@@ -1,12 +1,12 @@
-import { BaseEntity } from './BaseEntity'
+import { EntityModel } from './EntityModel'
 import { EntityActionPermissions } from './EntityPermission'
-import { EntityAttribute } from './EntityAttribute'
+import { ModelAttribute } from './ModelAttribute'
 
-export interface EntityConfig<T extends BaseEntity> {
+export interface EntityConfig<MODEL extends EntityModel> {
   entityName: string
   collectionName: string
   permissions?: EntityActionPermissions
   attributes: {
-    [key in keyof T]: EntityAttribute
+    [key in keyof MODEL]: ModelAttribute
   }
 }

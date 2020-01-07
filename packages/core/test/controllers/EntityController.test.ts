@@ -1,15 +1,15 @@
-import { BaseEntity, Commun, EntityConfig, EntityController } from '../../src'
+import { EntityModel, Commun, EntityConfig, EntityController } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
 import { EntityActionPermissions } from '../../src/types/EntityPermission'
 import { dbHelpers } from '../test-helpers/dbHelpers'
-import { EntityAttribute } from '../../src/types/EntityAttribute'
+import { ModelAttribute } from '../../src/types/ModelAttribute'
 
 describe('EntityController', () => {
   const entityName = 'items'
   const collectionName = 'items'
   const baseUrl = `/api/v1/${entityName}`
 
-  interface TestEntity extends BaseEntity {
+  interface TestEntity extends EntityModel {
     name: string
   }
 
@@ -21,7 +21,7 @@ describe('EntityController', () => {
 
   const getController = (
     permissions: EntityActionPermissions,
-    attributes: { [key in keyof TestEntity]: EntityAttribute } = { name: { type: 'string' } }
+    attributes: { [key in keyof TestEntity]: ModelAttribute } = { name: { type: 'string' } }
   ) => {
     const controller = new TestController({
       entityName,
@@ -101,7 +101,7 @@ describe('EntityController', () => {
     })
 
     it('should return an error if the name is unique and already exists', async () => {
-      const attributes: { [key in keyof TestEntity]: EntityAttribute } = {
+      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
         name: {
           type: 'string',
           unique: true,
@@ -135,7 +135,7 @@ describe('EntityController', () => {
     })
 
     it('should return an error if the name is unique and already exists', async () => {
-      const attributes: { [key in keyof TestEntity]: EntityAttribute } = {
+      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
         name: {
           type: 'string',
           unique: true,

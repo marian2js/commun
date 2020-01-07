@@ -1,15 +1,15 @@
 import { Request, Response } from 'express'
-import { BaseEntity, EntityConfig } from '..'
+import { EntityModel, EntityConfig } from '..'
 import { EntityDao } from '../dao/EntityDao'
 import { EntityActionPermissions } from '../types/EntityPermission'
 import { UnauthorizedError } from '../errors/UnauthorizedError'
 import { NotFoundError } from '../errors/NotFoundError'
-import { EntityAttribute, NumberEntityAttribute, StringEntityAttribute } from '../types/EntityAttribute'
+import { ModelAttribute, NumberModelAttribute, StringModelAttribute } from '../types/ModelAttribute'
 import { BadRequestError } from '../errors/BadRequestError'
 import { assertNever } from '../utils/typescript'
 import { ClientError } from '../errors/ClientError'
 
-export abstract class EntityController<T extends BaseEntity> {
+export abstract class EntityController<T extends EntityModel> {
   readonly dao: EntityDao<T>
 
   constructor (readonly config: EntityConfig<T>) {
@@ -74,7 +74,7 @@ export abstract class EntityController<T extends BaseEntity> {
     const entity: { [key in keyof T]: any } = {} as T
     for (const [key, attribute] of Object.entries(this.config.attributes)) {
       if (this.hasValidPermissions(action, { ...this.config.permissions, ...attribute!.permissions })) {
-        entity[key as keyof T] = getEntityAttribute(attribute!, key, req.body[key])
+        entity[key as keyof T] = getModelAttribute(attribute!, key, req.body[key])
       } else {
         throw new UnauthorizedError()
       }
@@ -98,22 +98,22 @@ export abstract class EntityController<T extends BaseEntity> {
   }
 }
 
-function getEntityAttribute (attribute: EntityAttribute, key: string, value: any) {
+function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
   if (attribute.required && !value) {
     throw new BadRequestError(`${key} is required`)
   }
 
   switch (attribute.type) {
     case 'string':
-      return getStringEntityAttribute(attribute, key, value)
+      return getStringModelAttribute(attribute, key, value)
     case 'number':
-      return getNumberEntityAttribute(attribute, key, value)
+      return getNumberModelAttribute(attribute, key, value)
     default:
       assertNever(attribute)
   }
 }
 
-function getStringEntityAttribute (attribute: StringEntityAttribute, key: string, value: any) {
+function getStringModelAttribute (attribute: StringModelAttribute, key: string, value: any) {
   const valueStr = value.toString()
   if (attribute.maxLength !== undefined && valueStr.length > attribute.maxLength) {
     throw new BadRequestError(`${key} must be shorter than ${attribute.maxLength} characters`)
@@ -121,7 +121,7 @@ function getStringEntityAttribute (attribute: StringEntityAttribute, key: string
   return value.trim()
 }
 
-function getNumberEntityAttribute (attribute: NumberEntityAttribute, key: string, value: any) {
+function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, value: any) {
   const valueNum = Number(value)
   if (Number.isNaN(valueNum)) {
     throw new BadRequestError(`${key} must be a number`)

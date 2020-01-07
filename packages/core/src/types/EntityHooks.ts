@@ -1,8 +1,8 @@
-import { BaseEntity } from './BaseEntity'
+import { EntityModel } from './EntityModel'
 
 type HookResponse = Promise<any> | void
 
-export interface EntityHooks<ENTITY extends BaseEntity> {
+export interface EntityHooks<ENTITY extends EntityModel> {
   beforeCreate?: (entity: ENTITY) => HookResponse
 
   afterCreate?: (entity: ENTITY) => HookResponse

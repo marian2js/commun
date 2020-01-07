@@ -1,22 +1,22 @@
 import { EntityActionPermissions } from './EntityPermission'
 
-type BaseEntityAttribute = {
+type BaseModelAttribute = {
   required?: boolean
   unique?: boolean
   permissions?: EntityActionPermissions
 }
 
-export type NumberEntityAttribute = BaseEntityAttribute & {
+export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
   max?: number
 }
 
-export type StringEntityAttribute = BaseEntityAttribute & {
+export type StringModelAttribute = BaseModelAttribute & {
   type: 'string'
   maxLength?: number
 }
 
-export type EntityAttribute =
-  NumberEntityAttribute |
-  StringEntityAttribute
+export type ModelAttribute =
+  NumberModelAttribute |
+  StringModelAttribute

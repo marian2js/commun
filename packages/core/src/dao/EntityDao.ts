@@ -1,4 +1,4 @@
-import { BaseEntity, EntityConfig } from '..'
+import { EntityModel, EntityConfig } from '..'
 import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
@@ -6,7 +6,7 @@ type Filter<T> = {
   [P in keyof T]?: any
 }
 
-export class EntityDao<T extends BaseEntity> {
+export class EntityDao<T extends EntityModel> {
   protected readonly collection: Collection
 
   constructor (collectionName: string) {

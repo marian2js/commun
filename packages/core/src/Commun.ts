@@ -4,12 +4,12 @@ import bodyParser from 'body-parser'
 import lusca from 'lusca'
 import morgan from 'morgan'
 import { EntityController } from './controllers/EntityController'
-import { BaseEntity } from './types/BaseEntity'
+import { EntityModel } from './types/EntityModel'
 import errorHandler from 'errorhandler'
 import { MongoClient } from 'mongodb'
 import { MongoDbConnection } from './dao/MongoDbConnection'
 
-const controllers: { [key: string]: EntityController<BaseEntity> } = {}
+const controllers: { [key: string]: EntityController<EntityModel> } = {}
 
 export const Commun = {
   createApp (): Express {
@@ -68,12 +68,12 @@ export const Commun = {
     return app
   },
 
-  getController (entityName: string): EntityController<BaseEntity> {
+  getController (entityName: string): EntityController<EntityModel> {
     return controllers[entityName]
   },
 
-  async registerController (controller: EntityController<BaseEntity>) {
+  async registerController (controller: EntityController<EntityModel>) {
     controllers[controller.config.entityName] = controller
     await controller.dao.createIndexes(controller.config)
-  }
+  },
 }
