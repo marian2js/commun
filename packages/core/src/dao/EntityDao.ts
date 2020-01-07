@@ -1,4 +1,4 @@
-import { EntityModel, EntityConfig } from '..'
+import { EntityConfig, EntityModel } from '..'
 import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 

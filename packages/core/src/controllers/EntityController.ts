@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
-import { EntityModel, EntityConfig } from '..'
-import { EntityDao } from '../dao/EntityDao'
+import { Commun, EntityModel } from '..'
 import { EntityActionPermissions } from '../types/EntityPermission'
 import { UnauthorizedError } from '../errors/UnauthorizedError'
 import { NotFoundError } from '../errors/NotFoundError'
@@ -9,11 +8,16 @@ import { BadRequestError } from '../errors/BadRequestError'
 import { assertNever } from '../utils/typescript'
 import { ClientError } from '../errors/ClientError'
 
-export abstract class EntityController<T extends EntityModel> {
-  readonly dao: EntityDao<T>
+export class EntityController<T extends EntityModel> {
 
-  constructor (readonly config: EntityConfig<T>) {
-    this.dao = new EntityDao<T>(this.config.collectionName)
+  constructor (private readonly entityName: string) {}
+
+  private get config () {
+    return Commun.getEntityConfig<T>(this.entityName)
+  }
+
+  private get dao () {
+    return Commun.getEntityDao<T>(this.entityName)
   }
 
   async list (req: Request, res: Response): Promise<{ items: T[] }> {

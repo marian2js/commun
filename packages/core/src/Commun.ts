@@ -3,13 +3,16 @@ import compression from 'compression'
 import bodyParser from 'body-parser'
 import lusca from 'lusca'
 import morgan from 'morgan'
-import { EntityController } from './controllers/EntityController'
 import { EntityModel } from './types/EntityModel'
 import errorHandler from 'errorhandler'
 import { MongoClient } from 'mongodb'
 import { MongoDbConnection } from './dao/MongoDbConnection'
+import { Entity, RegisterEntityOptions } from './types/Entity'
+import { EntityController } from './controllers/EntityController'
+import { EntityConfig } from './types/EntityConfig'
+import { EntityDao } from './dao/EntityDao'
 
-const controllers: { [key: string]: EntityController<EntityModel> } = {}
+const entities: { [key: string]: Entity<EntityModel> } = {}
 
 export const Commun = {
   createApp (): Express {
@@ -68,12 +71,42 @@ export const Commun = {
     return app
   },
 
-  getController (entityName: string): EntityController<EntityModel> {
-    return controllers[entityName]
+  async registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>) {
+    if (!entity.config.entityName) {
+      throw new Error('Config must include "entityName"')
+    }
+    if (!entity.config.collectionName) {
+      throw new Error('Config must include "collectionName"')
+    }
+    entities[entity.config.entityName] = {
+      ...entity,
+      dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),
+      controller: entity.controller || new EntityController<MODEL>(entity.config.entityName),
+    }
+    await entities[entity.config.entityName].dao.createIndexes(entity.config)
   },
 
-  async registerController (controller: EntityController<EntityModel>) {
-    controllers[controller.config.entityName] = controller
-    await controller.dao.createIndexes(controller.config)
+  getEntity<MODEL extends EntityModel> (entityName: string): Entity<MODEL> {
+    const entity = entities[entityName] as Entity<MODEL>
+    if (!entity) {
+      throw new Error(`Entity ${entityName} not registered`)
+    }
+    return entity
+  },
+
+  getEntityConfig<MODEL extends EntityModel> (entityName: string): EntityConfig<MODEL> {
+    return this.getEntity<MODEL>(entityName).config
+  },
+
+  getEntityDao<MODEL extends EntityModel> (entityName: string): EntityDao<MODEL> {
+    return this.getEntity<MODEL>(entityName).dao
+  },
+
+  getEntityController<MODEL extends EntityModel> (entityName: string): EntityController<MODEL> {
+    return this.getEntity<MODEL>(entityName).controller
+  },
+
+  getEntityRouter<MODEL extends EntityModel> (entityName: string): express.Router | undefined {
+    return this.getEntity<MODEL>(entityName).router
   },
 }
