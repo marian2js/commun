@@ -1,16 +1,20 @@
 import {
   BooleanModelAttribute,
+  EmailModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
   StringModelAttribute
 } from '../types/ModelAttribute'
 import { BadRequestError } from '../errors/BadRequestError'
 import { assertNever } from '../utils/typescript'
+import * as EmailValidator from 'email-validator'
 
 export function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
   switch (attribute.type) {
     case 'boolean':
       return getBooleanModelAttribute(attribute, key, value)
+    case 'email':
+      return getEmailModelAttribute(attribute, key, value)
     case 'number':
       return getNumberModelAttribute(attribute, key, value)
     case 'string':
@@ -30,6 +34,21 @@ function getBooleanModelAttribute (attribute: BooleanModelAttribute, key: string
     throw new BadRequestError(`${key} must be boolean`)
   }
   return value === true || value === 'true'
+}
+
+function getEmailModelAttribute (attribute: EmailModelAttribute, key: string, value: any) {
+  if (!value) {
+    if (attribute.required) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return undefined
+  }
+
+  const email = value.trim()
+  if (!EmailValidator.validate(email)) {
+    throw new BadRequestError(`${key} is not a valid email address`)
+  }
+  return email
 }
 
 function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, value: any) {

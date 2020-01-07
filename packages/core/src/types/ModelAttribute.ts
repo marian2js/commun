@@ -10,6 +10,10 @@ export type BooleanModelAttribute = BaseModelAttribute & {
   type: 'boolean'
 }
 
+export type EmailModelAttribute = BaseModelAttribute & {
+  type: 'email'
+}
+
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
@@ -23,5 +27,6 @@ export type StringModelAttribute = BaseModelAttribute & {
 
 export type ModelAttribute =
   BooleanModelAttribute |
+  EmailModelAttribute |
   NumberModelAttribute |
   StringModelAttribute

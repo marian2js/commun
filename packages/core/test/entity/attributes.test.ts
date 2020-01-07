@@ -33,6 +33,40 @@ describe('attributes', () => {
     })
   })
 
+  describe('Email', () => {
+    it('should return the given email', async () => {
+      expect(getModelAttribute({ type: 'email' }, 'key', 'email@example.org')).toBe('email@example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', 'email@s.example.org')).toBe('email@s.example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', 'a.b@example.org')).toBe('a.b@example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', 'a.b@s.example.org')).toBe('a.b@s.example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', '')).toBe(undefined)
+    })
+
+    it('should return the email trimmed', async () => {
+      expect(getModelAttribute({ type: 'email' }, 'key', 'email@example.org   ')).toBe('email@example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', '   email@example.org')).toBe('email@example.org')
+      expect(getModelAttribute({ type: 'email' }, 'key', '   email@example.org   ')).toBe('email@example.org')
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(getModelAttribute({ type: 'email', required: true }, 'key', 'email@example.org'))
+        .toBe('email@example.org')
+      expect(() => getModelAttribute({ type: 'email', required: true }, 'key', null))
+        .toThrow('key is required')
+    })
+
+    it('should throw an error if the email is not valid', async () => {
+      expect(() => getModelAttribute({ type: 'email', required: true }, 'key', 'email'))
+        .toThrow('key is not a valid email address')
+      expect(() => getModelAttribute({ type: 'email', required: true }, 'key', 'email@'))
+        .toThrow('key is not a valid email address')
+      expect(() => getModelAttribute({ type: 'email', required: true }, 'key', '@example.org'))
+        .toThrow('key is not a valid email address')
+      expect(() => getModelAttribute({ type: 'email', required: true }, 'key', 'email@@example.org'))
+        .toThrow('key is not a valid email address')
+    })
+  })
+
   describe('Number', () => {
     it('should return the given number', async () => {
       expect(getModelAttribute({ type: 'number' }, 'key', 123)).toBe(123)
