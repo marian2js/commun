@@ -2,6 +2,7 @@ import { BaseEntity, Commun, EntityConfig, EntityController } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
 import { EntityActionPermissions } from '../../src/types/EntityPermission'
 import { dbHelpers } from '../test-helpers/dbHelpers'
+import { EntityAttribute } from '../../src/types/EntityAttribute'
 
 describe('EntityController', () => {
   const entityName = 'items'
@@ -18,16 +19,15 @@ describe('EntityController', () => {
     }
   }
 
-  const getController = (permissions: EntityActionPermissions) => {
+  const getController = (
+    permissions: EntityActionPermissions,
+    attributes: { [key in keyof TestEntity]: EntityAttribute } = { name: { type: 'string' } }
+  ) => {
     const controller = new TestController({
       entityName,
       collectionName,
       permissions,
-      attributes: {
-        name: {
-          type: 'string'
-        }
-      }
+      attributes,
     })
     Commun.registerController(controller)
     return controller
@@ -99,6 +99,20 @@ describe('EntityController', () => {
         .send({ name: 'item' })
         .expect(401)
     })
+
+    it('should return an error if the name is unique and already exists', async () => {
+      const attributes: { [key in keyof TestEntity]: EntityAttribute } = {
+        name: {
+          type: 'string',
+          unique: true,
+        }
+      }
+      const controller = getController({ create: 'public' }, attributes)
+      await controller.dao.insertOne({ name: 'item' })
+      await request().post(baseUrl)
+        .send({ name: 'item' })
+        .expect(400)
+    })
   })
 
   describe('update - [PUT] /:entity/:id', () => {
@@ -118,6 +132,21 @@ describe('EntityController', () => {
       await request().put(`${baseUrl}/${item._id}`)
         .send({ name: 'updated' })
         .expect(401)
+    })
+
+    it('should return an error if the name is unique and already exists', async () => {
+      const attributes: { [key in keyof TestEntity]: EntityAttribute } = {
+        name: {
+          type: 'string',
+          unique: true,
+        }
+      }
+      const controller = getController({ update: 'public' }, attributes)
+      await controller.dao.insertOne({ name: 'item1' })
+      const item = await controller.dao.insertOne({ name: 'item2' })
+      await request().put(`${baseUrl}/${item._id}`)
+        .send({ name: 'item1' })
+        .expect(400)
     })
   })
 

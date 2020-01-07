@@ -1,4 +1,4 @@
-import { BaseEntity } from '..'
+import { BaseEntity, EntityConfig } from '..'
 import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
@@ -52,5 +52,13 @@ export class EntityDao<T extends BaseEntity> {
   async deleteOne (id: string): Promise<boolean> {
     const res = await this.collection.deleteOne({ _id: new ObjectId(id) })
     return res && res.result && !!res.result.ok
+  }
+
+  async createIndexes (config: EntityConfig<T>) {
+    for (const [key, attribute] of Object.entries(config.attributes)) {
+      if (attribute!.unique) {
+        await this.collection.createIndex({ [key]: 1 }, { unique: true, sparse: attribute!.required })
+      }
+    }
   }
 }

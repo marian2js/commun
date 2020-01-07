@@ -7,11 +7,12 @@ import { NotFoundError } from '../errors/NotFoundError'
 import { EntityAttribute, NumberEntityAttribute, StringEntityAttribute } from '../types/EntityAttribute'
 import { BadRequestError } from '../errors/BadRequestError'
 import { assertNever } from '../utils/typescript'
+import { ClientError } from '../errors/ClientError'
 
 export abstract class EntityController<T extends BaseEntity> {
   readonly dao: EntityDao<T>
 
-  protected constructor (readonly config: EntityConfig<T>) {
+  constructor (readonly config: EntityConfig<T>) {
     this.dao = new EntityDao<T>(this.config.collectionName)
   }
 
@@ -34,8 +35,15 @@ export abstract class EntityController<T extends BaseEntity> {
   async create (req: Request, res: Response): Promise<{ item: T }> {
     this.validateEntityPermissions('create')
     const entity = this.getEntityFromBodyRequest(req, 'create')
-    const resultEntity = await this.dao.insertOne(entity)
-    return { item: resultEntity }
+    try {
+      const resultEntity = await this.dao.insertOne(entity)
+      return { item: resultEntity }
+    } catch (e) {
+      if (e.code === 11000) {
+        throw new ClientError('Duplicated key', 400)
+      }
+      throw e
+    }
   }
 
   async update (req: Request, res: Response): Promise<{ result: boolean }> {
@@ -45,8 +53,15 @@ export abstract class EntityController<T extends BaseEntity> {
     }
     this.validateEntityPermissions('update')
     const entityData = this.getEntityFromBodyRequest(req, 'update')
-    const result = await this.dao.updateOne(req.params.id, entityData)
-    return { result }
+    try {
+      const result = await this.dao.updateOne(req.params.id, entityData)
+      return { result }
+    } catch (e) {
+      if (e.code === 11000) {
+        throw new ClientError('Duplicated key', 400)
+      }
+      throw e
+    }
   }
 
   async delete (req: Request, res: Response): Promise<{ result: boolean }> {

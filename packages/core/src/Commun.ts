@@ -37,7 +37,9 @@ export const Commun = {
   },
 
   async connectDb () { // TODO
-    const client = new MongoClient(process.env.MONGO_URL!)
+    const client = new MongoClient(process.env.MONGO_URL!, {
+      useUnifiedTopology: true
+    })
     await client.connect()
     MongoDbConnection.setClient(client)
     MongoDbConnection.setDb(client.db('commun'))
@@ -70,7 +72,8 @@ export const Commun = {
     return controllers[entityName]
   },
 
-  registerController (controller: EntityController<BaseEntity>) {
+  async registerController (controller: EntityController<BaseEntity>) {
     controllers[controller.config.entityName] = controller
-  },
+    await controller.dao.createIndexes(controller.config)
+  }
 }

@@ -3,6 +3,7 @@ import { Commun } from '../../src'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 
 describe('EntityDao', () => {
+  const entityName = 'test'
   const collectionName = 'test'
   let dao: EntityDao<{ _id?: string, name: string }>
 
@@ -98,6 +99,23 @@ describe('EntityDao', () => {
       await dao.deleteOne(item._id!)
       const find2 = await dao.find({})
       expect(find2.length).toBe(0)
+    })
+  })
+
+  describe('createIndexes', () => {
+    it('should create indexes on mongodb for unique attributes', async () => {
+      await dao.createIndexes({
+        entityName,
+        collectionName,
+        attributes: {
+          name: {
+            type: 'string',
+            unique: true,
+          }
+        }
+      })
+      await dao.insertOne({ name: 'item' })
+      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error dup key/)
     })
   })
 })
