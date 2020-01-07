@@ -1,4 +1,4 @@
-export type EntityPermission = 'public' | 'auth_user' | 'user_is_author' | 'admin' | 'nobody'
+export type EntityPermission = 'anyone' | 'user' | 'own' | 'admin' | 'system'
 
 export type EntityActionPermissions = {
   get?: EntityPermission | EntityPermission[]

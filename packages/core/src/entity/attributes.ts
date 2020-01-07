@@ -25,8 +25,11 @@ export function getModelAttribute (attribute: ModelAttribute, key: string, value
 }
 
 function getBooleanModelAttribute (attribute: BooleanModelAttribute, key: string, value: any) {
-  if (attribute.required && [undefined, null].includes(value)) {
-    throw new BadRequestError(`${key} is required`)
+  if ([undefined, null].includes(value)) {
+    if (attribute.required) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return undefined
   }
 
   const validValues = [true, false, 'true', 'false']
@@ -52,8 +55,11 @@ function getEmailModelAttribute (attribute: EmailModelAttribute, key: string, va
 }
 
 function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, value: any) {
-  if (attribute.required && [undefined, null].includes(value)) {
-    throw new BadRequestError(`${key} is required`)
+  if ([undefined, null].includes(value)) {
+    if (attribute.required) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return undefined
   }
 
   const parsedValue = Number(value)
@@ -70,11 +76,14 @@ function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, 
 }
 
 function getStringModelAttribute (attribute: StringModelAttribute, key: string, value: any) {
-  if (attribute.required && [undefined, null, false, ''].includes(value && value.trim())) {
-    throw new BadRequestError(`${key} is required`)
+  const parsedValue = value !== null && value !== undefined ? value.toString().trim() : value
+  if ([undefined, null, ''].includes(parsedValue)) {
+    if (attribute.required) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return parsedValue === '' ? '' : undefined
   }
 
-  const parsedValue = value.toString().trim()
   if (attribute.maxLength !== undefined && parsedValue.length > attribute.maxLength) {
     throw new BadRequestError(`${key} must be shorter than ${attribute.maxLength} characters`)
   }

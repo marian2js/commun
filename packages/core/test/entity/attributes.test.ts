@@ -5,6 +5,8 @@ describe('attributes', () => {
     it('should return true for a truly value', async () => {
       expect(getModelAttribute({ type: 'boolean' }, 'key', 'true')).toBe(true)
       expect(getModelAttribute({ type: 'boolean' }, 'key', true)).toBe(true)
+      expect(getModelAttribute({ type: 'boolean' }, 'key', undefined)).toBe(undefined)
+      expect(getModelAttribute({ type: 'boolean' }, 'key', null)).toBe(undefined)
     })
 
     it('should return false for a falsy value', async () => {
@@ -40,6 +42,8 @@ describe('attributes', () => {
       expect(getModelAttribute({ type: 'email' }, 'key', 'a.b@example.org')).toBe('a.b@example.org')
       expect(getModelAttribute({ type: 'email' }, 'key', 'a.b@s.example.org')).toBe('a.b@s.example.org')
       expect(getModelAttribute({ type: 'email' }, 'key', '')).toBe(undefined)
+      expect(getModelAttribute({ type: 'email' }, 'key', undefined)).toBe(undefined)
+      expect(getModelAttribute({ type: 'email' }, 'key', null)).toBe(undefined)
     })
 
     it('should return the email trimmed', async () => {
@@ -75,6 +79,8 @@ describe('attributes', () => {
       expect(getModelAttribute({ type: 'number' }, 'key', .5)).toBe(.5)
       expect(getModelAttribute({ type: 'number' }, 'key', '.5')).toBe(.5)
       expect(getModelAttribute({ type: 'number' }, 'key', '0.5')).toBe(.5)
+      expect(getModelAttribute({ type: 'number' }, 'key', undefined)).toBe(undefined)
+      expect(getModelAttribute({ type: 'number' }, 'key', null)).toBe(undefined)
     })
 
     it('should handle the max attribute', async () => {
@@ -119,6 +125,8 @@ describe('attributes', () => {
       expect(getModelAttribute({ type: 'string' }, 'key', true)).toBe('true')
       expect(getModelAttribute({ type: 'string' }, 'key', false)).toBe('false')
       expect(getModelAttribute({ type: 'string' }, 'key', '')).toBe('')
+      expect(getModelAttribute({ type: 'string' }, 'key', undefined)).toBe(undefined)
+      expect(getModelAttribute({ type: 'string' }, 'key', null)).toBe(undefined)
     })
 
     it('should return the given string trimmed', async () => {
@@ -142,8 +150,6 @@ describe('attributes', () => {
       expect(() => getModelAttribute({ type: 'string', required: true }, 'key', null))
         .toThrow('key is required')
       expect(() => getModelAttribute({ type: 'string', required: true }, 'key', undefined))
-        .toThrow('key is required')
-      expect(() => getModelAttribute({ type: 'string', required: true }, 'key', false))
         .toThrow('key is required')
       expect(() => getModelAttribute({ type: 'string', required: true }, 'key', '    '))
         .toThrow('key is required')
