@@ -1,0 +1,10 @@
+tmp
+coverage
+.env
+node_modules
+.idea
+*.iml
+.DS_Store
+Thumbs.db
+dist/**/*
+/packages/**/lib
