@@ -17,7 +17,7 @@ describe('EntityController', () => {
     permissions: EntityActionPermissions,
     attributes: { [key in keyof TestEntity]: ModelAttribute } = { name: { type: 'string' } }
   ) => {
-    await Commun.registerEntity<TestEntity>({
+    Commun.registerEntity<TestEntity>({
       config: {
         entityName,
         collectionName,
@@ -25,6 +25,7 @@ describe('EntityController', () => {
         attributes,
       }
     })
+    await Commun.createDbIndexes()
   }
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)

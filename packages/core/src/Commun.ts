@@ -39,14 +39,20 @@ export const Commun = {
     app.use('/api/v1', require('./routes/ApiRoutes').default)
   },
 
-  async connectDb () { // TODO
+  async connectDb () {
     const client = new MongoClient(process.env.MONGO_URL!, {
       useUnifiedTopology: true
     })
     await client.connect()
     MongoDbConnection.setClient(client)
-    MongoDbConnection.setDb(client.db('commun'))
+    MongoDbConnection.setDb(client.db('commun')) // TODO allow to configure db name
     console.log('Connected to MongoDB')
+  },
+
+  async createDbIndexes () {
+    for (const entity of Object.values(entities)) {
+      await entity.dao.createIndexes(entity.config)
+    }
   },
 
   async closeDb () {
@@ -55,14 +61,14 @@ export const Commun = {
 
   async startServer (expressApp?: Express) {
     const app = expressApp || Commun.createApp()
-    Commun.configureRoutes(app)
+    this.configureRoutes(app)
 
     if (process.env.NODE_ENV !== 'production') {
       app.use(errorHandler())
     }
 
-    await Commun.connectDb()
-    // await configurePassport()
+    await this.connectDb()
+    await this.createDbIndexes()
 
     app.listen(app.get('port'), () => {
       console.log(`${app.get('env')} server started at http://localhost:${app.get('port')}`)
@@ -71,7 +77,7 @@ export const Commun = {
     return app
   },
 
-  async registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>) {
+  registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>) {
     if (!entity.config.entityName) {
       throw new Error('Config must include "entityName"')
     }
@@ -83,7 +89,6 @@ export const Commun = {
       dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),
       controller: entity.controller || new EntityController<MODEL>(entity.config.entityName),
     }
-    await entities[entity.config.entityName].dao.createIndexes(entity.config)
   },
 
   getEntity<MODEL extends EntityModel> (entityName: string): Entity<MODEL> {

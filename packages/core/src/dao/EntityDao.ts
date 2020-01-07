@@ -7,11 +7,9 @@ type Filter<T> = {
 }
 
 export class EntityDao<T extends EntityModel> {
-  protected readonly collection: Collection
+  protected _collection?: Collection
 
-  constructor (collectionName: string) {
-    this.collection = MongoDbConnection.getDb().collection(collectionName)
-  }
+  constructor (protected readonly collectionName: string) {}
 
   async find (filter: Filter<T>): Promise<T[]> {
     return (await this.collection.find(filter).toArray())
@@ -60,5 +58,12 @@ export class EntityDao<T extends EntityModel> {
         await this.collection.createIndex({ [key]: 1 }, { unique: true, sparse: attribute!.required })
       }
     }
+  }
+
+  protected get collection () {
+    if (!this._collection) {
+      this._collection = MongoDbConnection.getDb().collection(this.collectionName)
+    }
+    return this._collection
   }
 }
