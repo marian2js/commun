@@ -23,6 +23,10 @@ export type NumberModelAttribute = BaseModelAttribute & {
 export type StringModelAttribute = BaseModelAttribute & {
   type: 'string'
   maxLength?: number
+  hash?: {
+    algorithm: 'bcrypt',
+    salt_rounds: number,
+  }
 }
 
 export type ModelAttribute =

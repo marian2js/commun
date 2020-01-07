@@ -8,8 +8,9 @@ import {
 import { BadRequestError } from '../errors/BadRequestError'
 import { assertNever } from '../utils/typescript'
 import * as EmailValidator from 'email-validator'
+import { SecurityUtils } from '../../utils/SecurityUtils'
 
-export function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
+export async function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
   switch (attribute.type) {
     case 'boolean':
       return getBooleanModelAttribute(attribute, key, value)
@@ -75,7 +76,7 @@ function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, 
   return parsedValue
 }
 
-function getStringModelAttribute (attribute: StringModelAttribute, key: string, value: any) {
+async function getStringModelAttribute (attribute: StringModelAttribute, key: string, value: any) {
   const parsedValue = value !== null && value !== undefined ? value.toString().trim() : value
   if ([undefined, null, ''].includes(parsedValue)) {
     if (attribute.required) {
@@ -87,5 +88,15 @@ function getStringModelAttribute (attribute: StringModelAttribute, key: string, 
   if (attribute.maxLength !== undefined && parsedValue.length > attribute.maxLength) {
     throw new BadRequestError(`${key} must be shorter than ${attribute.maxLength} characters`)
   }
+
+  if (attribute.hash) {
+    switch (attribute.hash.algorithm) {
+      case 'bcrypt':
+        return await SecurityUtils.hashWithBcrypt(value, attribute.hash.salt_rounds)
+      default:
+        assertNever(attribute.hash.algorithm)
+    }
+  }
+
   return parsedValue
 }

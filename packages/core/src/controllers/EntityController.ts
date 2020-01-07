@@ -36,7 +36,7 @@ export class EntityController<T extends EntityModel> {
 
   async create (req: Request, res: Response): Promise<{ item: T }> {
     this.validateActionPermissions('create')
-    const model = this.getModelFromBodyRequest(req, 'create')
+    const model = await this.getModelFromBodyRequest(req, 'create')
     try {
       const insertedModel = await this.dao.insertOne(model)
       return { item: insertedModel }
@@ -54,7 +54,7 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     this.validateActionPermissions('update')
-    const modelData = this.getModelFromBodyRequest(req, 'update')
+    const modelData = await this.getModelFromBodyRequest(req, 'update')
     try {
       const result = await this.dao.updateOne(req.params.id, modelData)
       return { result }
@@ -72,11 +72,11 @@ export class EntityController<T extends EntityModel> {
     return { result }
   }
 
-  protected getModelFromBodyRequest (req: Request, action: 'create' | 'update'): T {
+  protected async getModelFromBodyRequest (req: Request, action: 'create' | 'update'): Promise<T> {
     const model: { [key in keyof T]: any } = {} as T
     for (const [key, attribute] of Object.entries(this.config.attributes)) {
       if (this.hasValidPermissions(action, { ...this.config.permissions, ...attribute!.permissions })) {
-        model[key as keyof T] = getModelAttribute(attribute!, key, req.body[key])
+        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body[key])
       } else {
         throw new UnauthorizedError()
       }
