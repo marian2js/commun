@@ -44,7 +44,7 @@ describe('EntityController', () => {
 
   describe('list - [GET] /:entity', () => {
     it('should return a list of entity items', async () => {
-      await registerTestEntity({ get: 'public' })
+      await registerTestEntity({ get: 'anyone' })
       await getDao().insertOne({ name: 'item1' })
       await getDao().insertOne({ name: 'item2' })
       await getDao().insertOne({ name: 'item3' })
@@ -55,7 +55,7 @@ describe('EntityController', () => {
       expect(res.body.items[2].name).toBe('item3')
     })
 
-    it('should return an unauthorized error if get permission is not public', async () => {
+    it('should return an unauthorized error if get permission is not anyone', async () => {
       await registerTestEntity({})
       await getDao().insertOne({ name: 'item1' })
       await getDao().insertOne({ name: 'item2' })
@@ -66,13 +66,13 @@ describe('EntityController', () => {
 
   describe('get - [GET] /:entity/:id', () => {
     it('should return a single item', async () => {
-      await registerTestEntity({ get: 'public' })
+      await registerTestEntity({ get: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
       const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
       expect(res.body.item.name).toBe('item')
     })
 
-    it('should return an unauthorized error if get permission is not public', async () => {
+    it('should return an unauthorized error if get permission is not anyone', async () => {
       await registerTestEntity({})
       const item = await getDao().insertOne({ name: 'item' })
       await request().get(`${baseUrl}/${item._id}`).expect(401)
@@ -81,7 +81,7 @@ describe('EntityController', () => {
 
   describe('create - [POST] /:entity', () => {
     it('should create an item', async () => {
-      await registerTestEntity({ create: 'public' })
+      await registerTestEntity({ create: 'anyone' })
       const res = await request().post(baseUrl)
         .send({ name: 'item' })
         .expect(200)
@@ -90,7 +90,7 @@ describe('EntityController', () => {
       expect(item!.name).toBe('item')
     })
 
-    it('should return an unauthorized error if create permission is not public', async () => {
+    it('should return an unauthorized error if create permission is not anyone', async () => {
       await registerTestEntity({})
       await request().post(baseUrl)
         .send({ name: 'item' })
@@ -104,7 +104,7 @@ describe('EntityController', () => {
           unique: true,
         }
       }
-      await registerTestEntity({ create: 'public' }, attributes)
+      await registerTestEntity({ create: 'anyone' }, attributes)
       await getDao().insertOne({ name: 'item' })
       await request().post(baseUrl)
         .send({ name: 'item' })
@@ -114,7 +114,7 @@ describe('EntityController', () => {
 
   describe('update - [PUT] /:entity/:id', () => {
     it('should update an item', async () => {
-      await registerTestEntity({ update: 'public' })
+      await registerTestEntity({ update: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
       await request().put(`${baseUrl}/${item._id}`)
         .send({ name: 'updated' })
@@ -123,7 +123,7 @@ describe('EntityController', () => {
       expect(updatedItem!.name).toBe('updated')
     })
 
-    it('should return an unauthorized error if create permission is not public', async () => {
+    it('should return an unauthorized error if create permission is not anyone', async () => {
       await registerTestEntity({})
       const item = await getDao().insertOne({ name: 'item' })
       await request().put(`${baseUrl}/${item._id}`)
@@ -138,7 +138,7 @@ describe('EntityController', () => {
           unique: true,
         }
       }
-      await registerTestEntity({ update: 'public' }, attributes)
+      await registerTestEntity({ update: 'anyone' }, attributes)
       await getDao().insertOne({ name: 'item1' })
       const item = await getDao().insertOne({ name: 'item2' })
       await request().put(`${baseUrl}/${item._id}`)
@@ -149,7 +149,7 @@ describe('EntityController', () => {
 
   describe('delete - [DELETE] /:entity/:id', () => {
     it('should delete an item', async () => {
-      await registerTestEntity({ delete: 'public' })
+      await registerTestEntity({ delete: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
       await request().delete(`${baseUrl}/${item._id}`)
         .expect(200)
@@ -157,7 +157,7 @@ describe('EntityController', () => {
       expect(deletedItem).toBe(null)
     })
 
-    it('should return an unauthorized error if create permission is not public', async () => {
+    it('should return an unauthorized error if create permission is not anyone', async () => {
       await registerTestEntity({})
       const item = await getDao().insertOne({ name: 'item' })
       await request().delete(`${baseUrl}/${item._id}`)
