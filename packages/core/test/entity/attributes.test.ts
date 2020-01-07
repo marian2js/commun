@@ -1,6 +1,38 @@
 import { getModelAttribute } from '../../src/entity/attributes'
 
 describe('attributes', () => {
+  describe('Boolean', () => {
+    it('should return true for a truly value', async () => {
+      expect(getModelAttribute({ type: 'boolean' }, 'key', 'true')).toBe(true)
+      expect(getModelAttribute({ type: 'boolean' }, 'key', true)).toBe(true)
+    })
+
+    it('should return false for a falsy value', async () => {
+      expect(getModelAttribute({ type: 'boolean' }, 'key', 'false')).toBe(false)
+      expect(getModelAttribute({ type: 'boolean' }, 'key', false)).toBe(false)
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(getModelAttribute({ type: 'boolean', required: true }, 'key', 'true')).toBe(true)
+      expect(getModelAttribute({ type: 'boolean', required: true }, 'key', true)).toBe(true)
+      expect(getModelAttribute({ type: 'boolean', required: true }, 'key', 'false')).toBe(false)
+      expect(getModelAttribute({ type: 'boolean', required: true }, 'key', false)).toBe(false)
+      expect(() => getModelAttribute({ type: 'boolean', required: true }, 'key', undefined))
+        .toThrow('key is required')
+      expect(() => getModelAttribute({ type: 'boolean', required: true }, 'key', null))
+        .toThrow('key is required')
+    })
+
+    it('should throw an error if the value is not boolean', async () => {
+      expect(() => getModelAttribute({ type: 'boolean' }, 'key', 'str'))
+        .toThrow('key must be boolean')
+      expect(() => getModelAttribute({ type: 'boolean' }, 'key', 123))
+        .toThrow('key must be boolean')
+      expect(() => getModelAttribute({ type: 'boolean' }, 'key', {}))
+        .toThrow('key must be boolean')
+    })
+  })
+
   describe('Number', () => {
     it('should return the given number', async () => {
       expect(getModelAttribute({ type: 'number' }, 'key', 123)).toBe(123)

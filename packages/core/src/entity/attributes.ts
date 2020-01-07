@@ -1,4 +1,5 @@
 import {
+  BooleanModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
   StringModelAttribute
@@ -8,6 +9,8 @@ import { assertNever } from '../utils/typescript'
 
 export function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
   switch (attribute.type) {
+    case 'boolean':
+      return getBooleanModelAttribute(attribute, key, value)
     case 'number':
       return getNumberModelAttribute(attribute, key, value)
     case 'string':
@@ -15,6 +18,18 @@ export function getModelAttribute (attribute: ModelAttribute, key: string, value
     default:
       assertNever(attribute)
   }
+}
+
+function getBooleanModelAttribute (attribute: BooleanModelAttribute, key: string, value: any) {
+  if (attribute.required && [undefined, null].includes(value)) {
+    throw new BadRequestError(`${key} is required`)
+  }
+
+  const validValues = [true, false, 'true', 'false']
+  if (!validValues.includes(value)) {
+    throw new BadRequestError(`${key} must be boolean`)
+  }
+  return value === true || value === 'true'
 }
 
 function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, value: any) {

@@ -6,6 +6,10 @@ type BaseModelAttribute = {
   permissions?: EntityActionPermissions
 }
 
+export type BooleanModelAttribute = BaseModelAttribute & {
+  type: 'boolean'
+}
+
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
@@ -18,5 +22,6 @@ export type StringModelAttribute = BaseModelAttribute & {
 }
 
 export type ModelAttribute =
+  BooleanModelAttribute |
   NumberModelAttribute |
   StringModelAttribute
