@@ -1,5 +1,5 @@
 import { getModelAttribute } from '../../src/entity/attributes'
-import { SecurityUtils } from '../../utils/SecurityUtils'
+import { SecurityUtils } from '../../src/utils'
 
 describe('attributes', () => {
   describe('Boolean', () => {

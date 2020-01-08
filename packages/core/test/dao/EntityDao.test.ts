@@ -1,5 +1,4 @@
-import { EntityDao } from '../../src/dao/EntityDao'
-import { Commun } from '../../src'
+import { Commun, EntityDao } from '../../src'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 
 describe('EntityDao', () => {

@@ -1,8 +1,7 @@
 import { Commun, EntityController, EntityModel } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
-import { EntityActionPermissions } from '../../src/types/EntityPermission'
+import { EntityActionPermissions, ModelAttribute } from '../../src/types'
 import { dbHelpers } from '../test-helpers/dbHelpers'
-import { ModelAttribute } from '../../src/types/ModelAttribute'
 
 describe('EntityController', () => {
   const entityName = 'items'

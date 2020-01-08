@@ -2,7 +2,7 @@ import express from 'express'
 import { EntityModel } from './EntityModel'
 import { EntityConfig } from './EntityConfig'
 import { EntityController } from '..'
-import { EntityDao } from '../dao/EntityDao'
+import { EntityDao } from '..'
 
 export interface Entity<MODEL extends EntityModel> {
   config: EntityConfig<MODEL>

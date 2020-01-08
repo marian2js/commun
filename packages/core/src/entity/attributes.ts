@@ -4,11 +4,10 @@ import {
   ModelAttribute,
   NumberModelAttribute,
   StringModelAttribute
-} from '../types/ModelAttribute'
-import { BadRequestError } from '../errors/BadRequestError'
-import { assertNever } from '../utils/typescript'
+} from '../types'
+import { BadRequestError } from '../errors'
+import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
-import { SecurityUtils } from '../../utils/SecurityUtils'
 
 export async function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
   switch (attribute.type) {
