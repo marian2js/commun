@@ -1,11 +1,12 @@
 import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
+import jwt, { Secret, SignCallback, SignOptions } from 'jsonwebtoken'
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never
 
 describe('BaseUserController', () => {
-  const baseUrl = '/api/v1/users'
+  const baseUrl = '/api/v1/auth'
   const entityName = 'users'
   const collectionName = 'users'
   let dbConnection: PromiseType<ReturnType<typeof Commun.connectDb>>
@@ -18,6 +19,10 @@ describe('BaseUserController', () => {
         ...DefaultUserConfig,
         permissions,
         attributes,
+      }
+    }, {
+      accessToken: {
+        secretOrPrivateKey: 'SECRET'
       }
     })
     await Commun.createDbIndexes()
@@ -41,7 +46,7 @@ describe('BaseUserController', () => {
     await Commun.closeDb()
   })
 
-  describe('create - [POST] /users', () => {
+  describe('register with password - [POST] /auth/password', () => {
     it('should create an user', async () => {
       await registerUserEntity({ get: 'anyone', create: 'anyone' })
       const userData = {
@@ -49,7 +54,7 @@ describe('BaseUserController', () => {
         email: 'user@example.org',
         password: 'password',
       }
-      const res = await request().post(baseUrl)
+      const res = await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(200)
       expect(res.body.item.username).toBe('user')
@@ -67,7 +72,7 @@ describe('BaseUserController', () => {
         username: 'user',
         password: 'password',
       }
-      const res = await request().post(baseUrl)
+      const res = await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
     })
@@ -78,7 +83,7 @@ describe('BaseUserController', () => {
         email: 'user@example.org',
         password: 'password',
       }
-      const res = await request().post(baseUrl)
+      const res = await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
     })
@@ -89,13 +94,56 @@ describe('BaseUserController', () => {
         username: 'user',
         email: 'user@example.org',
       }
-      await request().post(baseUrl)
+      await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
     })
   })
 
-  describe('verify - [POST] /users/:username/verify', () => {
+  describe('login with password - [POST] /auth/password/login', () => {
+    let userData: BaseUserModel
+
+    beforeEach(async () => {
+      SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      userData = {
+        username: 'user',
+        email: 'user@example.org',
+        password: 'hashed(password)',
+        verified: true,
+      }
+      await getDao().insertOne(userData)
+    })
+
+    it('should return user and tokens if username and password are valid', async () => {
+      const res = await request().post(`${baseUrl}/password/login`)
+        .send({ username: 'user', password: 'password' })
+        .expect(200)
+      expect(res.body.user.username).toBe('user')
+      expect(res.body.tokens.accessToken).toBeDefined()
+      expect(res.body.tokens.accessTokenExpiration).toBeDefined()
+      expect(res.body.tokens.refreshToken).toBeDefined()
+    })
+
+    it('should return user and tokens if email and password are valid', async () => {
+      const res = await request().post(`${baseUrl}/password/login`)
+        .send({ username: 'user@example.org', password: 'password' })
+        .expect(200)
+      expect(res.body.user.username).toBe('user')
+      expect(res.body.tokens.accessToken).toBeDefined()
+      expect(res.body.tokens.accessTokenExpiration).toBeDefined()
+      expect(res.body.tokens.refreshToken).toBeDefined()
+    })
+
+    it('should return unauthorized error if password is not correct', async () => {
+      const res = await request().post(`${baseUrl}/password/login`)
+        .send({ username: 'user', password: 'wrong-password' })
+        .expect(401)
+    })
+  })
+
+  describe('verify - [POST] /auth/verify', () => {
     let userData: BaseUserModel
 
     beforeEach(async () => {
@@ -113,8 +161,8 @@ describe('BaseUserController', () => {
     })
 
     it('should verify an user given a valid verification code', async () => {
-      await request().post(`${baseUrl}/${userData.username}/verify`)
-        .send({ code: 'CODE' })
+      await request().post(`${baseUrl}/verify`)
+        .send({ code: 'CODE', username: userData.username })
         .expect(200)
       const user = (await getDao().findOne({ username: userData.username }))!
       expect(user.verified).toBe(true)
@@ -122,8 +170,8 @@ describe('BaseUserController', () => {
     })
 
     it('should verify an user given a valid verification code', async () => {
-      await request().post(`${baseUrl}/${userData.username}/verify`)
-        .send({ code: 'wrong-code' })
+      await request().post(`${baseUrl}/verify`)
+        .send({ code: 'wrong-code', username: userData.username })
         .expect(400)
       const user = (await getDao().findOne({ username: userData.username }))!
       expect(user.verified).toBe(false)

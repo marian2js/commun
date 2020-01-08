@@ -91,7 +91,7 @@ export const Commun = {
     return app
   },
 
-  registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>) {
+  registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>): Entity<MODEL> {
     if (!entity.config.entityName) {
       throw new Error('Config must include "entityName"')
     }
@@ -103,6 +103,7 @@ export const Commun = {
       dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),
       controller: entity.controller || new EntityController<MODEL>(entity.config.entityName),
     }
+    return entities[entity.config.entityName] as Entity<MODEL>
   },
 
   getEntity<MODEL extends EntityModel> (entityName: string): Entity<MODEL> {

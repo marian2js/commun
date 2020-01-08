@@ -37,6 +37,18 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
         update: 'admin',
       },
     },
+    refreshTokenHash: {
+      type: 'string',
+      hash: {
+        algorithm: 'bcrypt',
+        salt_rounds: 12,
+      },
+      permissions: {
+        get: 'system',
+        create: 'system',
+        update: 'system',
+      },
+    },
     verificationCode: {
       type: 'string',
       permissions: {
