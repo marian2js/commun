@@ -11,10 +11,11 @@ import { EntityController } from './controllers/EntityController'
 import { EntityDao } from './dao/EntityDao'
 
 const entities: { [key: string]: Entity<EntityModel> } = {}
+let app: Express
 
 export const Commun = {
-  createApp (): Express {
-    const app = express()
+  createExpressApp (): Express {
+    app = express()
 
     // Express configuration
     app.set('port', process.env.PORT || 3000)
@@ -33,8 +34,17 @@ export const Commun = {
     return app
   },
 
-  configureRoutes (app: Express) {
+  getExpressApp () {
+    return app
+  },
+
+  configureRoutes () {
     app.use('/api/v1', require('./routes/ApiRoutes').default)
+    for (const entity of Object.values(entities)) {
+      if (entity.router) {
+        app.use('/api/v1', entity.router)
+      }
+    }
   },
 
   async connectDb () {
@@ -59,8 +69,8 @@ export const Commun = {
   },
 
   async startServer (expressApp?: Express) {
-    const app = expressApp || Commun.createApp()
-    this.configureRoutes(app)
+    app = expressApp || app || Commun.createExpressApp()
+    this.configureRoutes()
 
     if (process.env.NODE_ENV !== 'production') {
       app.use(errorHandler())
