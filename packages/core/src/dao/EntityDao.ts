@@ -41,7 +41,7 @@ export class EntityDao<T extends EntityModel> {
     return item
   }
 
-  async updateOne (id: string, data: { [key in keyof T]: any }): Promise<boolean> {
+  async updateOne (id: string, data: { [key in keyof T]?: any }): Promise<boolean> {
     const res = await this.collection
       .updateOne({ _id: new ObjectId(id) }, { $set: { ...data, updatedAt: new Date() } })
     return res && res.result && !!res.result.ok

@@ -45,6 +45,7 @@ export const Commun = {
     MongoDbConnection.setClient(client)
     MongoDbConnection.setDb(client.db('commun')) // TODO allow to configure db name
     console.log('Connected to MongoDB')
+    return MongoDbConnection
   },
 
   async createDbIndexes () {

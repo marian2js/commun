@@ -1,0 +1,57 @@
+import { EntityConfig } from '@commun/core'
+import { BaseUserModel } from '..'
+
+export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
+  entityName: 'users',
+  collectionName: 'users',
+  attributes: {
+    username: {
+      type: 'string',
+      required: true,
+      unique: true,
+    },
+    email: {
+      type: 'email',
+      required: true,
+      unique: true,
+      permissions: {
+        get: 'own',
+      }
+    },
+    password: {
+      type: 'string',
+      required: true,
+      hash: {
+        algorithm: 'bcrypt',
+        salt_rounds: 12,
+      },
+      permissions: {
+        get: 'system',
+      },
+    },
+    verified: {
+      type: 'boolean',
+      permissions: {
+        get: 'own',
+        create: 'admin',
+        update: 'admin',
+      },
+    },
+    verificationCode: {
+      type: 'string',
+      permissions: {
+        get: 'system',
+        create: 'system',
+        update: 'system',
+      },
+    },
+    resetPasswordCode: {
+      type: 'string',
+      permissions: {
+        get: 'system',
+        create: 'system',
+        update: 'system',
+      },
+    }
+  },
+}

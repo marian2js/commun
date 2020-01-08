@@ -87,7 +87,14 @@ export class EntityController<T extends EntityModel> {
 
   protected async prepareModelResponse (model: T): Promise<T> {
     const item: { [key in keyof T]: any } = {} as T
-    for (const [key, attribute] of Object.entries(this.config.attributes)) {
+    const attributes = Object.entries(this.config.attributes)
+    if (!this.config.attributes._id) {
+      attributes.unshift(['_id', {
+        type: 'string',
+        permissions: { get: this.config.permissions?.get }
+      }])
+    }
+    for (const [key, attribute] of attributes) {
       if (this.hasValidPermissions('get', { ...this.config.permissions, ...attribute!.permissions })) {
         item[key as keyof T] = model[key as keyof T]
       }
