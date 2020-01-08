@@ -10,7 +10,7 @@ import {
 } from '@commun/core'
 import { BaseUserModel, UserModule } from '..'
 import jwt from 'jsonwebtoken'
-import { UserTokens } from '../types/UserTokens'
+import { AccessToken, UserTokens } from '../types/UserTokens'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
   async create (req: Request, res: Response): Promise<{ item: MODEL }> {
@@ -40,6 +40,17 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
         refreshToken: await this.generateRefreshToken(user),
       },
     }
+  }
+
+  async getAccessToken (req: Request, res: Response): Promise<AccessToken> {
+    const user = await this.dao.findOne({ username: req.body.username })
+    if (!user) {
+      throw new NotFoundError()
+    }
+    if (!user.refreshTokenHash || !await SecurityUtils.bcryptHashIsValid(req.body.refreshToken, user.refreshTokenHash)) {
+      throw new UnauthorizedError('Refresh token is invalid or expired')
+    }
+    return this.generateAccessToken(user)
   }
 
   async verify (req: Request, res: Response) {

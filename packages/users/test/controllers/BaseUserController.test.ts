@@ -1,7 +1,6 @@
 import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
-import jwt, { Secret, SignCallback, SignOptions } from 'jsonwebtoken'
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never
 
@@ -143,6 +142,40 @@ describe('BaseUserController', () => {
     })
   })
 
+  describe('get access token - [POST] /auth/token', () => {
+    let userData: BaseUserModel
+
+    beforeEach(async () => {
+      SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      userData = {
+        username: 'user',
+        email: 'user@example.org',
+        password: 'password',
+        verified: false,
+        refreshTokenHash: 'hashed(REFRESH_TOKEN)'
+      }
+      await getDao().insertOne(userData)
+    })
+
+    it('should return the access token given a valid refresh token', async () => {
+      const res = await request().post(`${baseUrl}/token`)
+        .send({ username: userData.username, refreshToken: 'REFRESH_TOKEN' })
+        .expect(200)
+      expect(res.body.accessToken).toBeDefined()
+      expect(res.body.accessTokenExpiration).toBeDefined()
+    })
+
+    it('should return an error if the refresh code is invalid', async () => {
+      const res = await request().post(`${baseUrl}/token`)
+        .send({ username: userData.username, refreshToken: 'INVALID_TOKEN' })
+        .expect(401)
+      expect(res.body.accessToken).toBeUndefined()
+      expect(res.body.accessTokenExpiration).toBeUndefined()
+    })
+  })
+
   describe('verify - [POST] /auth/verify', () => {
     let userData: BaseUserModel
 
@@ -169,7 +202,7 @@ describe('BaseUserController', () => {
       expect(user.verificationCode).toBeFalsy()
     })
 
-    it('should verify an user given a valid verification code', async () => {
+    it('should return an error if the verification code is invalid', async () => {
       await request().post(`${baseUrl}/verify`)
         .send({ code: 'wrong-code', username: userData.username })
         .expect(400)
