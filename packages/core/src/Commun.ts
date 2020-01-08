@@ -70,6 +70,11 @@ export const Commun = {
 
   async startServer (expressApp?: Express) {
     app = expressApp || app || Commun.createExpressApp()
+    for (const entity of Object.values(entities)) {
+      if (entity.onExpressAppCreated) {
+        await entity.onExpressAppCreated(app)
+      }
+    }
     this.configureRoutes()
 
     if (process.env.NODE_ENV !== 'production') {
