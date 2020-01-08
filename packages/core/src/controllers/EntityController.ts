@@ -6,7 +6,7 @@ import { getModelAttribute } from '../entity/attributes'
 
 export class EntityController<T extends EntityModel> {
 
-  constructor (private readonly entityName: string) {}
+  constructor (protected readonly entityName: string) {}
 
   protected get config () {
     return Commun.getEntityConfig<T>(this.entityName)

@@ -1,5 +1,5 @@
 import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
-import { BaseUserController, BaseUserModel, BaseUserRouter, DefaultUserConfig } from '../../src'
+import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never
@@ -13,14 +13,12 @@ describe('BaseUserController', () => {
   const registerUserEntity = async (
     permissions: EntityActionPermissions,
     attributes: { [key in keyof BaseUserModel]: ModelAttribute } = DefaultUserConfig.attributes) => {
-    Commun.registerEntity<BaseUserModel>({
+    UserModule.setup({
       config: {
         ...DefaultUserConfig,
         permissions,
         attributes,
-      },
-      controller: new BaseUserController(entityName),
-      router: BaseUserRouter,
+      }
     })
     await Commun.createDbIndexes()
     Commun.configureRoutes()
