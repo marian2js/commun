@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { EntityController, SecurityUtils } from '@commun/core'
+import { BadRequestError, EntityController, NotFoundError, SecurityUtils } from '@commun/core'
 import { BaseUserModel } from '..'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
@@ -12,5 +12,27 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     // TODO send verification email
 
     return { item }
+  }
+
+  async verify (req: Request, res: Response) {
+    const user = await this.dao.findOne({ username: req.params.username })
+    if (!user) {
+      throw new NotFoundError()
+    }
+    if (user.verified) {
+      return res.send({ result: true })
+    }
+    if (!user.verificationCode) {
+      throw new BadRequestError('Missing verification code')
+    }
+    if (await SecurityUtils.bcryptHashIsValid(req.body.code, user.verificationCode)) {
+      await this.dao.updateOne(user._id!, { verified: true, verificationCode: undefined })
+
+      // TODO send welcome email
+
+      res.send({ result: true })
+    } else {
+      throw new BadRequestError('Invalid verification code')
+    }
   }
 }
