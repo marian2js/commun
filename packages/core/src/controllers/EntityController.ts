@@ -20,8 +20,9 @@ export class EntityController<T extends EntityModel> {
 
   async list (req: Request, res: Response): Promise<{ items: T[] }> {
     this.validateActionPermissions('get')
+    const models = await this.dao.find({})
     return {
-      items: await this.dao.find({}) // TODO validate permissions for individual attributes
+      items: await Promise.all(models.map(async model => await this.prepareModelResponse(model)))
     }
   }
 
@@ -31,7 +32,9 @@ export class EntityController<T extends EntityModel> {
     if (!model) {
       throw new NotFoundError()
     }
-    return { item: model } // TODO validate permissions for individual attributes
+    return {
+      item: await this.prepareModelResponse(model)
+    }
   }
 
   async create (req: Request, res: Response): Promise<{ item: T }> {
@@ -39,7 +42,9 @@ export class EntityController<T extends EntityModel> {
     const model = await this.getModelFromBodyRequest(req, 'create')
     try {
       const insertedModel = await this.dao.insertOne(model)
-      return { item: insertedModel }
+      return {
+        item: await this.prepareModelResponse(insertedModel)
+      }
     } catch (e) {
       if (e.code === 11000) {
         throw new ClientError('Duplicated key', 400)
@@ -77,11 +82,19 @@ export class EntityController<T extends EntityModel> {
     for (const [key, attribute] of Object.entries(this.config.attributes)) {
       if (this.hasValidPermissions(action, { ...this.config.permissions, ...attribute!.permissions })) {
         model[key as keyof T] = await getModelAttribute(attribute!, key, req.body[key])
-      } else {
-        throw new UnauthorizedError()
       }
     }
     return model
+  }
+
+  protected async prepareModelResponse (model: T): Promise<T> {
+    const item: { [key in keyof T]: any } = {} as T
+    for (const [key, attribute] of Object.entries(this.config.attributes)) {
+      if (this.hasValidPermissions('get', { ...this.config.permissions, ...attribute!.permissions })) {
+        item[key as keyof T] = model[key as keyof T]
+      }
+    }
+    return item
   }
 
   protected validateActionPermissions (action: keyof EntityActionPermissions) {

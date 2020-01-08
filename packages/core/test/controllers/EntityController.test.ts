@@ -11,6 +11,7 @@ describe('EntityController', () => {
 
   interface TestEntity extends EntityModel {
     name: string
+    num?: number
   }
 
   const registerTestEntity = async (
@@ -63,6 +64,31 @@ describe('EntityController', () => {
       await getDao().insertOne({ name: 'item3' })
       await request().get(baseUrl).expect(401)
     })
+
+    it('should not return values with get permission different of anyone', async () => {
+      await registerTestEntity({
+        get: 'anyone'
+      }, {
+        num: { type: 'number' },
+        name: {
+          type: 'string',
+          permissions: {
+            get: 'system'
+          }
+        }
+      })
+      await getDao().insertOne({ name: 'item1', num: 1 })
+      await getDao().insertOne({ name: 'item2', num: 2 })
+      await getDao().insertOne({ name: 'item3', num: 3 })
+      const res = await request().get(baseUrl).expect(200)
+      expect(res.body.items.length).toBe(3)
+      expect(res.body.items[0].name).toBeUndefined()
+      expect(res.body.items[0].num).toBe(1)
+      expect(res.body.items[1].name).toBeUndefined()
+      expect(res.body.items[1].num).toBe(2)
+      expect(res.body.items[2].name).toBeUndefined()
+      expect(res.body.items[2].num).toBe(3)
+    })
   })
 
   describe('get - [GET] /:entity/:id', () => {
@@ -78,11 +104,29 @@ describe('EntityController', () => {
       const item = await getDao().insertOne({ name: 'item' })
       await request().get(`${baseUrl}/${item._id}`).expect(401)
     })
+
+    it('should not return values with get permission different of anyone', async () => {
+      await registerTestEntity({
+        get: 'anyone'
+      }, {
+        num: { type: 'number' },
+        name: {
+          type: 'string',
+          permissions: {
+            get: 'system'
+          }
+        }
+      })
+      const item = await getDao().insertOne({ name: 'item1', num: 1 })
+      const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+      expect(res.body.item.name).toBeUndefined()
+      expect(res.body.item.num).toBe(1)
+    })
   })
 
   describe('create - [POST] /:entity', () => {
     it('should create an item', async () => {
-      await registerTestEntity({ create: 'anyone' })
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await request().post(baseUrl)
         .send({ name: 'item' })
         .expect(200)
@@ -110,6 +154,26 @@ describe('EntityController', () => {
       await request().post(baseUrl)
         .send({ name: 'item' })
         .expect(400)
+    })
+
+    it('should not return values with get permission different of anyone', async () => {
+      await registerTestEntity({
+        get: 'anyone',
+        create: 'anyone',
+      }, {
+        num: { type: 'number' },
+        name: {
+          type: 'string',
+          permissions: {
+            get: 'system'
+          }
+        }
+      })
+      const res = await request().post(baseUrl)
+        .send({ name: 'item', num: 1 })
+        .expect(200)
+      expect(res.body.item.name).toBeUndefined()
+      expect(res.body.item.num).toBe(1)
     })
   })
 
