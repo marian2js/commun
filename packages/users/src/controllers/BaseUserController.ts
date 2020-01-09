@@ -25,7 +25,6 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
-    console.log('Body ==>', req.body)
     const user = await this.findUserByEmailOrUsername(req.body.username)
 
     if (!user || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
@@ -33,7 +32,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
 
     return {
-      user: await this.prepareModelResponse(user),
+      user: await this.prepareModelResponse(req, user),
       tokens: {
         ...(await this.generateAccessToken(user)),
         refreshToken: await this.generateRefreshToken(user),

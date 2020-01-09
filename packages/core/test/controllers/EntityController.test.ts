@@ -1,5 +1,5 @@
-import { Commun, EntityController, EntityModel } from '../../src'
-import { request } from '../test-helpers/requestHelpers'
+import { Commun, EntityController, EntityModel, EntityPermission } from '../../src'
+import { authenticatedRequest, request } from '../test-helpers/requestHelpers'
 import { EntityActionPermissions, ModelAttribute } from '../../src/types'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 
@@ -26,6 +26,24 @@ describe('EntityController', () => {
       }
     })
     await Commun.createDbIndexes()
+  }
+
+  const registerTestEntityWithCustomAttrPermissions = (
+    action: string,
+    defaultPermission: EntityPermission,
+    nameAttrPermission: EntityPermission
+  ) => {
+    return registerTestEntity({
+      [action]: defaultPermission
+    }, {
+      num: { type: 'number' },
+      name: {
+        type: 'string',
+        permissions: {
+          [action]: nameAttrPermission
+        }
+      }
+    })
   }
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
@@ -56,37 +74,53 @@ describe('EntityController', () => {
       expect(res.body.items[2].name).toBe('item3')
     })
 
-    it('should return an unauthorized error if get permission is not anyone', async () => {
-      await registerTestEntity({})
-      await getDao().insertOne({ name: 'item1' })
-      await getDao().insertOne({ name: 'item2' })
-      await getDao().insertOne({ name: 'item3' })
-      await request().get(baseUrl).expect(401)
-    })
-
-    it('should not return values with get permission different of anyone', async () => {
-      await registerTestEntity({
-        get: 'anyone'
-      }, {
-        num: { type: 'number' },
-        name: {
-          type: 'string',
-          permissions: {
-            get: 'system'
-          }
-        }
+    describe('Permissions', () => {
+      beforeEach(async () => {
+        await getDao().insertOne({ name: 'item1', num: 1 })
+        await getDao().insertOne({ name: 'item2', num: 2 })
+        await getDao().insertOne({ name: 'item3', num: 3 })
       })
-      await getDao().insertOne({ name: 'item1', num: 1 })
-      await getDao().insertOne({ name: 'item2', num: 2 })
-      await getDao().insertOne({ name: 'item3', num: 3 })
-      const res = await request().get(baseUrl).expect(200)
-      expect(res.body.items.length).toBe(3)
-      expect(res.body.items[0].name).toBeUndefined()
-      expect(res.body.items[0].num).toBe(1)
-      expect(res.body.items[1].name).toBeUndefined()
-      expect(res.body.items[1].num).toBe(2)
-      expect(res.body.items[2].name).toBeUndefined()
-      expect(res.body.items[2].num).toBe(3)
+
+      it('should return an unauthorized error if get permission is not anyone', async () => {
+        await registerTestEntity({})
+        await request().get(baseUrl).expect(401)
+      })
+
+      it('should not return values with get permission different of anyone', async () => {
+        await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'system')
+        const res = await request().get(baseUrl).expect(200)
+        expect(res.body.items.length).toBe(3)
+        expect(res.body.items[0].name).toBeUndefined()
+        expect(res.body.items[0].num).toBe(1)
+        expect(res.body.items[1].name).toBeUndefined()
+        expect(res.body.items[1].num).toBe(2)
+        expect(res.body.items[2].name).toBeUndefined()
+        expect(res.body.items[2].num).toBe(3)
+      })
+
+      it('should only return items with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntity({ get: 'user' })
+        await request().get(baseUrl).expect(401)
+
+        const res = await authenticatedRequest()
+          .get(baseUrl)
+          .expect(200)
+        expect(res.body.items.length).toBe(3)
+      })
+
+      it('should only return values with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'user')
+
+        const resUnauth = await request().get(baseUrl).expect(200)
+        expect(resUnauth.body.items.length).toBe(3)
+        expect(resUnauth.body.items[0].name).toBeUndefined()
+        expect(resUnauth.body.items[0].num).toBe(1)
+
+        const resAuth = await authenticatedRequest().get(baseUrl).expect(200)
+        expect(resAuth.body.items.length).toBe(3)
+        expect(resAuth.body.items[0].name).toBe('item1')
+        expect(resAuth.body.items[0].num).toBe(1)
+      })
     })
   })
 
@@ -98,28 +132,45 @@ describe('EntityController', () => {
       expect(res.body.item.name).toBe('item')
     })
 
-    it('should return an unauthorized error if get permission is not anyone', async () => {
-      await registerTestEntity({})
-      const item = await getDao().insertOne({ name: 'item' })
-      await request().get(`${baseUrl}/${item._id}`).expect(401)
-    })
+    describe('Permissions', () => {
+      let item: TestEntity
 
-    it('should not return values with get permission different of anyone', async () => {
-      await registerTestEntity({
-        get: 'anyone'
-      }, {
-        num: { type: 'number' },
-        name: {
-          type: 'string',
-          permissions: {
-            get: 'system'
-          }
-        }
+      beforeEach(async () => {
+        item = await getDao().insertOne({ name: 'item1', num: 1 })
       })
-      const item = await getDao().insertOne({ name: 'item1', num: 1 })
-      const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
-      expect(res.body.item.name).toBeUndefined()
-      expect(res.body.item.num).toBe(1)
+
+      it('should return an unauthorized error if get permission is not anyone', async () => {
+        await registerTestEntity({})
+        await request().get(`${baseUrl}/${item._id}`).expect(401)
+      })
+
+      it('should not return values with get permission different of anyone', async () => {
+        await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'system')
+
+        const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+        expect(res.body.item.name).toBeUndefined()
+        expect(res.body.item.num).toBe(1)
+      })
+
+      it('should only return items with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntity({ get: 'user' })
+        await request().get(`${baseUrl}/${item._id}`).expect(401)
+
+        await registerTestEntity({ get: 'user' })
+        await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+      })
+
+      it('should only return values with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'user')
+
+        const resUnauth = await request().get(`${baseUrl}/${item._id}`).expect(200)
+        expect(resUnauth.body.item.name).toBeUndefined()
+        expect(resUnauth.body.item.num).toBe(1)
+
+        const resAuth = await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+        expect(resAuth.body.item.name).toBe('item1')
+        expect(resAuth.body.item.num).toBe(1)
+      })
     })
   })
 
@@ -132,13 +183,6 @@ describe('EntityController', () => {
       expect(res.body.item.name).toBe('item')
       const item = await getDao().findOne({ name: 'item' })
       expect(item!.name).toBe('item')
-    })
-
-    it('should return an unauthorized error if create permission is not anyone', async () => {
-      await registerTestEntity({})
-      await request().post(baseUrl)
-        .send({ name: 'item' })
-        .expect(401)
     })
 
     it('should return an error if the name is unique and already exists', async () => {
@@ -155,24 +199,44 @@ describe('EntityController', () => {
         .expect(400)
     })
 
-    it('should not return values with get permission different of anyone', async () => {
-      await registerTestEntity({
-        get: 'anyone',
-        create: 'anyone',
-      }, {
-        num: { type: 'number' },
-        name: {
-          type: 'string',
-          permissions: {
-            get: 'system'
-          }
-        }
+    describe('Permissions', () => {
+      it('should return an unauthorized error if create permission is "system"', async () => {
+        await registerTestEntity({})
+        await request().post(baseUrl)
+          .send({ name: 'item' })
+          .expect(401)
       })
-      const res = await request().post(baseUrl)
-        .send({ name: 'item', num: 1 })
-        .expect(200)
-      expect(res.body.item.name).toBeUndefined()
-      expect(res.body.item.num).toBe(1)
+
+      it('should not create values with "system" get permissions', async () => {
+        await registerTestEntityWithCustomAttrPermissions('create', 'anyone', 'system')
+        await request().post(baseUrl)
+          .send({ name: 'item', num: 1 })
+          .expect(200)
+        const item = await getDao().findOne({ num: 1 })
+        expect(item!.name).toBeUndefined()
+      })
+
+      it('should only create items with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntity({ create: 'user' })
+        await request().post(baseUrl)
+          .send({ name: 'item' })
+          .expect(401)
+      })
+
+      it('should only create values with "user" get permissions if the request is authenticated', async () => {
+        await registerTestEntityWithCustomAttrPermissions('create', 'anyone', 'user')
+        await request().post(baseUrl)
+          .send({ name: 'item1', num: 1 })
+          .expect(200)
+        const item1 = await getDao().findOne({ num: 1 })
+        expect(item1!.name).toBeUndefined()
+
+        await authenticatedRequest().post(baseUrl)
+          .send({ name: 'item2', num: 2 })
+          .expect(200)
+        const item2 = await getDao().findOne({ num: 2 })
+        expect(item2!.name).toBe('item2')
+      })
     })
   })
 
@@ -185,14 +249,6 @@ describe('EntityController', () => {
         .expect(200)
       const updatedItem = await getDao().findOneById(item._id!)
       expect(updatedItem!.name).toBe('updated')
-    })
-
-    it('should return an unauthorized error if create permission is not anyone', async () => {
-      await registerTestEntity({})
-      const item = await getDao().insertOne({ name: 'item' })
-      await request().put(`${baseUrl}/${item._id}`)
-        .send({ name: 'updated' })
-        .expect(401)
     })
 
     it('should return an error if the name is unique and already exists', async () => {
@@ -209,6 +265,38 @@ describe('EntityController', () => {
         .send({ name: 'item1' })
         .expect(400)
     })
+
+    describe('Permissions', () => {
+      let item: TestEntity
+
+      beforeEach(async () => {
+        item = await getDao().insertOne({ name: 'item' })
+      })
+
+      it('should return an unauthorized error if update permission is system', async () => {
+        await registerTestEntity({})
+        await request().put(`${baseUrl}/${item._id}`)
+          .send({ name: 'updated' })
+          .expect(401)
+
+        await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          .send({ name: 'updated' })
+          .expect(401)
+      })
+
+      it('should only update items with "user" update permissions if the request is authenticated', async () => {
+        await registerTestEntity({ update: 'user' })
+        await request().put(`${baseUrl}/${item._id}`)
+          .send({ name: 'updated' })
+          .expect(401)
+
+        await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          .send({ name: 'updated' })
+          .expect(200)
+        const updatedItem = await getDao().findOneById(item._id!)
+        expect(updatedItem!.name).toBe('updated')
+      })
+    })
   })
 
   describe('delete - [DELETE] /:entity/:id', () => {
@@ -221,11 +309,28 @@ describe('EntityController', () => {
       expect(deletedItem).toBe(null)
     })
 
-    it('should return an unauthorized error if create permission is not anyone', async () => {
-      await registerTestEntity({})
-      const item = await getDao().insertOne({ name: 'item' })
-      await request().delete(`${baseUrl}/${item._id}`)
-        .expect(401)
+    describe('Permissions', () => {
+      let item: TestEntity
+
+      beforeEach(async () => {
+        item = await getDao().insertOne({ name: 'item' })
+      })
+
+      it('should return an unauthorized error if delete permission is "system"', async () => {
+        await registerTestEntity({})
+        await request().delete(`${baseUrl}/${item._id}`)
+          .expect(401)
+        await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          .expect(401)
+      })
+
+      it('should only delete an item with "user" delete permission if the request is authenticated', async () => {
+        await registerTestEntity({ delete: 'user' })
+        await request().delete(`${baseUrl}/${item._id}`)
+          .expect(401)
+        await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          .expect(200)
+      })
     })
   })
 })
