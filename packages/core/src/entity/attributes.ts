@@ -9,7 +9,7 @@ import { BadRequestError } from '../errors'
 import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
 
-export async function getModelAttribute (attribute: ModelAttribute, key: string, value: any) {
+export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, value: any) {
   switch (attribute.type) {
     case 'boolean':
       return getBooleanModelAttribute(attribute, key, value)
@@ -24,7 +24,7 @@ export async function getModelAttribute (attribute: ModelAttribute, key: string,
   }
 }
 
-function getBooleanModelAttribute (attribute: BooleanModelAttribute, key: string, value: any) {
+function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: keyof T, value: any) {
   if ([undefined, null].includes(value)) {
     if (attribute.required) {
       throw new BadRequestError(`${key} is required`)
@@ -39,7 +39,7 @@ function getBooleanModelAttribute (attribute: BooleanModelAttribute, key: string
   return value === true || value === 'true'
 }
 
-function getEmailModelAttribute (attribute: EmailModelAttribute, key: string, value: any) {
+function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any) {
   if (!value) {
     if (attribute.required) {
       throw new BadRequestError(`${key} is required`)
@@ -54,7 +54,7 @@ function getEmailModelAttribute (attribute: EmailModelAttribute, key: string, va
   return email
 }
 
-function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, value: any) {
+function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any) {
   if ([undefined, null].includes(value)) {
     if (attribute.required) {
       throw new BadRequestError(`${key} is required`)
@@ -75,7 +75,7 @@ function getNumberModelAttribute (attribute: NumberModelAttribute, key: string, 
   return parsedValue
 }
 
-async function getStringModelAttribute (attribute: StringModelAttribute, key: string, value: any) {
+async function getStringModelAttribute<T> (attribute: StringModelAttribute, key: keyof T, value: any) {
   const parsedValue = value !== null && value !== undefined ? value.toString().trim() : value
   if ([undefined, null, ''].includes(parsedValue)) {
     if (attribute.required) {

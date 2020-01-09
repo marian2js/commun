@@ -25,9 +25,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
-    const user = req.body.username.includes('@') ?
-      await this.dao.findOne({ email: req.body.username }) :
-      await this.dao.findOne({ username: req.body.username })
+    const user = await this.findUserByEmailOrUsername(req.body.username)
 
     if (!user || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
       throw new UnauthorizedError('Invalid username or password')
@@ -73,6 +71,49 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     } else {
       throw new BadRequestError('Invalid verification code')
     }
+  }
+
+  async forgotPassword (req: Request, res: Response) {
+    if (!req.body.username) {
+      throw new BadRequestError('Missing email or username')
+    }
+    const user = await this.findUserByEmailOrUsername(req.body.username)
+    if (!user) {
+      throw new NotFoundError()
+    }
+
+    const resetPasswordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.resetPasswordCodeHash
+    const plainResetPasswordCode = await SecurityUtils.generateRandomString(48)
+    const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', plainResetPasswordCode)
+    await this.dao.updateOne(user._id!, { resetPasswordCodeHash })
+
+    // TODO send email with plainResetPasswordCode
+
+    return { result: true }
+  }
+
+  async resetPassword (req: Request, res: Response) {
+    if (!req.body.username) {
+      throw new BadRequestError('Missing email or username')
+    }
+    const user = await this.findUserByEmailOrUsername(req.body.username)
+    if (!user) {
+      throw new NotFoundError()
+    }
+
+    if (user.resetPasswordCodeHash && await SecurityUtils.bcryptHashIsValid(req.body.code, user.resetPasswordCodeHash)) {
+      const passwordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.password
+      const password = await getModelAttribute<MODEL>(passwordAttr!, 'password', req.body.password)
+      await this.dao.updateOne(user._id!, { password, resetPasswordCodeHash: undefined })
+      return { result: true }
+    }
+    throw new UnauthorizedError()
+  }
+
+  private findUserByEmailOrUsername (emailOrUsername: string) {
+    return emailOrUsername.includes('@') ?
+      this.dao.findOne({ email: emailOrUsername }) :
+      this.dao.findOne({ username: emailOrUsername })
   }
 
   protected generateAccessToken (user: MODEL) {

@@ -57,8 +57,12 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
         update: 'system',
       },
     },
-    resetPasswordCode: {
+    resetPasswordCodeHash: {
       type: 'string',
+      hash: {
+        algorithm: 'bcrypt',
+        salt_rounds: 12,
+      },
       permissions: {
         get: 'system',
         create: 'system',

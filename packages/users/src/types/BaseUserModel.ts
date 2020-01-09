@@ -7,5 +7,5 @@ export interface BaseUserModel extends EntityModel {
   verified: boolean
   refreshTokenHash?: string
   verificationCode?: string
-  resetPasswordCode?: string
+  resetPasswordCodeHash?: string
 }

@@ -13,3 +13,7 @@ export const BaseUserRouter = express.Router()
     sendResponse(req, res, next, getController().getAccessToken(req, res)))
   .post('/auth/verify', (req, res, next) =>
     sendResponse(req, res, next, getController().verify(req, res)))
+  .post('/auth/password/forgot', (req, res, next) =>
+    sendResponse(req, res, next, getController().forgotPassword(req, res)))
+  .post('/auth/password/reset', (req, res, next) =>
+    sendResponse(req, res, next, getController().resetPassword(req, res)))

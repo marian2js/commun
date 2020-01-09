@@ -1,8 +1,7 @@
 import { Request, Response } from 'express'
-import { Commun, EntityModel } from '..'
+import { Commun, EntityModel, getModelAttribute } from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError, UnauthorizedError } from '../errors'
-import { getModelAttribute } from '../entity/attributes'
 
 export class EntityController<T extends EntityModel> {
 

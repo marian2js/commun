@@ -211,4 +211,39 @@ describe('BaseUserController', () => {
       expect(user.verificationCode).toBe('hashed(CODE)')
     })
   })
+
+  describe('reset password - [POST] /auth/password/reset', () => {
+    let userData: BaseUserModel
+
+    beforeEach(async () => {
+      SecurityUtils.hashWithBcrypt = jest.fn((str, saltRounds) => Promise.resolve(`hashed(${str}:${saltRounds})`))
+      SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      userData = {
+        username: 'user',
+        email: 'user@example.org',
+        password: 'old-password',
+        verified: true,
+        resetPasswordCodeHash: 'hashed(RESET_CODE)'
+      }
+      await getDao().insertOne(userData)
+    })
+
+    it('should set the new password given a valid reset code', async () => {
+      await request().post(`${baseUrl}/password/reset`)
+        .send({ username: userData.username, code: 'RESET_CODE', password: 'new-password' })
+        .expect(200)
+      const user = await getDao().findOne({ username: userData.username })
+      expect(user!.password).toBe('hashed(new-password:12)')
+    })
+
+    it('should return an error if the reset code is invalid', async () => {
+      await request().post(`${baseUrl}/password/reset`)
+        .send({ username: userData.username, code: 'INVALID_CODE' })
+        .expect(401)
+      const user = await getDao().findOne({ username: userData.username })
+      expect(user!.password).toBe('old-password')
+    })
+  })
 })
