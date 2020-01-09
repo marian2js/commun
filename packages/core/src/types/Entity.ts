@@ -8,7 +8,7 @@ export interface Entity<MODEL extends EntityModel> {
   dao: EntityDao<MODEL>
   controller: EntityController<MODEL>
   router?: express.Router
-  onExpressAppCreated?: (app: Express) => Promise<void>
+  onExpressAppCreated?: (app: Express) => Promise<void> | void
 }
 
 export type RegisterEntityOptions<MODEL extends EntityModel> = {
@@ -16,5 +16,5 @@ export type RegisterEntityOptions<MODEL extends EntityModel> = {
   dao?: EntityDao<MODEL>
   controller?: EntityController<MODEL>
   router?: express.Router
-  onExpressAppCreated?: (app: Express) => Promise<void>
+  onExpressAppCreated?: (app: Express) => Promise<void> | void
 }

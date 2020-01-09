@@ -4,15 +4,17 @@ import { BaseUserController } from './controllers/BaseUserController'
 import { BaseUserRouter } from './routers/BaseUserRouter'
 import { DefaultUserConfig } from './config/DefaultUserConfig'
 import jwt from 'jsonwebtoken'
+import { AccessTokenSecurity } from './security/AccessTokenSecurity'
 
 type UserModuleRequiredOptions = {
   accessToken: {
-    secretOrPrivateKey: jwt.Secret
+    secretOrPrivateKey: jwt.Secret,
   }
 }
 
 type UserModuleDefaultOptions = {
   accessToken: {
+    secretOrPublicKey?: jwt.Secret | jwt.GetPublicKeyOrSecret,
     signOptions?: jwt.SignOptions
   }
   refreshToken: {
@@ -48,6 +50,7 @@ export const UserModule = {
       config,
       controller: new BaseUserController<MODEL>(config.entityName),
       router: BaseUserRouter,
+      onExpressAppCreated: app => { app.use(AccessTokenSecurity.setRequestAuthMiddleware) },
       ...entityOptions
     })
   },

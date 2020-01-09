@@ -27,6 +27,9 @@
       "dom"
     ]
   },
+  "files": [
+    "types/index.d.ts"
+  ],
   "include": [
     "src/**/*"
   ]

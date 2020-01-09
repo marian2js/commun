@@ -9,8 +9,8 @@ import {
   UnauthorizedError
 } from '@commun/core'
 import { BaseUserModel, UserModule } from '..'
-import jwt from 'jsonwebtoken'
 import { AccessToken, UserTokens } from '../types/UserTokens'
+import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
   async create (req: Request, res: Response): Promise<{ item: MODEL }> {
@@ -25,6 +25,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
+    console.log('Body ==>', req.body)
     const user = await this.findUserByEmailOrUsername(req.body.username)
 
     if (!user || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
@@ -34,7 +35,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     return {
       user: await this.prepareModelResponse(user),
       tokens: {
-        ...this.generateAccessToken(user),
+        ...(await this.generateAccessToken(user)),
         refreshToken: await this.generateRefreshToken(user),
       },
     }
@@ -116,12 +117,11 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       this.dao.findOne({ username: emailOrUsername })
   }
 
-  protected generateAccessToken (user: MODEL) {
-    const options = UserModule.getOptions()
-    const accessToken = jwt.sign({ _id: user._id }, options.accessToken.secretOrPrivateKey, options.accessToken.signOptions)
+  protected async generateAccessToken (user: MODEL) {
+    const accessToken = await AccessTokenSecurity.sign({ _id: user._id! })
     return {
       accessToken,
-      accessTokenExpiration: options.accessToken.signOptions?.expiresIn
+      accessTokenExpiration: UserModule.getOptions().accessToken.signOptions?.expiresIn
     }
   }
 
