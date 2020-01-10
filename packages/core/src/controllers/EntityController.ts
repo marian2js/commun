@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { Commun, DaoFilter, EntityModel, getModelAttribute } from '..'
+import { Commun, DaoFilter, EntityModel, getModelAttribute, UnauthorizedError } from '..'
 import { EntityActionPermissions } from '../types'
-import { ClientError, NotFoundError, UnauthorizedError } from '../errors'
+import { ClientError, NotFoundError } from '../errors'
 
 export class EntityController<T extends EntityModel> {
 
@@ -16,26 +16,29 @@ export class EntityController<T extends EntityModel> {
   }
 
   async list (req: Request, res: Response): Promise<{ items: T[] }> {
-    this.validateActionPermissions(req, 'get')
-    const models = await this.dao.find({})
+    if (this.config.permissions?.get !== 'own') {
+      this.validateActionPermissions(req, null, 'get')
+    }
+    const models = (await this.dao.find({}))
+      .filter(model => this.hasValidPermissions(req, model, 'get', this.config.permissions))
     return {
       items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model)))
     }
   }
 
   async get (req: Request, res: Response): Promise<{ item: T }> {
-    this.validateActionPermissions(req, 'get')
     const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
     }
+    this.validateActionPermissions(req, model, 'get')
     return {
       item: await this.prepareModelResponse(req, model)
     }
   }
 
   async create (req: Request, res: Response): Promise<{ item: T }> {
-    this.validateActionPermissions(req, 'create')
+    this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
     try {
       const insertedModel = await this.dao.insertOne(model)
@@ -51,12 +54,12 @@ export class EntityController<T extends EntityModel> {
   }
 
   async update (req: Request, res: Response): Promise<{ result: boolean }> {
-    this.validateActionPermissions(req, 'update')
     const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
     }
-    const modelData = await this.getModelFromBodyRequest(req, 'update')
+    this.validateActionPermissions(req, model, 'update')
+    const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
       const result = await this.dao.updateOne(req.params.id, modelData)
       return { result }
@@ -69,11 +72,11 @@ export class EntityController<T extends EntityModel> {
   }
 
   async delete (req: Request, res: Response): Promise<{ result: boolean }> {
-    this.validateActionPermissions(req, 'delete')
     const model = await this.findModelByApiKey(req)
     if (!model) {
       return { result: true }
     }
+    this.validateActionPermissions(req, model, 'delete')
     const result = await this.dao.deleteOne(model._id!)
     return { result }
   }
@@ -95,10 +98,14 @@ export class EntityController<T extends EntityModel> {
     return this.dao.findOne({ [attrKey]: value } as DaoFilter<T>)
   }
 
-  protected async getModelFromBodyRequest (req: Request, action: 'create' | 'update'): Promise<T> {
+  protected async getModelFromBodyRequest (req: Request, action: 'create' | 'update', persistedModel?: T): Promise<T> {
     const model: { [key in keyof T]: any } = {} as T
     for (const [key, attribute] of Object.entries(this.config.attributes)) {
-      if (this.hasValidPermissions(req, action, { ...this.config.permissions, ...attribute!.permissions })) {
+      const permissions = {
+        ...this.config.permissions,
+        ...attribute!.permissions
+      }
+      if (this.hasValidPermissions(req, persistedModel || null, action, permissions)) {
         model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
       }
     }
@@ -115,32 +122,49 @@ export class EntityController<T extends EntityModel> {
       }])
     }
     for (const [key, attribute] of attributes) {
-      if (this.hasValidPermissions(req, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
+      if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
         item[key as keyof T] = model[key as keyof T]
       }
     }
     return item
   }
 
-  protected validateActionPermissions (req: Request, action: keyof EntityActionPermissions) {
-    if (!this.hasValidPermissions(req, action, this.config.permissions)) {
+  protected validateActionPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions) {
+    if (!this.hasValidPermissions(req, model, action, this.config.permissions)) {
       throw new UnauthorizedError()
     }
   }
 
-  protected hasValidPermissions (req: Request, action: keyof EntityActionPermissions, permissions?: EntityActionPermissions) {
+  protected hasValidPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions, permissions?: EntityActionPermissions) {
     if (!permissions) {
       return false
     }
+
     const hasAnyoneAccess = Array.isArray(permissions[action]) ?
       permissions[action]!.includes('anyone') : permissions[action] === 'anyone'
     if (hasAnyoneAccess) {
       return true
     }
+    if (!req.auth?._id) {
+      return false
+    }
+
     const hasUserAccess = Array.isArray(permissions[action]) ?
       permissions[action]!.includes('user') : permissions[action] === 'user'
-    if (hasUserAccess && req.auth?._id) {
+    if (hasUserAccess) {
       return true
     }
+
+    const hasOwnAccess = Array.isArray(permissions[action]) ?
+      permissions[action]!.includes('own') : permissions[action] === 'own'
+    if (hasOwnAccess && model) {
+      const userAttrEntries = Object.entries(this.config.attributes).find(([_, value]) => value?.type === 'user')
+      if (userAttrEntries && userAttrEntries[0]) {
+        const userId = '' + (model as { [key in keyof T]?: any })[userAttrEntries[0] as keyof T]
+        return userId && userId === req.auth._id
+      }
+    }
+
+    return false
   }
 }
