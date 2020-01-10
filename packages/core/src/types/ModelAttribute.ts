@@ -29,8 +29,13 @@ export type StringModelAttribute = BaseModelAttribute & {
   }
 }
 
+export type UserModelAttribute = BaseModelAttribute & {
+  type: 'user'
+}
+
 export type ModelAttribute =
   BooleanModelAttribute |
   EmailModelAttribute |
   NumberModelAttribute |
-  StringModelAttribute
+  StringModelAttribute |
+  UserModelAttribute

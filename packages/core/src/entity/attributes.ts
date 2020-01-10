@@ -3,13 +3,15 @@ import {
   EmailModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
-  StringModelAttribute
+  StringModelAttribute,
+  UserModelAttribute
 } from '../types'
 import { BadRequestError } from '../errors'
 import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
+import { ObjectId } from 'mongodb'
 
-export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, value: any) {
+export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, value: any, userId?: string) {
   switch (attribute.type) {
     case 'boolean':
       return getBooleanModelAttribute(attribute, key, value)
@@ -19,6 +21,8 @@ export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyo
       return getNumberModelAttribute(attribute, key, value)
     case 'string':
       return getStringModelAttribute(attribute, key, value)
+    case 'user':
+      return getUserModelAttribute(attribute, key, value, userId)
     default:
       assertNever(attribute)
   }
@@ -98,4 +102,13 @@ async function getStringModelAttribute<T> (attribute: StringModelAttribute, key:
   }
 
   return parsedValue
+}
+
+async function getUserModelAttribute<T> (attribute: UserModelAttribute, key: keyof T, value: any, userId?: string) {
+  if (attribute.required && !userId) {
+    throw new BadRequestError(`${key} is required`)
+  }
+  if (userId) {
+    return new ObjectId(userId)
+  }
 }

@@ -1,5 +1,6 @@
-import { getModelAttribute } from '../../src/entity/attributes'
+import { getModelAttribute } from '../../src'
 import { SecurityUtils } from '../../src/utils'
+import { ObjectId } from 'mongodb'
 
 describe('attributes', () => {
   describe('Boolean', () => {
@@ -161,6 +162,23 @@ describe('attributes', () => {
       await expect(getModelAttribute({ type: 'string', required: true }, 'key', undefined))
         .rejects.toThrow('key is required')
       await expect(getModelAttribute({ type: 'string', required: true }, 'key', '    '))
+        .rejects.toThrow('key is required')
+    })
+  })
+
+  describe('User', () => {
+    const userId = new ObjectId()
+
+    it('should return an ObjectId with the user id or undefined', async () => {
+      expect(await getModelAttribute({ type: 'user' }, 'key', 'test', userId.toString()))
+        .toEqual(userId)
+      expect(await getModelAttribute({ type: 'user' }, 'key', 'test')).toBeUndefined()
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(await getModelAttribute({ type: 'user', required: true }, 'key', 'test', userId.toString()))
+        .toEqual(userId)
+      await expect(getModelAttribute({ type: 'user', required: true }, 'key', 'test'))
         .rejects.toThrow('key is required')
     })
   })
