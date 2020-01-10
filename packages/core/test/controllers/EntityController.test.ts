@@ -291,6 +291,16 @@ describe('EntityController', () => {
         .expect(400)
     })
 
+    it('should set the user attribute with the authenticated user', async () => {
+      const user = new ObjectId()
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
+      const res = await authenticatedRequest(user.toString()).post(baseUrl)
+        .expect(200)
+      expect(res.body.item.user).toBe(user.toString())
+      const items = await getDao().find({ user })
+      expect(items.length).toBe(1)
+    })
+
     describe('Permissions', () => {
 
       describe('User', () => {
