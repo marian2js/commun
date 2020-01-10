@@ -3,6 +3,7 @@ import {
   EmailModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
+  SlugModelAttribute,
   StringModelAttribute,
   UserModelAttribute
 } from '../types'
@@ -10,19 +11,24 @@ import { BadRequestError } from '../errors'
 import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
 import { ObjectId } from 'mongodb'
+import S from 'string'
 
-export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, value: any, userId?: string) {
+type ModelData<T> = { [P in keyof T]?: T[P] }
+
+export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, data: ModelData<T>, userId?: string) {
   switch (attribute.type) {
     case 'boolean':
-      return getBooleanModelAttribute(attribute, key, value)
+      return getBooleanModelAttribute(attribute, key, data[key])
     case 'email':
-      return getEmailModelAttribute(attribute, key, value)
+      return getEmailModelAttribute(attribute, key, data[key])
     case 'number':
-      return getNumberModelAttribute(attribute, key, value)
+      return getNumberModelAttribute(attribute, key, data[key])
+    case 'slug':
+      return getSlugModelAttribute(attribute, key, data)
     case 'string':
-      return getStringModelAttribute(attribute, key, value)
+      return getStringModelAttribute(attribute, key, data[key])
     case 'user':
-      return getUserModelAttribute(attribute, key, value, userId)
+      return getUserModelAttribute(attribute, key, data[key], userId)
     default:
       assertNever(attribute)
   }
@@ -79,8 +85,26 @@ function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof
   return parsedValue
 }
 
+async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: keyof T, data: ModelData<T>) {
+  const targetData = '' + data[attribute.setFrom as keyof T]
+  let slug: string = ''
+  if (targetData) {
+    slug = S(targetData.trim()).slugify().s
+  }
+  if (attribute.prefix?.type === 'random') {
+    slug = (await SecurityUtils.generateRandomString(attribute.prefix.chars)) + '-' + slug
+  }
+  if (attribute.suffix?.type === 'random') {
+    slug += '-' + (await SecurityUtils.generateRandomString(attribute.suffix.chars))
+  }
+  if (attribute.required && !slug) {
+    throw new BadRequestError(`${key} is required`)
+  }
+  return slug
+}
+
 async function getStringModelAttribute<T> (attribute: StringModelAttribute, key: keyof T, value: any) {
-  const parsedValue = value !== null && value !== undefined ? value.toString().trim() : value
+  const parsedValue = value?.toString()?.trim()
   if ([undefined, null, ''].includes(parsedValue)) {
     if (attribute.required) {
       throw new BadRequestError(`${key} is required`)

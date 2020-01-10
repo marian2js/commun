@@ -78,7 +78,7 @@ export class EntityController<T extends EntityModel> {
     const model: { [key in keyof T]: any } = {} as T
     for (const [key, attribute] of Object.entries(this.config.attributes)) {
       if (this.hasValidPermissions(req, action, { ...this.config.permissions, ...attribute!.permissions })) {
-        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body[key], req.auth?._id)
+        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
       }
     }
     return model

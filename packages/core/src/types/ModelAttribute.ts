@@ -21,6 +21,19 @@ export type NumberModelAttribute = BaseModelAttribute & {
   max?: number
 }
 
+export type SlugModelAttribute = BaseModelAttribute & {
+  type: 'slug'
+  setFrom: string
+  prefix?: {
+    type: 'random'
+    chars: number
+  }
+  suffix?: {
+    type: 'random',
+    chars: number
+  }
+}
+
 export type StringModelAttribute = BaseModelAttribute & {
   type: 'string'
   maxLength?: number
@@ -38,5 +51,6 @@ export type ModelAttribute =
   BooleanModelAttribute |
   EmailModelAttribute |
   NumberModelAttribute |
+  SlugModelAttribute |
   StringModelAttribute |
   UserModelAttribute

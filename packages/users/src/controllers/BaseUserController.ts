@@ -84,7 +84,9 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
     const resetPasswordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.resetPasswordCodeHash
     const plainResetPasswordCode = await SecurityUtils.generateRandomString(48)
-    const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', plainResetPasswordCode)
+    const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', {
+      resetPasswordCodeHash: plainResetPasswordCode
+    })
     await this.dao.updateOne(user._id!, { resetPasswordCodeHash })
 
     // TODO send email with plainResetPasswordCode
@@ -103,7 +105,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
     if (user.resetPasswordCodeHash && await SecurityUtils.bcryptHashIsValid(req.body.code, user.resetPasswordCodeHash)) {
       const passwordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.password
-      const password = await getModelAttribute<MODEL>(passwordAttr!, 'password', req.body.password)
+      const password = await getModelAttribute<MODEL>(passwordAttr!, 'password', { password: req.body.password })
       await this.dao.updateOne(user._id!, { password, resetPasswordCodeHash: undefined })
       return { result: true }
     }
@@ -128,7 +130,9 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     if (UserModule.getOptions().refreshToken.enabled) {
       const refreshTokenAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.refreshTokenHash
       const plainRefreshToken = await SecurityUtils.generateRandomString(48)
-      const refreshTokenHash = await getModelAttribute(refreshTokenAttr!, 'refreshTokenHash', plainRefreshToken)
+      const refreshTokenHash = await getModelAttribute(refreshTokenAttr!, 'refreshTokenHash', {
+        refreshTokenHash: plainRefreshToken
+      })
       await this.dao.updateOne(user._id!, { refreshTokenHash })
       return plainRefreshToken
     }
