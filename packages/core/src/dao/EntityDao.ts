@@ -2,7 +2,7 @@ import { EntityConfig, EntityModel } from '..'
 import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
-type Filter<T> = {
+export type DaoFilter<T> = {
   [P in keyof T]?: any
 }
 
@@ -11,7 +11,7 @@ export class EntityDao<T extends EntityModel> {
 
   constructor (protected readonly collectionName: string) {}
 
-  async find (filter: Filter<T>): Promise<T[]> {
+  async find (filter: DaoFilter<T>): Promise<T[]> {
     return (await this.collection.find(filter).toArray())
       .map(item => {
         item.createdAt = item._id.getTimestamp()
@@ -20,7 +20,7 @@ export class EntityDao<T extends EntityModel> {
       })
   }
 
-  async findOne (filter: Filter<T> = {}): Promise<T | null> {
+  async findOne (filter: DaoFilter<T> = {}): Promise<T | null> {
     const item = await this.collection.findOne(filter)
     if (!item) {
       return null

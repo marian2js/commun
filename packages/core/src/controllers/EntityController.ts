@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { Commun, EntityModel, getModelAttribute } from '..'
+import { Commun, DaoFilter, EntityModel, getModelAttribute } from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError, UnauthorizedError } from '../errors'
 
@@ -25,7 +25,7 @@ export class EntityController<T extends EntityModel> {
 
   async get (req: Request, res: Response): Promise<{ item: T }> {
     this.validateActionPermissions(req, 'get')
-    const model = await this.dao.findOneById(req.params.id)
+    const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
     }
@@ -51,11 +51,11 @@ export class EntityController<T extends EntityModel> {
   }
 
   async update (req: Request, res: Response): Promise<{ result: boolean }> {
-    const model = this.dao.findOneById(req.params.id)
+    this.validateActionPermissions(req, 'update')
+    const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
     }
-    this.validateActionPermissions(req, 'update')
     const modelData = await this.getModelFromBodyRequest(req, 'update')
     try {
       const result = await this.dao.updateOne(req.params.id, modelData)
@@ -70,8 +70,29 @@ export class EntityController<T extends EntityModel> {
 
   async delete (req: Request, res: Response): Promise<{ result: boolean }> {
     this.validateActionPermissions(req, 'delete')
-    const result = await this.dao.deleteOne(req.params.id)
+    const model = await this.findModelByApiKey(req)
+    if (!model) {
+      return { result: true }
+    }
+    const result = await this.dao.deleteOne(model._id!)
     return { result }
+  }
+
+  protected findModelByApiKey (req: Request) {
+    if (!this.config.apiKey || this.config.apiKey === '_id') {
+      return this.dao.findOneById(req.params.id)
+    }
+    const attrKey: keyof T = <keyof T>this.config.apiKey as keyof T
+    const attribute = this.config.attributes[attrKey]
+    let value: string | number | boolean
+    if (attribute?.type === 'number') {
+      value = Number(req.params.id)
+    } else if (attribute?.type === 'boolean') {
+      value = Boolean(req.params.id)
+    } else {
+      value = req.params.id
+    }
+    return this.dao.findOne({ [attrKey]: value } as DaoFilter<T>)
   }
 
   protected async getModelFromBodyRequest (req: Request, action: 'create' | 'update'): Promise<T> {

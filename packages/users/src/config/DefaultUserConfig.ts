@@ -4,6 +4,7 @@ import { BaseUserModel } from '..'
 export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
   entityName: 'users',
   collectionName: 'users',
+  apiKey: 'username',
   attributes: {
     username: {
       type: 'string',

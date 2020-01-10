@@ -246,4 +246,20 @@ describe('BaseUserController', () => {
       expect(user!.password).toBe('old-password')
     })
   })
+
+  describe('get - [GET] /users/:id', () => {
+    it('should return an user by username', async () => {
+      const userData = {
+        username: 'test-username',
+        email: 'test-username@example.org',
+        password: 'old-password',
+        verified: true,
+      }
+      await getDao().insertOne(userData)
+      const res = await request().get(`/api/v1/users/test-username`)
+        .expect(200)
+      expect(res.body.item.username).toBe('test-username')
+      expect(res.body.item.password).toBeUndefined()
+    })
+  })
 })
