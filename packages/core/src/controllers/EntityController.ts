@@ -61,7 +61,7 @@ export class EntityController<T extends EntityModel> {
     this.validateActionPermissions(req, model, 'update')
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
-      const result = await this.dao.updateOne(req.params.id, modelData)
+      const result = await this.dao.updateOne(model._id!, modelData)
       return { result }
     } catch (e) {
       if (e.code === 11000) {
@@ -108,7 +108,9 @@ export class EntityController<T extends EntityModel> {
       const validPermissions = this.hasValidPermissions(req, persistedModel || null, action, permissions)
       const settingUser = attribute!.type === 'user' && action === 'create'
       if (validPermissions || settingUser) {
-        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
+        if (!attribute!.readonly || action === 'create') {
+          model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
+        }
       }
     }
     return model

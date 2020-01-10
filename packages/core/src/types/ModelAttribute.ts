@@ -4,6 +4,7 @@ type BaseModelAttribute = {
   required?: boolean
   unique?: boolean
   index?: boolean
+  readonly?: boolean
   permissions?: EntityActionPermissions
 }
 
