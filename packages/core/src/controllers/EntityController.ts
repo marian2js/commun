@@ -105,12 +105,13 @@ export class EntityController<T extends EntityModel> {
         ...this.config.permissions,
         ...attribute!.permissions
       }
+
       const validPermissions = this.hasValidPermissions(req, persistedModel || null, action, permissions)
+      const shouldSetValue = action === 'create' || (!attribute!.readonly && req.body[key] !== undefined)
       const settingUser = attribute!.type === 'user' && action === 'create'
-      if (validPermissions || settingUser) {
-        if (!attribute!.readonly || action === 'create') {
-          model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
-        }
+
+      if ((validPermissions && shouldSetValue) || settingUser) {
+        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
       }
     }
     return model

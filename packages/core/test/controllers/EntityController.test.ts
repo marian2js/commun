@@ -389,6 +389,23 @@ describe('EntityController', () => {
       expect(updatedItem!.name).toBe('item')
     })
 
+    it('should succeed if a required value is not send on update', async () => {
+      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+        name: {
+          type: 'string',
+          required: true,
+        }
+      }
+      await registerTestEntity({ update: 'anyone' }, attributes)
+      const item = await getDao().insertOne({ name: 'item' })
+      await request().put(`${baseUrl}/${item._id}`)
+        .send({ num: 3 })
+        .expect(200)
+      const updatedItem = await getDao().findOneById(item._id!)
+      expect(updatedItem!.name).toBe('item')
+      expect(updatedItem!.num).toBe(3)
+    })
+
     describe('Permissions', () => {
       let item: TestEntity
       const user = new ObjectId().toString()
