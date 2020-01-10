@@ -1,13 +1,17 @@
 import { Commun, EntityDao } from '../../src'
 import { dbHelpers } from '../test-helpers/dbHelpers'
+import { MongoDbConnection } from '../../src/dao/MongoDbConnection'
+import { Collection } from 'mongodb'
 
 describe('EntityDao', () => {
   const entityName = 'test'
   const collectionName = 'test'
   let dao: EntityDao<{ _id?: string, name: string }>
+  let collection: Collection
 
   beforeEach(() => {
     dao = new EntityDao<{ _id?: string, name: string }>(collectionName)
+    collection = MongoDbConnection.getDb().collection(collectionName)
   })
 
   beforeAll(async () => {
@@ -102,7 +106,7 @@ describe('EntityDao', () => {
   })
 
   describe('createIndexes', () => {
-    it('should create indexes on mongodb for unique attributes', async () => {
+    it('should create indexes on mongodb for sparse unique attributes', async () => {
       await dao.createIndexes({
         entityName,
         collectionName,
@@ -115,6 +119,63 @@ describe('EntityDao', () => {
       })
       await dao.insertOne({ name: 'item' })
       await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error dup key/)
+
+      const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
+      expect(index.sparse).toBe(true)
+      expect(index.unique).toBe(true)
+    })
+
+    it('should create indexes on mongodb for non sparse unique attributes', async () => {
+      await dao.createIndexes({
+        entityName,
+        collectionName,
+        attributes: {
+          name: {
+            type: 'string',
+            unique: true,
+            required: true,
+          }
+        }
+      })
+      await dao.insertOne({ name: 'item' })
+      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error dup key/)
+
+      const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
+      expect(index.sparse).toBeFalsy()
+      expect(index.unique).toBe(true)
+    })
+
+    it('should create indexes on mongodb for sparse non unique attributes', async () => {
+      await dao.createIndexes({
+        entityName,
+        collectionName,
+        attributes: {
+          name: {
+            type: 'string',
+            index: true,
+          }
+        }
+      })
+      const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
+      expect(index.sparse).toBe(true)
+      expect(index.unique).toBeFalsy()
+    })
+
+    it('should create indexes on mongodb for non sparse non unique attributes', async () => {
+      await dao.createIndexes({
+        entityName,
+        collectionName,
+        attributes: {
+          name: {
+            type: 'string',
+            index: true,
+            required: true,
+          }
+        }
+      })
+      const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
+      expect(index.sparse).toBe(false)
+      expect(index.unique).toBeFalsy()
     })
   })
 })

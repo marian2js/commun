@@ -3,6 +3,7 @@ import { EntityActionPermissions } from './EntityPermission'
 type BaseModelAttribute = {
   required?: boolean
   unique?: boolean
+  index?: boolean
   permissions?: EntityActionPermissions
 }
 

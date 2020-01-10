@@ -55,7 +55,9 @@ export class EntityDao<T extends EntityModel> {
   async createIndexes (config: EntityConfig<T>) {
     for (const [key, attribute] of Object.entries(config.attributes)) {
       if (attribute!.unique) {
-        await this.collection.createIndex({ [key]: 1 }, { unique: true, sparse: !attribute!.required })
+        await this.collection.createIndex(key, { unique: true, sparse: !attribute!.required })
+      } else if (attribute!.index) {
+        await this.collection.createIndex(key, { sparse: !attribute!.required })
       }
     }
   }
