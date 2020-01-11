@@ -1,4 +1,4 @@
-import { getModelAttribute } from '../../src'
+import { getModelAttribute, parseModelAttribute } from '../../src'
 import { SecurityUtils } from '../../src/utils'
 import { ObjectId } from 'mongodb'
 
@@ -233,5 +233,20 @@ describe('attributes', () => {
       await expect(getModelAttribute({ type: 'user', required: true }, 'key', { key: 'test' }))
         .rejects.toThrow('key is required')
     })
+  })
+})
+
+describe('parseModelAttribute', () => {
+  it('should parse the value according the attribute type', async () => {
+    expect(parseModelAttribute({ type: 'boolean' }, 'true')).toBe(true)
+    expect(parseModelAttribute({ type: 'boolean' }, 'false')).toBe(false)
+    expect(parseModelAttribute({ type: 'string' }, 'test')).toBe('test')
+    expect(parseModelAttribute({ type: 'email' }, 'test@example.org')).toBe('test@example.org')
+    expect(parseModelAttribute({ type: 'slug', setFrom: 'key' }, 'test')).toBe('test')
+    expect(parseModelAttribute({ type: 'number' }, '123')).toBe(123)
+
+    const userId = new ObjectId()
+    expect(parseModelAttribute({ type: 'user' }, userId.toString())).toEqual(userId)
+    expect(parseModelAttribute({ type: 'user' }, userId.toString()) instanceof ObjectId).toBe(true)
   })
 })

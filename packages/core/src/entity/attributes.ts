@@ -46,7 +46,8 @@ function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: key
   if (!validValues.includes(value)) {
     throw new BadRequestError(`${key} must be boolean`)
   }
-  return value === true || value === 'true'
+
+  return parseModelAttribute(attribute, value)
 }
 
 function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any) {
@@ -133,6 +134,23 @@ async function getUserModelAttribute<T> (attribute: UserModelAttribute, key: key
     throw new BadRequestError(`${key} is required`)
   }
   if (userId) {
-    return new ObjectId(userId)
+    return parseModelAttribute(attribute, userId)
+  }
+}
+
+export function parseModelAttribute (attribute: ModelAttribute, value: any) {
+  switch (attribute.type) {
+    case 'boolean':
+      return value === true || value === 'true'
+    case 'string':
+    case 'email':
+    case 'slug':
+      return '' + value
+    case 'number':
+      return Number(value)
+    case 'user':
+      return new ObjectId(value)
+    default:
+      assertNever(attribute)
   }
 }

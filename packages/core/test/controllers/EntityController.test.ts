@@ -12,7 +12,7 @@ describe('EntityController', () => {
   interface TestEntity extends EntityModel {
     name: string
     num?: number
-    user?: string
+    user?: string | ObjectId
   }
 
   const registerTestEntity = async (
@@ -127,6 +127,45 @@ describe('EntityController', () => {
         expect(res2.body.items[0].name).toBe('second item')
         expect(res2.body.items[1].name).toBe('last item')
         expect(res2.body.items[2].name).toBe('first item')
+      })
+    })
+
+    describe('Filters', () => {
+      const user1 = new ObjectId()
+      const user2 = new ObjectId()
+
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        await getDao().insertOne({ name: 'item1', num: 20, user: user1 })
+        await getDao().insertOne({ name: 'item2', num: 8, user: user1 })
+        await getDao().insertOne({ name: 'item3', num: 20, user: user2 })
+        await getDao().insertOne({ name: 'item4', num: 12, user: user2 })
+      })
+
+      it('should filter items by name', async () => {
+        const res = await request().get(`${baseUrl}?filter=name:item1`).expect(200)
+        expect(res.body.items.length).toBe(1)
+        expect(res.body.items[0].name).toBe('item1')
+      })
+
+      it('should filter items by a numeric attribute', async () => {
+        const res = await request().get(`${baseUrl}?filter=num:20`).expect(200)
+        expect(res.body.items.length).toBe(2)
+        expect(res.body.items[0].name).toBe('item1')
+        expect(res.body.items[1].name).toBe('item3')
+      })
+
+      it('should filter items by user ID', async () => {
+        const res = await request().get(`${baseUrl}?filter=user:${user1}`).expect(200)
+        expect(res.body.items.length).toBe(2)
+        expect(res.body.items[0].name).toBe('item1')
+        expect(res.body.items[1].name).toBe('item2')
+      })
+
+      it('should filter items by multiple attributes', async () => {
+        const res = await request().get(`${baseUrl}?filter=num:20;user:${user1}`).expect(200)
+        expect(res.body.items.length).toBe(1)
+        expect(res.body.items[0].name).toBe('item1')
       })
     })
 

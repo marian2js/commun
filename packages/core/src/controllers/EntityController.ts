@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { Commun, DaoFilter, EntityModel, getModelAttribute, UnauthorizedError } from '..'
+import { Commun, DaoFilter, EntityModel, getModelAttribute, parseModelAttribute, UnauthorizedError } from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 
@@ -31,7 +31,20 @@ export class EntityController<T extends EntityModel> {
       }
     }
 
-    const models = (await this.dao.find({}, sort))
+    const filter: { [P in keyof T]?: any } = {}
+    if (req.query.filter) {
+      const filterStrings = req.query.filter.split(';')
+      for (const filterString of filterStrings) {
+        const filterParts = filterString.split(':')
+        const filterKey = filterParts[0] as keyof T
+        const filterValue = filterParts[1]
+        if (this.config.attributes[filterKey]) {
+          filter[filterKey] = parseModelAttribute(this.config.attributes[filterKey], filterValue)
+        }
+      }
+    }
+
+    const models = (await this.dao.find(filter, sort))
       .filter(model => this.hasValidPermissions(req, model, 'get', this.config.permissions))
     return {
       items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model)))
