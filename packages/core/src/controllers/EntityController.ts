@@ -19,7 +19,19 @@ export class EntityController<T extends EntityModel> {
     if (this.config.permissions?.get !== 'own') {
       this.validateActionPermissions(req, null, 'get')
     }
-    const models = (await this.dao.find({}))
+
+    const sort: { [P in keyof T]?: 1 | -1 } = {}
+    if (req.query.sort) {
+      const [sortKey, sortDir] = req.query.sort.split(':')
+      const dir = sortDir === 'asc' ? 1 : -1
+      if (sortKey === 'createdAt') {
+        sort._id = dir
+      } else {
+        sort[sortKey as keyof T] = dir
+      }
+    }
+
+    const models = (await this.dao.find({}, sort))
       .filter(model => this.hasValidPermissions(req, model, 'get', this.config.permissions))
     return {
       items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model)))

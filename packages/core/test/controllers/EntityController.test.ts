@@ -97,6 +97,39 @@ describe('EntityController', () => {
       expect(res.body.items[2].name).toBe('item3')
     })
 
+    describe('Sorting', () => {
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        await getDao().insertOne({ name: 'first item' })
+        await getDao().insertOne({ name: 'second item' })
+        await getDao().insertOne({ name: 'last item' })
+      })
+
+      it('should return items sorted by creation time', async () => {
+        const res = await request().get(`${baseUrl}?sort=createdAt:asc`).expect(200)
+        expect(res.body.items[0].name).toBe('first item')
+        expect(res.body.items[1].name).toBe('second item')
+        expect(res.body.items[2].name).toBe('last item')
+
+        const res2 = await request().get(`${baseUrl}?sort=createdAt:desc`).expect(200)
+        expect(res2.body.items[0].name).toBe('last item')
+        expect(res2.body.items[1].name).toBe('second item')
+        expect(res2.body.items[2].name).toBe('first item')
+      })
+
+      it('should return items sorted by name', async () => {
+        const res = await request().get(`${baseUrl}?sort=name:asc`).expect(200)
+        expect(res.body.items[0].name).toBe('first item')
+        expect(res.body.items[1].name).toBe('last item')
+        expect(res.body.items[2].name).toBe('second item')
+
+        const res2 = await request().get(`${baseUrl}?sort=name:desc`).expect(200)
+        expect(res2.body.items[0].name).toBe('second item')
+        expect(res2.body.items[1].name).toBe('last item')
+        expect(res2.body.items[2].name).toBe('first item')
+      })
+    })
+
     describe('Permissions', () => {
       const user1 = new ObjectId().toString()
       const user2 = new ObjectId().toString()
@@ -391,6 +424,9 @@ describe('EntityController', () => {
 
     it('should succeed if a required value is not send on update', async () => {
       const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+        num: {
+          type: 'number'
+        },
         name: {
           type: 'string',
           required: true,
