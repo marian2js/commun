@@ -22,6 +22,11 @@ export type NumberModelAttribute = BaseModelAttribute & {
   max?: number
 }
 
+export type RefModelAttribute = BaseModelAttribute & {
+  type: 'ref'
+  entity: string
+}
+
 export type SlugModelAttribute = BaseModelAttribute & {
   type: 'slug'
   setFrom: string
@@ -52,6 +57,7 @@ export type ModelAttribute =
   BooleanModelAttribute |
   EmailModelAttribute |
   NumberModelAttribute |
+  RefModelAttribute |
   SlugModelAttribute |
   StringModelAttribute |
   UserModelAttribute

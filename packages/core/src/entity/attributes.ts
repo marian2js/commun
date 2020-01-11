@@ -3,15 +3,17 @@ import {
   EmailModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
+  RefModelAttribute,
   SlugModelAttribute,
   StringModelAttribute,
   UserModelAttribute
 } from '../types'
-import { BadRequestError } from '../errors'
+import { BadRequestError, NotFoundError } from '../errors'
 import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
 import { ObjectId } from 'mongodb'
 import S from 'string'
+import { Commun } from '../Commun'
 
 type ModelData<T> = { [P in keyof T]?: T[P] }
 
@@ -23,6 +25,8 @@ export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyo
       return getEmailModelAttribute(attribute, key, data[key])
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key])
+    case 'ref':
+      return getRefModelAttribute(attribute, key, data[key])
     case 'slug':
       return getSlugModelAttribute(attribute, key, data)
     case 'string':
@@ -84,6 +88,20 @@ function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof
     throw new BadRequestError(`${key} must be smaller or equal than ${attribute.max}`)
   }
   return parsedValue
+}
+
+async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof T, value: any) {
+  if (attribute.required && !value) {
+    throw new BadRequestError(`${key} is required`)
+  }
+  if (!ObjectId.isValid(value)) {
+    throw new BadRequestError(`${key} is not a valid ID`)
+  }
+  const item = await Commun.getEntityDao(attribute.entity).findOne({ _id: new ObjectId(value) })
+  if (!item) {
+    throw new NotFoundError(`${key} not found`)
+  }
+  return new ObjectId(value)
 }
 
 async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: keyof T, data: ModelData<T>) {
@@ -148,6 +166,7 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return '' + value
     case 'number':
       return Number(value)
+    case 'ref':
     case 'user':
       return new ObjectId(value)
     default:

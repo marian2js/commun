@@ -1,6 +1,7 @@
-import { getModelAttribute, parseModelAttribute } from '../../src'
+import { Commun, getModelAttribute, parseModelAttribute } from '../../src'
 import { SecurityUtils } from '../../src/utils'
 import { ObjectId } from 'mongodb'
+import { dbHelpers } from '../test-helpers/dbHelpers'
 
 describe('attributes', () => {
   describe('Boolean', () => {
@@ -125,7 +126,62 @@ describe('attributes', () => {
     })
   })
 
-  describe('String', () => {
+  describe('Ref', () => {
+    let itemId: string
+
+    beforeEach(async () => {
+      await Commun.connectDb()
+      Commun.registerEntity({
+        config: {
+          entityName: 'items',
+          collectionName: 'items',
+          attributes: {},
+        }
+      })
+      const item = await Commun.getEntityDao('items').insertOne({})
+      itemId = item._id!
+    })
+
+    afterEach(async () => {
+      await dbHelpers.dropCollection('items')
+    })
+
+    afterAll(async () => {
+      await Commun.closeDb()
+    })
+
+    it('should return an ObjectId with the referenced value', async () => {
+      const res = await getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: itemId })
+      expect(res instanceof ObjectId).toBe(true)
+      expect(res.toString()).toBe(itemId)
+    })
+
+    it('should throw an error if value is not a valid ObjectId', async () => {
+      await expect(getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: 'bad-id' }))
+        .rejects.toThrow('item is not a valid ID')
+    })
+
+    it('should throw an error if the value does not reference to an existent resource', async () => {
+      const objectId = new ObjectId()
+      await expect(getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: objectId.toString() }))
+        .rejects.toThrow('item not found')
+    })
+
+    it('should handle the required attribute', async () => {
+      const res = await getModelAttribute({
+        type: 'ref',
+        entity: 'items',
+        required: true
+      }, 'item', { item: itemId })
+      expect(res instanceof ObjectId).toBe(true)
+      expect(res.toString()).toBe(itemId)
+
+      await expect(getModelAttribute({ type: 'ref', entity: 'items', required: true }, 'item', {}))
+        .rejects.toThrow('item is required')
+    })
+  })
+
+  describe('Slug', () => {
     beforeEach(() => {
       SecurityUtils.generateRandomString = jest.fn((chars) => Promise.resolve(`RANDOM:${chars}`))
     })
@@ -245,8 +301,10 @@ describe('parseModelAttribute', () => {
     expect(parseModelAttribute({ type: 'slug', setFrom: 'key' }, 'test')).toBe('test')
     expect(parseModelAttribute({ type: 'number' }, '123')).toBe(123)
 
-    const userId = new ObjectId()
-    expect(parseModelAttribute({ type: 'user' }, userId.toString())).toEqual(userId)
-    expect(parseModelAttribute({ type: 'user' }, userId.toString()) instanceof ObjectId).toBe(true)
+    const objectId = new ObjectId()
+    expect(parseModelAttribute({ type: 'user' }, objectId.toString())).toEqual(objectId)
+    expect(parseModelAttribute({ type: 'user' }, objectId.toString()) instanceof ObjectId).toBe(true)
+    expect(parseModelAttribute({ type: 'ref', entity: 'e' }, objectId.toString())).toEqual(objectId)
+    expect(parseModelAttribute({ type: 'ref', entity: 'e' }, objectId.toString()) instanceof ObjectId).toBe(true)
   })
 })
