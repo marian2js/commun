@@ -17,33 +17,41 @@ import { Commun } from '../Commun'
 
 type ModelData<T> = { [P in keyof T]?: T[P] }
 
-export async function getModelAttribute<T> (attribute: ModelAttribute, key: keyof T, data: ModelData<T>, userId?: string) {
+export async function getModelAttribute<T> (
+  attribute: ModelAttribute,
+  key: keyof T,
+  data: ModelData<T>,
+  userId?: string,
+  ignoreDefault?: boolean) {
+
+  const defaultValue = ignoreDefault ? undefined : attribute.default
+
   switch (attribute.type) {
     case 'boolean':
-      return getBooleanModelAttribute(attribute, key, data[key])
+      return getBooleanModelAttribute(attribute, key, data[key], defaultValue)
     case 'email':
-      return getEmailModelAttribute(attribute, key, data[key])
+      return getEmailModelAttribute(attribute, key, data[key], defaultValue)
     case 'number':
-      return getNumberModelAttribute(attribute, key, data[key])
+      return getNumberModelAttribute(attribute, key, data[key], defaultValue)
     case 'ref':
-      return getRefModelAttribute(attribute, key, data[key])
+      return getRefModelAttribute(attribute, key, data[key], defaultValue)
     case 'slug':
-      return getSlugModelAttribute(attribute, key, data)
+      return getSlugModelAttribute(attribute, key, data, defaultValue)
     case 'string':
-      return getStringModelAttribute(attribute, key, data[key])
+      return getStringModelAttribute(attribute, key, data[key], defaultValue)
     case 'user':
-      return getUserModelAttribute(attribute, key, data[key], userId)
+      return getUserModelAttribute(attribute, key, data[key], defaultValue, userId)
     default:
       assertNever(attribute)
   }
 }
 
-function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: keyof T, value: any) {
+function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: keyof T, value: any, defaultValue: boolean) {
   if ([undefined, null].includes(value)) {
-    if (attribute.required) {
+    if (attribute.required && defaultValue === undefined) {
       throw new BadRequestError(`${key} is required`)
     }
-    return undefined
+    return defaultValue
   }
 
   const validValues = [true, false, 'true', 'false']
@@ -54,12 +62,12 @@ function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: key
   return parseModelAttribute(attribute, value)
 }
 
-function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any) {
+function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any, defaultValue: string) {
   if (!value) {
-    if (attribute.required) {
+    if (attribute.required && defaultValue === undefined) {
       throw new BadRequestError(`${key} is required`)
     }
-    return undefined
+    return defaultValue
   }
 
   const email = value.trim()
@@ -69,12 +77,12 @@ function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T
   return email
 }
 
-function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any) {
+function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any, defaultValue: number) {
   if ([undefined, null].includes(value)) {
-    if (attribute.required) {
+    if (attribute.required && defaultValue === undefined) {
       throw new BadRequestError(`${key} is required`)
     }
-    return undefined
+    return defaultValue
   }
 
   const parsedValue = Number(value)
@@ -90,12 +98,12 @@ function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof
   return parsedValue
 }
 
-async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof T, value: any) {
-  if (attribute.required && !value) {
+async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof T, value: any, defaultValue: string) {
+  if (attribute.required && !value && defaultValue === undefined) {
     throw new BadRequestError(`${key} is required`)
   }
   if (!value) {
-    return
+    return defaultValue ? parseModelAttribute(attribute, defaultValue) : undefined
   }
   if (!ObjectId.isValid(value)) {
     throw new BadRequestError(`${key} is not a valid ID`)
@@ -104,14 +112,20 @@ async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof
   if (!item) {
     throw new NotFoundError(`${key} not found`)
   }
-  return new ObjectId(value)
+  return parseModelAttribute(attribute, value)
 }
 
-async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: keyof T, data: ModelData<T>) {
-  const targetData = '' + data[attribute.setFrom as keyof T]
+async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: keyof T, data: ModelData<T>, defaultValue: string) {
+  const targetData = (data[attribute.setFrom as keyof T] || '') as string
   let slug: string = ''
   if (targetData) {
     slug = S(targetData.trim()).slugify().s
+  }
+  if (!slug) {
+    slug = defaultValue
+  }
+  if (attribute.required && !slug && defaultValue === undefined) {
+    throw new BadRequestError(`${key} is required`)
   }
   if (attribute.prefix?.type === 'random') {
     slug = (await SecurityUtils.generateRandomString(attribute.prefix.chars)) + '-' + slug
@@ -119,17 +133,17 @@ async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: key
   if (attribute.suffix?.type === 'random') {
     slug += '-' + (await SecurityUtils.generateRandomString(attribute.suffix.chars))
   }
-  if (attribute.required && !slug) {
-    throw new BadRequestError(`${key} is required`)
-  }
   return slug
 }
 
-async function getStringModelAttribute<T> (attribute: StringModelAttribute, key: keyof T, value: any) {
+async function getStringModelAttribute<T> (attribute: StringModelAttribute, key: keyof T, value: any, defaultValue: string) {
   const parsedValue = value?.toString()?.trim()
   if ([undefined, null, ''].includes(parsedValue)) {
-    if (attribute.required) {
+    if (attribute.required && defaultValue === undefined) {
       throw new BadRequestError(`${key} is required`)
+    }
+    if (defaultValue) {
+      return defaultValue
     }
     return parsedValue === '' ? '' : undefined
   }
@@ -150,13 +164,14 @@ async function getStringModelAttribute<T> (attribute: StringModelAttribute, key:
   return parsedValue
 }
 
-async function getUserModelAttribute<T> (attribute: UserModelAttribute, key: keyof T, value: any, userId?: string) {
-  if (attribute.required && !userId) {
+async function getUserModelAttribute<T> (attribute: UserModelAttribute, key: keyof T, value: any, defaultValue: string, userId?: string) {
+  if (attribute.required && !userId && defaultValue === undefined) {
     throw new BadRequestError(`${key} is required`)
   }
   if (userId) {
     return parseModelAttribute(attribute, userId)
   }
+  return defaultValue ? parseModelAttribute(attribute, defaultValue) : undefined
 }
 
 export function parseModelAttribute (attribute: ModelAttribute, value: any) {

@@ -6,25 +6,30 @@ type BaseModelAttribute = {
   index?: boolean
   readonly?: boolean
   permissions?: EntityActionPermissions
+  default?: any
 }
 
 export type BooleanModelAttribute = BaseModelAttribute & {
-  type: 'boolean'
+  type: 'boolean',
+  default?: boolean
 }
 
 export type EmailModelAttribute = BaseModelAttribute & {
   type: 'email'
+  default?: string
 }
 
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
   max?: number
+  default?: number
 }
 
 export type RefModelAttribute = BaseModelAttribute & {
   type: 'ref'
   entity: string
+  default?: string
 }
 
 export type SlugModelAttribute = BaseModelAttribute & {
@@ -38,6 +43,7 @@ export type SlugModelAttribute = BaseModelAttribute & {
     type: 'random',
     chars: number
   }
+  default?: string
 }
 
 export type StringModelAttribute = BaseModelAttribute & {
@@ -47,10 +53,12 @@ export type StringModelAttribute = BaseModelAttribute & {
     algorithm: 'bcrypt',
     salt_rounds: number,
   }
+  default?: string
 }
 
 export type UserModelAttribute = BaseModelAttribute & {
   type: 'user'
+  default?: string
 }
 
 export type ModelAttribute =

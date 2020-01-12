@@ -149,7 +149,7 @@ export class EntityController<T extends EntityModel> {
       const settingUser = attribute!.type === 'user' && action === 'create'
 
       if ((validPermissions && shouldSetValue) || settingUser) {
-        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id)
+        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id, action === 'update')
       }
     }
     return model

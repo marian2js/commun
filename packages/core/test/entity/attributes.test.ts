@@ -28,6 +28,13 @@ describe('attributes', () => {
         .rejects.toThrow('key is required')
     })
 
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'boolean', default: true }, 'key', {})).toBe(true)
+      expect(await getModelAttribute({ type: 'boolean', default: false }, 'key', {})).toBe(false)
+      expect(await getModelAttribute({ type: 'boolean', default: false }, 'key', { key: true })).toBe(true)
+      expect(await getModelAttribute({ type: 'boolean', default: true }, 'key', { key: false })).toBe(false)
+    })
+
     it('should throw an error if the value is not boolean', async () => {
       await expect(getModelAttribute({ type: 'boolean' }, 'key', { key: 'str' }))
         .rejects.toThrow('key must be boolean')
@@ -67,6 +74,14 @@ describe('attributes', () => {
         .toBe('email@example.org')
       await expect(getModelAttribute({ type: 'email', required: true }, 'key', { key: null }))
         .rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'email', default: 'email@example.org' }, 'key', {}))
+        .toBe('email@example.org')
+      expect(await getModelAttribute({ type: 'email', default: 'email@example.org' }, 'key', {
+        key: 'test-email@example.org'
+      })).toBe('test-email@example.org')
     })
 
     it('should throw an error if the email is not valid', async () => {
@@ -112,6 +127,11 @@ describe('attributes', () => {
         .rejects.toThrow('key is required')
       await expect(getModelAttribute({ type: 'number', required: true }, 'key', { key: null }))
         .rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'number', default: 123 }, 'key', {})).toBe(123)
+      expect(await getModelAttribute({ type: 'number', default: 123 }, 'key', { key: 987 })).toBe(987)
     })
 
     it('should throw an error if the value is not a number', async () => {
@@ -179,6 +199,19 @@ describe('attributes', () => {
       await expect(getModelAttribute({ type: 'ref', entity: 'items', required: true }, 'item', {}))
         .rejects.toThrow('item is required')
     })
+
+    it('should handle the default attribute', async () => {
+      const res = await getModelAttribute({ type: 'ref', entity: 'items', default: itemId }, 'item', {})
+      expect(res instanceof ObjectId).toBe(true)
+      expect(res.toString()).toBe(itemId)
+      const res2 = await getModelAttribute({
+        type: 'ref',
+        entity: 'items',
+        default: new ObjectId().toString()
+      }, 'item', { item: itemId })
+      expect(res2 instanceof ObjectId).toBe(true)
+      expect(res2.toString()).toBe(itemId)
+    })
   })
 
   describe('Slug', () => {
@@ -218,6 +251,15 @@ describe('attributes', () => {
         title: '',
         key: ''
       })).rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'slug', setFrom: 'title', default: 'default' }, 'key', {}))
+        .toBe('default')
+      expect(await getModelAttribute({ type: 'slug', setFrom: 'title', default: 'default' }, 'key', {
+        title: 'test',
+        key: ''
+      })).toBe('test')
     })
   })
 
@@ -272,22 +314,36 @@ describe('attributes', () => {
       await expect(getModelAttribute({ type: 'string', required: true }, 'key', { key: '    ' }))
         .rejects.toThrow('key is required')
     })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'string', default: 'test' }, 'key', {})).toBe('test')
+      expect(await getModelAttribute({ type: 'string', default: 'test' }, 'key', { key: 'aaa' })).toBe('aaa')
+    })
   })
 
   describe('User', () => {
     const userId = new ObjectId()
 
     it('should return an ObjectId with the user id or undefined', async () => {
-      expect(await getModelAttribute({ type: 'user' }, 'key', { key: 'test' }, userId.toString()))
+      expect(await getModelAttribute({ type: 'user' }, 'key', {}, userId.toString()))
         .toEqual(userId)
-      expect(await getModelAttribute({ type: 'user' }, 'key', { key: 'test' })).toBeUndefined()
+      expect(await getModelAttribute({ type: 'user' }, 'key', {})).toBeUndefined()
     })
 
     it('should handle the required attribute', async () => {
-      expect(await getModelAttribute({ type: 'user', required: true }, 'key', { key: 'test' }, userId.toString()))
+      expect(await getModelAttribute({ type: 'user', required: true }, 'key', {}, userId.toString()))
         .toEqual(userId)
-      await expect(getModelAttribute({ type: 'user', required: true }, 'key', { key: 'test' }))
+      await expect(getModelAttribute({ type: 'user', required: true }, 'key', {}))
         .rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'user', default: userId.toString() }, 'key', {}))
+        .toEqual(userId)
+      expect(await getModelAttribute({
+        type: 'user',
+        default: new ObjectId().toString()
+      }, 'key', {}, userId.toString())).toEqual(userId)
     })
   })
 })
