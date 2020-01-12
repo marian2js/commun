@@ -19,6 +19,12 @@ export type EmailModelAttribute = BaseModelAttribute & {
   default?: string
 }
 
+export type EnumModelAttribute = BaseModelAttribute & {
+  type: 'enum'
+  values: (string | number | boolean)[]
+  default?: string | number | boolean
+}
+
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
@@ -64,6 +70,7 @@ export type UserModelAttribute = BaseModelAttribute & {
 export type ModelAttribute =
   BooleanModelAttribute |
   EmailModelAttribute |
+  EnumModelAttribute |
   NumberModelAttribute |
   RefModelAttribute |
   SlugModelAttribute |

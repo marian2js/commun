@@ -96,6 +96,33 @@ describe('attributes', () => {
     })
   })
 
+  describe('Enum', () => {
+    it('should return the given value', async () => {
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3] }, 'key', { key: 1 })).toBe(1)
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3] }, 'key', { key: 2 })).toBe(2)
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3] }, 'key', { key: 3 })).toBe(3)
+    })
+
+    it('should throw an error if the given value is not in the enum', async () => {
+      await expect(getModelAttribute({ type: 'enum', values: [1, 2, 3] }, 'key', { key: 4 }))
+        .rejects.toThrow('key must be one of 1, 2, 3')
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3], required: true }, 'key', { key: 1 }))
+        .toBe(1)
+      await expect(getModelAttribute({ type: 'enum', values: [1, 2, 3], required: true }, 'key', {}))
+        .rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3], default: 2 }, 'key', {}))
+        .toBe(2)
+      expect(await getModelAttribute({ type: 'enum', values: [1, 2, 3], default: 2 }, 'key', { key: 1 }))
+        .toBe(1)
+    })
+  })
+
   describe('Number', () => {
     it('should return the given number', async () => {
       expect(await getModelAttribute({ type: 'number' }, 'key', { key: 123 })).toBe(123)
@@ -363,5 +390,8 @@ describe('parseModelAttribute', () => {
     expect(parseModelAttribute({ type: 'user' }, objectId.toString()) instanceof ObjectId).toBe(true)
     expect(parseModelAttribute({ type: 'ref', entity: 'e' }, objectId.toString())).toEqual(objectId)
     expect(parseModelAttribute({ type: 'ref', entity: 'e' }, objectId.toString()) instanceof ObjectId).toBe(true)
+
+    expect(parseModelAttribute({ type: 'enum', values: [1, 2, 3] }, 2)).toBe(2)
+    expect(parseModelAttribute({ type: 'enum', values: [1, 2, 3] }, 4)).toBeUndefined()
   })
 })

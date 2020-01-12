@@ -1,6 +1,7 @@
 import {
   BooleanModelAttribute,
   EmailModelAttribute,
+  EnumModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
   RefModelAttribute,
@@ -31,6 +32,8 @@ export async function getModelAttribute<T> (
       return getBooleanModelAttribute(attribute, key, data[key], defaultValue)
     case 'email':
       return getEmailModelAttribute(attribute, key, data[key], defaultValue)
+    case 'enum':
+      return getEnumModelAttribute(attribute, key, data[key], defaultValue)
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key], defaultValue)
     case 'ref':
@@ -75,6 +78,19 @@ function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T
     throw new BadRequestError(`${key} is not a valid email address`)
   }
   return email
+}
+
+function getEnumModelAttribute<T> (attribute: EnumModelAttribute, key: keyof T, value: any, defaultValue: string) {
+  if (!value) {
+    if (attribute.required && defaultValue === undefined) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return defaultValue
+  }
+  if (!attribute.values.includes(value)) {
+    throw new BadRequestError(`${key} must be one of ${attribute.values.join(', ')}`)
+  }
+  return value
 }
 
 function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any, defaultValue: number) {
@@ -187,6 +203,8 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
     case 'ref':
     case 'user':
       return new ObjectId(value)
+    case 'enum':
+      return attribute.values.includes(value) ? value : undefined
     default:
       assertNever(attribute)
   }
