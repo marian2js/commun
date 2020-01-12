@@ -3,6 +3,7 @@ import { authenticatedRequest, request } from '../test-helpers/requestHelpers'
 import { EntityActionPermissions, ModelAttribute } from '../../src/types'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 import { ObjectId } from 'mongodb'
+import { entityHooks } from '../../src/entity/entityHooks'
 
 describe('EntityController', () => {
   const entityName = 'items'
@@ -287,6 +288,17 @@ describe('EntityController', () => {
       expect(res.body.item.name).toBe('item')
     })
 
+    describe('Hooks', () => {
+      it('should call beforeGet and afterGet', async () => {
+        spyOn(entityHooks, 'run')
+        await registerTestEntity({ get: 'anyone' })
+        const item = await getDao().insertOne({ name: 'item' })
+        await request().get(`${baseUrl}/${item._id}`).expect(200)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item)
+      })
+    })
+
     describe('Permissions', () => {
       let item: TestEntity
       const user = new ObjectId().toString()
@@ -398,6 +410,24 @@ describe('EntityController', () => {
       expect(items.length).toBe(1)
     })
 
+    describe('Hooks', () => {
+      it('should call beforeCreate and afterCreate', async () => {
+        spyOn(entityHooks, 'run')
+        await registerTestEntity({ get: 'anyone', create: 'anyone' })
+        await request().post(baseUrl)
+          .send({ name: 'item' })
+          .expect(200)
+        const item = await getDao().findOne({ name: 'item' })
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeCreate', expect.objectContaining({
+          name: 'item'
+        }))
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterCreate', expect.objectContaining({
+          _id: item!._id!.toString(),
+          name: 'item'
+        }))
+      })
+    })
+
     describe('Permissions', () => {
 
       describe('User', () => {
@@ -505,6 +535,20 @@ describe('EntityController', () => {
       const updatedItem = await getDao().findOneById(item._id!)
       expect(updatedItem!.name).toBe('item')
       expect(updatedItem!.num).toBe(3)
+    })
+
+    describe('Hooks', () => {
+      it('should call beforeUpdate and afterUpdate', async () => {
+        spyOn(entityHooks, 'run')
+        await registerTestEntity({ get: 'anyone', update: 'anyone' })
+        const item = await getDao().insertOne({ name: 'item' })
+        await request().put(`${baseUrl}/${item._id}`)
+          .send({ name: 'updated' })
+          .expect(200)
+        const updatedItem = await getDao().findOneById(item._id!)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem)
+      })
     })
 
     describe('Permissions', () => {
@@ -623,6 +667,19 @@ describe('EntityController', () => {
         .expect(200)
       const deletedItem = await getDao().findOneById(item._id!)
       expect(deletedItem).toBe(null)
+    })
+
+    describe('Hooks', () => {
+      it('should call beforeDelete and afterDelete', async () => {
+        spyOn(entityHooks, 'run')
+        await registerTestEntity({ delete: 'anyone' })
+        const item = await getDao().insertOne({ name: 'item' })
+        await request().delete(`${baseUrl}/${item._id}`)
+          .expect(200)
+        const updatedItem = await getDao().findOneById(item._id!)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item)
+      })
     })
 
     describe('Permissions', () => {

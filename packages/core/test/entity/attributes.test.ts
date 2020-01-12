@@ -147,23 +147,24 @@ describe('attributes', () => {
   })
 
   describe('Ref', () => {
+    const entityName = 'attributes'
     let itemId: string
 
     beforeEach(async () => {
       await Commun.connectDb()
       Commun.registerEntity({
         config: {
-          entityName: 'items',
-          collectionName: 'items',
+          entityName,
+          collectionName: entityName,
           attributes: {},
         }
       })
-      const item = await Commun.getEntityDao('items').insertOne({})
+      const item = await Commun.getEntityDao(entityName).insertOne({})
       itemId = item._id!
     })
 
     afterEach(async () => {
-      await dbHelpers.dropCollection('items')
+      await dbHelpers.dropCollection(entityName)
     })
 
     afterAll(async () => {
@@ -171,42 +172,42 @@ describe('attributes', () => {
     })
 
     it('should return an ObjectId with the referenced value', async () => {
-      const res = await getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: itemId })
+      const res = await getModelAttribute({ type: 'ref', entity: entityName }, 'item', { item: itemId })
       expect(res instanceof ObjectId).toBe(true)
       expect(res.toString()).toBe(itemId)
     })
 
     it('should throw an error if value is not a valid ObjectId', async () => {
-      await expect(getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: 'bad-id' }))
+      await expect(getModelAttribute({ type: 'ref', entity: entityName }, 'item', { item: 'bad-id' }))
         .rejects.toThrow('item is not a valid ID')
     })
 
     it('should throw an error if the value does not reference to an existent resource', async () => {
       const objectId = new ObjectId()
-      await expect(getModelAttribute({ type: 'ref', entity: 'items' }, 'item', { item: objectId.toString() }))
+      await expect(getModelAttribute({ type: 'ref', entity: entityName }, 'item', { item: objectId.toString() }))
         .rejects.toThrow('item not found')
     })
 
     it('should handle the required attribute', async () => {
       const res = await getModelAttribute({
         type: 'ref',
-        entity: 'items',
+        entity: entityName,
         required: true
       }, 'item', { item: itemId })
       expect(res instanceof ObjectId).toBe(true)
       expect(res.toString()).toBe(itemId)
 
-      await expect(getModelAttribute({ type: 'ref', entity: 'items', required: true }, 'item', {}))
+      await expect(getModelAttribute({ type: 'ref', entity: entityName, required: true }, 'item', {}))
         .rejects.toThrow('item is required')
     })
 
     it('should handle the default attribute', async () => {
-      const res = await getModelAttribute({ type: 'ref', entity: 'items', default: itemId }, 'item', {})
+      const res = await getModelAttribute({ type: 'ref', entity: entityName, default: itemId }, 'item', {})
       expect(res instanceof ObjectId).toBe(true)
       expect(res.toString()).toBe(itemId)
       const res2 = await getModelAttribute({
         type: 'ref',
-        entity: 'items',
+        entity: entityName,
         default: new ObjectId().toString()
       }, 'item', { item: itemId })
       expect(res2 instanceof ObjectId).toBe(true)

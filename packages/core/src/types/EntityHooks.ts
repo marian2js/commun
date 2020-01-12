@@ -1,17 +1,25 @@
-import { EntityModel } from './EntityModel'
-
-type HookResponse = Promise<any> | void
-
-export interface EntityHooks<ENTITY extends EntityModel> {
-  beforeCreate?: (entity: ENTITY) => HookResponse
-
-  afterCreate?: (entity: ENTITY) => HookResponse
-
-  beforeUpdate?: (entity: ENTITY) => HookResponse
-
-  afterUpdate?: (entity: ENTITY) => HookResponse
-
-  beforeDelete?: (entity: ENTITY) => HookResponse
-
-  afterDelete?: (entity: ENTITY) => HookResponse
+export type IncrementEntityHook = {
+  action: 'increment',
+  value: number | string
+  target: string
 }
+
+export type SetEntityHook = {
+  action: 'set',
+  value: any
+  target: string
+}
+
+export type EntityHook =
+  IncrementEntityHook |
+  SetEntityHook
+
+export type EntityLifecycle =
+  'beforeGet' |
+  'afterGet' |
+  'beforeCreate' |
+  'afterCreate' |
+  'beforeUpdate' |
+  'afterUpdate' |
+  'beforeDelete' |
+  'afterDelete'

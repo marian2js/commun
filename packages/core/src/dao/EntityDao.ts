@@ -50,7 +50,22 @@ export class EntityDao<T extends EntityModel> {
       .findOneAndUpdate({ _id: new ObjectId(id) }, {
         $set: { ...data, updatedAt: new Date() }
       }, { returnOriginal: false })
-    return res.value
+    const item = res.value
+    item._id = item._id.toString()
+    item.createdAt = new ObjectId(item._id.toString()).getTimestamp()
+    return item
+  }
+
+  async incrementOne (id: string, data: { [key in keyof T]?: any }): Promise<T> {
+    const res = await this.collection
+      .findOneAndUpdate({ _id: new ObjectId(id) }, {
+        $set: { updatedAt: new Date() },
+        $inc: { ...data }
+      }, { returnOriginal: false })
+    const item = res.value
+    item._id = item._id.toString()
+    item.createdAt = new ObjectId(item._id.toString()).getTimestamp()
+    return item
   }
 
   async deleteOne (id: string): Promise<boolean> {

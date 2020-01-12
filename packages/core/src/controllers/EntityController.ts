@@ -11,6 +11,7 @@ import {
 } from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
+import { entityHooks } from '../entity/entityHooks'
 
 export class EntityController<T extends EntityModel> {
 
@@ -68,16 +69,21 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     this.validateActionPermissions(req, model, 'get')
+    await entityHooks.run(this.entityName, 'beforeGet', model)
+    const item = await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
+    await entityHooks.run(this.entityName, 'afterGet', model)
     return {
-      item: await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
+      item
     }
   }
 
   async create (req: Request, res: Response): Promise<{ item: T }> {
     this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
+    await entityHooks.run(this.entityName, 'beforeCreate', model)
     try {
       const insertedModel = await this.dao.insertOne(model)
+      await entityHooks.run(this.entityName, 'afterCreate', insertedModel)
       return {
         item: await this.prepareModelResponse(req, insertedModel)
       }
@@ -95,11 +101,13 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     this.validateActionPermissions(req, model, 'update')
+    await entityHooks.run(this.entityName, 'beforeUpdate', model)
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
-      const item = await this.dao.updateOne(model._id!, modelData)
+      const updatedItem = await this.dao.updateOne(model._id!, modelData)
+      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem)
       return {
-        item: await this.prepareModelResponse(req, item, this.getPopulateFromRequest(req))
+        item: await this.prepareModelResponse(req, updatedItem, this.getPopulateFromRequest(req))
       }
     } catch (e) {
       if (e.code === 11000) {
@@ -115,7 +123,9 @@ export class EntityController<T extends EntityModel> {
       return { result: true }
     }
     this.validateActionPermissions(req, model, 'delete')
+    await entityHooks.run(this.entityName, 'beforeDelete', model)
     const result = await this.dao.deleteOne(model._id!)
+    await entityHooks.run(this.entityName, 'afterDelete', model)
     return { result }
   }
 
@@ -150,6 +160,8 @@ export class EntityController<T extends EntityModel> {
 
       if ((validPermissions && shouldSetValue) || settingUser) {
         model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id, action === 'update')
+      } else if (attribute!.default !== undefined && action === 'create') {
+        model[key as keyof T] = await getModelAttribute(attribute!, key, {}, req.auth?._id)
       }
     }
     return model
