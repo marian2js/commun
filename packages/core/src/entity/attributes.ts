@@ -94,6 +94,9 @@ async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof
   if (attribute.required && !value) {
     throw new BadRequestError(`${key} is required`)
   }
+  if (!value) {
+    return
+  }
   if (!ObjectId.isValid(value)) {
     throw new BadRequestError(`${key} is not a valid ID`)
   }

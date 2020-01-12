@@ -13,6 +13,7 @@ describe('EntityController', () => {
     name: string
     num?: number
     user?: string | ObjectId
+    entityRef?: string | ObjectId
   }
 
   const registerTestEntity = async (
@@ -31,6 +32,10 @@ describe('EntityController', () => {
           update: 'system'
         }
       },
+      entityRef: {
+        type: 'ref',
+        entity: entityName,
+      }
     }
   ) => {
     Commun.registerEntity<TestEntity>({
@@ -166,6 +171,26 @@ describe('EntityController', () => {
         const res = await request().get(`${baseUrl}?filter=num:20;user:${user1}`).expect(200)
         expect(res.body.items.length).toBe(1)
         expect(res.body.items[0].name).toBe('item1')
+      })
+    })
+
+    describe('Populate', () => {
+      let item1: TestEntity
+      let item2: TestEntity
+      let item3: TestEntity
+
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        item1 = await getDao().insertOne({ name: 'item1' })
+        item2 = await getDao().insertOne({ name: 'item2', entityRef: item1._id })
+        item3 = await getDao().insertOne({ name: 'item3', entityRef: item2._id })
+      })
+
+      it('should populate a ref attribute', async () => {
+        const res = await request().get(`${baseUrl}?populate=entityRef`).expect(200)
+        expect(res.body.items[0].entityRef).toBeUndefined()
+        expect(res.body.items[1].entityRef).toEqual({ _id: item1._id, name: 'item1' })
+        expect(res.body.items[2].entityRef).toEqual({ _id: item2._id, name: 'item2', entityRef: { _id: item1._id } })
       })
     })
 
@@ -368,7 +393,7 @@ describe('EntityController', () => {
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await authenticatedRequest(user.toString()).post(baseUrl)
         .expect(200)
-      expect(res.body.item.user).toBe(user.toString())
+      expect(res.body.item.user).toEqual({ _id: user.toString() })
       const items = await getDao().find({ user })
       expect(items.length).toBe(1)
     })

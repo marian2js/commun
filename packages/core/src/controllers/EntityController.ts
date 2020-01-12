@@ -1,5 +1,14 @@
 import { Request, Response } from 'express'
-import { Commun, DaoFilter, EntityModel, getModelAttribute, parseModelAttribute, UnauthorizedError } from '..'
+import {
+  Commun,
+  DaoFilter,
+  EntityModel,
+  getModelAttribute,
+  ModelAttribute,
+  parseModelAttribute,
+  RefModelAttribute,
+  UnauthorizedError
+} from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 
@@ -44,10 +53,12 @@ export class EntityController<T extends EntityModel> {
       }
     }
 
+    const populate = this.getPopulateFromRequest(req)
+
     const models = (await this.dao.find(filter, sort))
       .filter(model => this.hasValidPermissions(req, model, 'get', this.config.permissions))
     return {
-      items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model)))
+      items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model, populate)))
     }
   }
 
@@ -58,7 +69,7 @@ export class EntityController<T extends EntityModel> {
     }
     this.validateActionPermissions(req, model, 'get')
     return {
-      item: await this.prepareModelResponse(req, model)
+      item: await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
     }
   }
 
@@ -142,7 +153,7 @@ export class EntityController<T extends EntityModel> {
     return model
   }
 
-  protected async prepareModelResponse (req: Request, model: T): Promise<T> {
+  protected async prepareModelResponse (req: Request, model: T, populate: { [P in keyof T]?: any } = {}): Promise<T> {
     const item: { [key in keyof T]: any } = {} as T
     const attributes = Object.entries(this.config.attributes)
     if (!this.config.attributes._id) {
@@ -153,10 +164,42 @@ export class EntityController<T extends EntityModel> {
     }
     for (const [key, attribute] of attributes) {
       if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
-        item[key as keyof T] = model[key as keyof T]
+        item[key as keyof T] = await this.prepareModelAttributeResponse(req, model, key as keyof T, attribute!, populate)
       }
     }
     return item
+  }
+
+  protected async prepareModelAttributeResponse (
+    req: Request,
+    model: T,
+    key: keyof T,
+    attribute: ModelAttribute,
+    populate: { [P in keyof T]?: any }
+  ): Promise<any> {
+    if (key === '_id' || !['ref', 'user'].includes(attribute!.type)) {
+      return model[key]
+    }
+    if (!populate[key] || !model[key]) {
+      return model[key] ? { _id: model[key] } : undefined
+    }
+    const populateEntityName = attribute!.type === 'ref' ? (attribute as RefModelAttribute).entity : 'users'
+    const populatedItem = await Commun.getEntityDao(populateEntityName).findOneById('' + model[key as keyof T])
+    if (populatedItem) {
+      return await Commun.getEntityController(populateEntityName).prepareModelResponse(req, populatedItem, {})
+    }
+    return { _id: model[key] }
+  }
+
+  protected getPopulateFromRequest (req: Request) {
+    const populate: { [P in keyof T]?: any } = {}
+    if (req.query.populate) {
+      const populateKeys = req.query.populate.split(';')
+      for (const key of populateKeys) {
+        populate[key as keyof T] = true
+      }
+    }
+    return populate
   }
 
   protected validateActionPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions) {
