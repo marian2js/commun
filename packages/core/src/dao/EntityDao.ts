@@ -81,6 +81,13 @@ export class EntityDao<T extends EntityModel> {
         await this.collection.createIndex(key, { sparse: !attribute!.required })
       }
     }
+    if (config.indexes) {
+      for (const index of config.indexes) {
+        const indexOptions = { ...index }
+        delete indexOptions.keys
+        await this.collection.createIndex(index.keys, indexOptions)
+      }
+    }
   }
 
   protected get collection () {

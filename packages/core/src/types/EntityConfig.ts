@@ -11,6 +11,17 @@ export interface EntityConfig<MODEL extends EntityModel> {
   attributes: {
     [key in keyof MODEL]: ModelAttribute
   }
+  indexes?: {
+    keys: {
+      [key in keyof MODEL]?: 1 | -1
+    }
+    unique?: boolean
+    sparse?: boolean
+    v?: number
+    expireAfterSeconds?: number
+    name?: string
+    default_language?: string
+  }[]
   beforeGet?: EntityHook[]
   afterGet?: EntityHook[]
   beforeCreate?: EntityHook[]

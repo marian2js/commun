@@ -177,5 +177,34 @@ describe('EntityDao', () => {
       expect(index.sparse).toBe(false)
       expect(index.unique).toBeFalsy()
     })
+
+    it('should create generic indexes from config', async () => {
+      await dao.createIndexes({
+        entityName,
+        collectionName,
+        attributes: {
+          name: {
+            type: 'string',
+          }
+        },
+        indexes: [{
+          keys: {
+            name: -1
+          },
+          name: 'new_index',
+          unique: true,
+          sparse: true,
+          v: 1,
+          expireAfterSeconds: 45,
+          default_language: 'en'
+        }]
+      })
+      const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'new_index')
+      expect(index.unique).toBe(true)
+      expect(index.sparse).toBe(true)
+      expect(index.v).toBe(1)
+      expect(index.expireAfterSeconds).toBe(45)
+      expect(index.default_language).toBe('en')
+    })
   })
 })
