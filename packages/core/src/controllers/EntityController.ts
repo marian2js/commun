@@ -89,7 +89,7 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async update (req: Request, res: Response): Promise<{ result: boolean }> {
+  async update (req: Request, res: Response): Promise<{ item: T }> {
     const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
@@ -97,8 +97,10 @@ export class EntityController<T extends EntityModel> {
     this.validateActionPermissions(req, model, 'update')
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
-      const result = await this.dao.updateOne(model._id!, modelData)
-      return { result }
+      const item = await this.dao.updateOne(model._id!, modelData)
+      return {
+        item: await this.prepareModelResponse(req, item, this.getPopulateFromRequest(req))
+      }
     } catch (e) {
       if (e.code === 11000) {
         throw new ClientError('Duplicated key', 400)

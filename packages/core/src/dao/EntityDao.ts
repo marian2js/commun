@@ -45,10 +45,12 @@ export class EntityDao<T extends EntityModel> {
     return item
   }
 
-  async updateOne (id: string, data: { [key in keyof T]?: any }): Promise<boolean> {
+  async updateOne (id: string, data: { [key in keyof T]?: any }): Promise<T> {
     const res = await this.collection
-      .updateOne({ _id: new ObjectId(id) }, { $set: { ...data, updatedAt: new Date() } })
-    return res && res.result && !!res.result.ok
+      .findOneAndUpdate({ _id: new ObjectId(id) }, {
+        $set: { ...data, updatedAt: new Date() }
+      }, { returnOriginal: false })
+    return res.value
   }
 
   async deleteOne (id: string): Promise<boolean> {
