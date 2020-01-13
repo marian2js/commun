@@ -10,6 +10,7 @@ describe('configVariables', () => {
 
   interface TestEntity extends EntityModel {
     name?: string
+    num?: number
     user?: ObjectId
     ref?: ObjectId
   }
@@ -42,6 +43,9 @@ describe('configVariables', () => {
         attributes: {
           name: {
             type: 'string'
+          },
+          num: {
+            type: 'number'
           },
           user: {
             type: 'user',
@@ -99,6 +103,30 @@ describe('configVariables', () => {
         .toBe('item2 --> item1')
       expect(await parseConfigString<TestEntity>('{ this.name } --> { this.ref.name }', entityName, item2))
         .toBe('item2 --> item1')
+    })
+
+    describe('Expressions', () => {
+      it('should support expressions', async () => {
+        registerTestEntity()
+        expect(await parseConfigString<TestEntity>('{this.num+2}', entityName, { num: 3 })).toBe(5)
+        expect(await parseConfigString<TestEntity>('{this.num + 2}', entityName, { num: 3 })).toBe(5)
+        expect(await parseConfigString<TestEntity>('{2 + this.num}', entityName, { num: 3 })).toBe(5)
+        expect(await parseConfigString<TestEntity>('{2-this.num}', entityName, { num: 3 })).toBe(-1)
+        expect(await parseConfigString<TestEntity>('{this.num * 2 - this.num}', entityName, { num: 3 })).toBe(3)
+        expect(await parseConfigString<TestEntity>('{this.num * (2 - this.num)}', entityName, { num: 3 })).toBe(-3)
+        expect(await parseConfigString<TestEntity>('{this.num / 3}', entityName, { num: 3 })).toBe(1)
+        expect(await parseConfigString<TestEntity>('{5 ^ 2 - 5}', entityName, { num: 3 })).toBe(20)
+        expect(await parseConfigString<TestEntity>('{-this.num}', entityName, { num: 3 })).toBe(-3)
+      })
+
+      it('should throw an error if the expression is not valid', async () => {
+        await expect(parseConfigString<TestEntity>('{this.num +}', entityName, { num: 3 }))
+          .rejects.toThrow()
+        await expect(parseConfigString<TestEntity>('{* this.num}', entityName, { num: 3 }))
+          .rejects.toThrow()
+        await expect(parseConfigString<TestEntity>('{this.num this.num}', entityName, { num: 3 }))
+          .rejects.toThrow()
+      })
     })
   })
 

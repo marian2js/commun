@@ -2,18 +2,19 @@ import { Commun } from '../Commun'
 import { ServerError } from '../errors'
 import { EntityModel, ModelAttribute, RefModelAttribute } from '../types'
 import { parseModelAttribute } from './modelAttributes'
+import * as mathjs from 'mathjs'
 
 export async function parseConfigString<T extends EntityModel> (str: string, entityName: string, model: T, userId?: string) {
-  const variables = str.match(/{([^}]+)}/g)
-  if (!variables) {
+  const expressions = str.match(/{([^}]+)}/g)
+  if (!expressions) {
     return str
   }
-  if (variables.length === 1 && /^{.*}$/.test(str.trim())) {
-    return await getConfigVariableValue(variables[0].trim().slice(1, -1).trim(), entityName, model, userId)
+  if (expressions.length === 1 && /^{.*}$/.test(str.trim())) {
+    return await getConfigExpressionValue(expressions[0].trim().slice(1, -1).trim(), entityName, model, userId)
   }
-  for (const variable of variables) {
-    const value = await getConfigVariableValue(variable.trim().slice(1, -1).trim(), entityName, model, userId)
-    str = str.replace(variable, value ? '' + value : '')
+  for (const expression of expressions) {
+    const value = await getConfigExpressionValue(expression.trim().slice(1, -1).trim(), entityName, model, userId)
+    str = str.replace(expression, value ? '' + value : '')
   }
   return str
 }
@@ -67,6 +68,23 @@ export function getVariableData<T extends EntityModel> (variable: string, entity
     variableKey,
     variableValue,
   }
+}
+
+async function getConfigExpressionValue<T extends EntityModel> (expression: string, entityName: string, model: T, userId?: string) {
+  const variables = expression.match(/([a-zA-Z][\w.]+)/g)
+
+  if (variables && variables[0] === expression) {
+    return await getConfigVariableValue(expression, entityName, model, userId)
+  }
+
+  if (variables) {
+    for (const variable of variables) {
+      const value = await getConfigVariableValue(variable, entityName, model, userId)
+      expression = expression.replace(variable, value ? '' + value : '')
+    }
+  }
+
+  return mathjs.evaluate(expression)
 }
 
 async function getConfigVariableValue<T extends EntityModel> (variable: string, entityName: string, model: T, userId?: string) {

@@ -26,6 +26,7 @@
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
     "lusca": "^1.6.1",
+    "mathjs": "^6.5.0",
     "mongodb": "^3.4.1",
     "morgan": "^1.9.1",
     "string": "^3.3.3"
@@ -38,6 +39,7 @@
     "@types/errorhandler": "^0.0.32",
     "@types/express": "^4.17.2",
     "@types/lusca": "^1.6.1",
+    "@types/mathjs": "^6.0.3",
     "@types/mongodb": "^3.3.14",
     "@types/morgan": "^1.7.37",
     "@types/string": "^0.0.29",
