@@ -50,7 +50,7 @@ export function getVariableData<T extends EntityModel> (variable: string, entity
   if (variableParts.length === 3 && ['user', 'ref'].includes(attributeEntries[1].type)) {
     const id = model[variableParts[1] as keyof T]
     variableId = id ? '' + id : undefined
-    variableEntity = (attributeEntries[1] as RefModelAttribute).entity
+    variableEntity = attributeEntries[1].type === 'user' ? 'users' : (attributeEntries[1] as RefModelAttribute).entity
     variableKey = variableParts[2]
     variableAttribute = Commun.getEntityConfig(variableEntity).attributes[variableKey as keyof EntityModel] as ModelAttribute
   } else {

@@ -15,7 +15,7 @@ describe('configVariables', () => {
     ref?: ObjectId
   }
 
-  const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
+  const getDao = (entity: string = entityName) => Commun.getEntityDao<TestEntity>(entity)
 
   beforeAll(async () => {
     await Commun.connectDb()
@@ -79,6 +79,13 @@ describe('configVariables', () => {
       const userId = new ObjectId()
       expect(await parseConfigString<TestEntity>('{user._id}', entityName, {}, userId.toString())).toEqual(userId)
       expect(await parseConfigString<TestEntity>(' { user._id } ', entityName, {}, userId.toString())).toEqual(userId)
+    })
+
+    it('should return an attribute from the user', async () => {
+      registerTestEntity('users')
+      const user = await getDao('users').insertOne({ name: 'test-user' })
+      const item = await getDao().insertOne({ user: new ObjectId(user._id) })
+      expect(await parseConfigString<TestEntity>('{this.user.name}', entityName, item)).toEqual('test-user')
     })
 
     it('should return undefined if the value does not exist', async () => {
