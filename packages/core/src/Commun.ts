@@ -5,7 +5,7 @@ import lusca from 'lusca'
 import morgan from 'morgan'
 import { Entity, EntityConfig, EntityModel, RegisterEntityOptions } from './types'
 import errorHandler from 'errorhandler'
-import { MongoClient } from 'mongodb'
+import { MongoClient, MongoClientCommonOption } from 'mongodb'
 import { MongoDbConnection } from './dao/MongoDbConnection'
 import { EntityController } from './controllers/EntityController'
 import { EntityDao } from './dao/EntityDao'
@@ -13,12 +13,25 @@ import { EntityDao } from './dao/EntityDao'
 const entities: { [key: string]: Entity<EntityModel> } = {}
 let app: Express
 
+type CommunOptions = {
+  port?: number
+  endpoint?: string
+  appName?: string
+  mongoDB: {
+    uri: string
+    dbName: string
+    options?: MongoClientCommonOption
+  }
+}
+
+let communOptions: CommunOptions
+
 export const Commun = {
   createExpressApp (): Express {
     app = express()
 
     // Express configuration
-    app.set('port', process.env.PORT || 3000)
+    app.set('port', communOptions.port || process.env.PORT || 3000)
     app.use(compression())
     app.use(bodyParser.json())
     app.use(bodyParser.urlencoded({ extended: true }))
@@ -48,12 +61,12 @@ export const Commun = {
   },
 
   async connectDb () {
-    const client = new MongoClient(process.env.MONGO_URL!, {
+    const client = new MongoClient(communOptions.mongoDB.uri, {
       useUnifiedTopology: true
     })
     await client.connect()
     MongoDbConnection.setClient(client)
-    MongoDbConnection.setDb(client.db('commun')) // TODO allow to configure db name
+    MongoDbConnection.setDb(client.db(communOptions.mongoDB.dbName, communOptions.mongoDB.options || {}))
     console.log('Connected to MongoDB')
     return MongoDbConnection
   },
@@ -68,8 +81,9 @@ export const Commun = {
     await MongoDbConnection.getClient().close()
   },
 
-  async startServer (expressApp?: Express) {
-    app = expressApp || app || Commun.createExpressApp()
+  async startServer (options: CommunOptions, expressApp?: Express) {
+    this.setOptions(options)
+    app = expressApp || app || this.createExpressApp()
     for (const entity of Object.values(entities)) {
       if (entity.onExpressAppCreated) {
         await entity.onExpressAppCreated(app)
@@ -134,5 +148,13 @@ export const Commun = {
 
   getEntityRouter<MODEL extends EntityModel> (entityName: string): express.Router | undefined {
     return this.getEntity<MODEL>(entityName).router
+  },
+
+  getOptions () {
+    return communOptions
+  },
+
+  setOptions (options: CommunOptions) {
+    communOptions = options
   },
 }
