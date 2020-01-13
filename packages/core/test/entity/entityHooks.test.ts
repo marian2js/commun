@@ -60,6 +60,42 @@ describe('entityHooks', () => {
       await Commun.closeDb()
     })
 
+    describe('Hook Conditions', () => {
+      it('should run the hook if the condition is true', async () => {
+        registerTestEntity('afterUpdate', [{
+          action: 'increment',
+          value: 3,
+          target: 'this.value',
+          condition: {
+            left: '{this.value}',
+            right: 2,
+            comparator: '=',
+          }
+        }])
+        const item = await getDao().insertOne({ value: 2 })
+        await entityHooks.run(entityName, 'afterUpdate', item)
+        const updatedItem = await getDao().findOneById(item._id!)
+        expect(updatedItem!.value).toBe(5)
+      })
+
+      it('should not run the hook if the condition is false', async () => {
+        registerTestEntity('afterUpdate', [{
+          action: 'increment',
+          value: 3,
+          target: 'this.value',
+          condition: {
+            left: '{this.value}',
+            right: 2,
+            comparator: '!=',
+          }
+        }])
+        const item = await getDao().insertOne({ value: 2 })
+        await entityHooks.run(entityName, 'afterUpdate', item)
+        const updatedItem = await getDao().findOneById(item._id!)
+        expect(updatedItem!.value).toBe(2)
+      })
+    })
+
     describe('Increment', () => {
       it('should increment the value of a local attribute', async () => {
         registerTestEntity('afterUpdate', [{

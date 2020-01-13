@@ -1,4 +1,11 @@
-import { EntityHook, EntityLifecycle, EntityModel, IncrementEntityHook, SetEntityHook } from '../types'
+import {
+  EntityHook,
+  EntityHookCondition,
+  EntityLifecycle,
+  EntityModel,
+  IncrementEntityHook,
+  SetEntityHook
+} from '../types'
 import { Commun } from '../Commun'
 import { assertNever } from '../utils'
 import { parseModelAttribute } from './modelAttributes'
@@ -18,6 +25,10 @@ export const entityHooks = {
 }
 
 async function runEntityHook<T extends EntityModel> (entityName: string, hook: EntityHook, model: T, userId?: string) {
+  if (hook.condition && !(await validHookCondition(entityName, hook.condition, model, userId))) {
+    return
+  }
+
   switch (hook.action) {
     case 'increment':
       return runIncrementEntityHook(entityName, hook, model, userId)
@@ -25,6 +36,30 @@ async function runEntityHook<T extends EntityModel> (entityName: string, hook: E
       return runSetEntityHook(entityName, hook, model, userId)
     default:
       assertNever(hook)
+  }
+}
+
+async function validHookCondition<T extends EntityModel> (entityName: string, condition: EntityHookCondition, model: T, userId?: string) {
+  const leftValue = typeof condition.left === 'string' ?
+    await parseConfigString(condition.left, entityName, model, userId) : condition.left
+  const rightValue = typeof condition.right === 'string' ?
+    await parseConfigString(condition.right, entityName, model, userId) : condition.right
+
+  switch (condition.comparator) {
+    case '=':
+      return leftValue === rightValue
+    case '>':
+      return leftValue > rightValue
+    case '<':
+      return leftValue < rightValue
+    case '>=':
+      return leftValue >= rightValue
+    case '<=':
+      return leftValue <= rightValue
+    case '!=':
+      return leftValue !== rightValue
+    default:
+      assertNever(condition.comparator)
   }
 }
 
