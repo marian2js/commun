@@ -2,8 +2,8 @@ import { Commun, EntityHook, EntityLifecycle, EntityModel } from '../../src'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 import { entityHooks } from '../../src/entity/entityHooks'
 
-describe('hooks', () => {
-  describe('entityHooks.run', () => {
+describe('entityHooks', () => {
+  describe('run', () => {
     const entityName = 'entityHooks'
     const collectionName = 'entityHooks'
 
@@ -167,6 +167,5 @@ describe('hooks', () => {
         expect(updatedItem!.value).toBe(3)
       })
     })
-
   })
 })

@@ -1,4 +1,5 @@
 import { EntityActionPermissions } from './EntityPermission'
+import { JsonPrimitive } from './JsonPrimitive'
 
 type BaseModelAttribute = {
   required?: boolean
@@ -21,8 +22,13 @@ export type EmailModelAttribute = BaseModelAttribute & {
 
 export type EnumModelAttribute = BaseModelAttribute & {
   type: 'enum'
-  values: (string | number | boolean)[]
-  default?: string | number | boolean
+  values: JsonPrimitive[]
+  default?: JsonPrimitive
+}
+
+export type IdModelAttribute = BaseModelAttribute & {
+  type: 'id'
+  permissions?: EntityActionPermissions
 }
 
 export type NumberModelAttribute = BaseModelAttribute & {
@@ -71,6 +77,7 @@ export type ModelAttribute =
   BooleanModelAttribute |
   EmailModelAttribute |
   EnumModelAttribute |
+  IdModelAttribute |
   NumberModelAttribute |
   RefModelAttribute |
   SlugModelAttribute |

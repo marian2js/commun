@@ -12,6 +12,7 @@ import {
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
+import { getJoinAttribute } from '../entity/joinAttributes'
 
 export class EntityController<T extends EntityModel> {
 
@@ -69,9 +70,9 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     this.validateActionPermissions(req, model, 'get')
-    await entityHooks.run(this.entityName, 'beforeGet', model)
+    await entityHooks.run(this.entityName, 'beforeGet', model, req.auth?._id)
     const item = await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
-    await entityHooks.run(this.entityName, 'afterGet', model)
+    await entityHooks.run(this.entityName, 'afterGet', model, req.auth?._id)
     return {
       item
     }
@@ -80,12 +81,12 @@ export class EntityController<T extends EntityModel> {
   async create (req: Request, res: Response): Promise<{ item: T }> {
     this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
-    await entityHooks.run(this.entityName, 'beforeCreate', model)
+    await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?._id)
     try {
       const insertedModel = await this.dao.insertOne(model)
-      await entityHooks.run(this.entityName, 'afterCreate', insertedModel)
+      await entityHooks.run(this.entityName, 'afterCreate', insertedModel, req.auth?._id)
       return {
-        item: await this.prepareModelResponse(req, insertedModel)
+        item: await this.prepareModelResponse(req, insertedModel, this.getPopulateFromRequest(req))
       }
     } catch (e) {
       if (e.code === 11000) {
@@ -101,11 +102,11 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     this.validateActionPermissions(req, model, 'update')
-    await entityHooks.run(this.entityName, 'beforeUpdate', model)
+    await entityHooks.run(this.entityName, 'beforeUpdate', model, req.auth?._id)
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
       const updatedItem = await this.dao.updateOne(model._id!, modelData)
-      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem)
+      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem, req.auth?._id)
       return {
         item: await this.prepareModelResponse(req, updatedItem, this.getPopulateFromRequest(req))
       }
@@ -123,9 +124,9 @@ export class EntityController<T extends EntityModel> {
       return { result: true }
     }
     this.validateActionPermissions(req, model, 'delete')
-    await entityHooks.run(this.entityName, 'beforeDelete', model)
+    await entityHooks.run(this.entityName, 'beforeDelete', model, req.auth?._id)
     const result = await this.dao.deleteOne(model._id!)
-    await entityHooks.run(this.entityName, 'afterDelete', model)
+    await entityHooks.run(this.entityName, 'afterDelete', model, req.auth?._id)
     return { result }
   }
 
@@ -170,17 +171,29 @@ export class EntityController<T extends EntityModel> {
   protected async prepareModelResponse (req: Request, model: T, populate: { [P in keyof T]?: any } = {}): Promise<T> {
     const item: { [key in keyof T]: any } = {} as T
     const attributes = Object.entries(this.config.attributes)
-    if (!this.config.attributes._id) {
-      attributes.unshift(['_id', {
-        type: 'string',
-        permissions: { get: this.config.permissions?.get }
-      }])
-    }
+
+    // Prepare attributes
     for (const [key, attribute] of attributes) {
       if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
         item[key as keyof T] = await this.prepareModelAttributeResponse(req, model, key as keyof T, attribute!, populate)
       }
     }
+
+    // Prepare joinAttributes
+    for (const [key, joinAttribute] of Object.entries(this.config.joinAttributes || {})) {
+      if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...joinAttribute.permissions })) {
+        const joinedAttribute = await getJoinAttribute(joinAttribute, model, req.auth?._id)
+        if (joinedAttribute) {
+          const joinAttrController = Commun.getEntityController(joinAttribute.entity)
+          if (Array.isArray(joinedAttribute)) {
+            item[key as keyof T] = await Promise.all(joinedAttribute.map(attr => joinAttrController.prepareModelResponse(req, attr)))
+          } else {
+            item[key as keyof T] = await joinAttrController.prepareModelResponse(req, joinedAttribute)
+          }
+        }
+      }
+    }
+
     return item
   }
 

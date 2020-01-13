@@ -98,6 +98,12 @@ export const Commun = {
     if (!entity.config.collectionName) {
       throw new Error('Config must include "collectionName"')
     }
+    if (!entity.config.attributes._id) {
+      entity.config.attributes._id = {
+        type: 'id',
+        permissions: { get: entity.config.permissions?.get }
+      }
+    }
     entities[entity.config.entityName] = {
       ...entity,
       dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),

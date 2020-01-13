@@ -3,7 +3,7 @@ import { SecurityUtils } from '../../src/utils'
 import { ObjectId } from 'mongodb'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 
-describe('attributes', () => {
+describe('modelAttributes', () => {
   describe('Boolean', () => {
     it('should return true for a truly value', async () => {
       expect(await getModelAttribute({ type: 'boolean' }, 'key', { key: 'true' })).toBe(true)

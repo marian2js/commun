@@ -2,6 +2,7 @@ import { EntityModel } from './EntityModel'
 import { EntityActionPermissions } from './EntityPermission'
 import { ModelAttribute } from './ModelAttribute'
 import { EntityHook } from './EntityHooks'
+import { JoinAttribute } from './JoinAttributes'
 
 export interface EntityConfig<MODEL extends EntityModel> {
   entityName: string
@@ -10,6 +11,9 @@ export interface EntityConfig<MODEL extends EntityModel> {
   permissions?: EntityActionPermissions
   attributes: {
     [key in keyof MODEL]: ModelAttribute
+  }
+  joinAttributes?: {
+    [key: string]: JoinAttribute
   }
   indexes?: {
     keys: {

@@ -34,6 +34,8 @@ export async function getModelAttribute<T> (
       return getEmailModelAttribute(attribute, key, data[key], defaultValue)
     case 'enum':
       return getEnumModelAttribute(attribute, key, data[key], defaultValue)
+    case 'id':
+      return
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key], defaultValue)
     case 'ref':
@@ -200,6 +202,7 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return '' + value
     case 'number':
       return Number(value)
+    case 'id':
     case 'ref':
     case 'user':
       return new ObjectId(value)

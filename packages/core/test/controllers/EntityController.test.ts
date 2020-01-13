@@ -4,6 +4,7 @@ import { EntityActionPermissions, ModelAttribute } from '../../src/types'
 import { dbHelpers } from '../test-helpers/dbHelpers'
 import { ObjectId } from 'mongodb'
 import { entityHooks } from '../../src/entity/entityHooks'
+import { JoinAttribute } from '../../src/types/JoinAttributes'
 
 describe('EntityController', () => {
   const entityName = 'items'
@@ -19,32 +20,34 @@ describe('EntityController', () => {
 
   const registerTestEntity = async (
     permissions: EntityActionPermissions,
-    attributes: { [key in keyof TestEntity]: ModelAttribute } = {
-      name: {
-        type: 'string'
-      },
-      num: {
-        type: 'number'
-      },
-      user: {
-        type: 'user',
-        permissions: {
-          create: 'system',
-          update: 'system'
-        }
-      },
-      entityRef: {
-        type: 'ref',
-        entity: entityName,
-      }
-    }
+    attributes?: { [key in keyof TestEntity]: ModelAttribute } | null,
+    joinAttributes: { [key: string]: JoinAttribute } = {},
   ) => {
     Commun.registerEntity<TestEntity>({
       config: {
         entityName,
         collectionName,
         permissions,
-        attributes,
+        attributes: attributes || {
+          name: {
+            type: 'string'
+          },
+          num: {
+            type: 'number'
+          },
+          user: {
+            type: 'user',
+            permissions: {
+              create: 'system',
+              update: 'system'
+            }
+          },
+          entityRef: {
+            type: 'ref',
+            entity: entityName,
+          }
+        },
+        joinAttributes,
       }
     })
     await Commun.createDbIndexes()
@@ -294,8 +297,54 @@ describe('EntityController', () => {
         await registerTestEntity({ get: 'anyone' })
         const item = await getDao().insertOne({ name: 'item' })
         await request().get(`${baseUrl}/${item._id}`).expect(200)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item, undefined)
+      })
+    })
+
+    describe('Join Attributes', () => {
+      it('should return join attributes', async () => {
+        await registerTestEntity({ get: 'anyone' }, {
+          name: {
+            type: 'string'
+          },
+          num: {
+            type: 'number',
+            permissions: { get: 'system' }
+          },
+          entityRef: {
+            type: 'ref',
+            entity: entityName,
+          }
+        }, {
+          single: {
+            type: 'findOne',
+            entity: entityName,
+            query: {
+              name: '{this.entityRef.name}'
+            }
+          },
+          multiple: {
+            type: 'findMany',
+            entity: entityName,
+            query: {
+              name: '{this.entityRef.name}'
+            }
+          }
+        })
+        const target1 = await getDao().insertOne({ name: 'target-item', num: 1 })
+        const target2 = await getDao().insertOne({ name: 'target-item', num: 2 })
+        const item = await getDao().insertOne({ name: 'item', entityRef: new ObjectId(target1._id) })
+        const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+        expect(res.body.item.single._id).toBe(target1._id)
+        expect(res.body.item.single.name).toBe('target-item')
+        expect(res.body.item.single.num).toBeUndefined()
+        expect(res.body.item.multiple[0]._id).toBe(target1._id)
+        expect(res.body.item.multiple[0].name).toBe('target-item')
+        expect(res.body.item.multiple[0].num).toBeUndefined()
+        expect(res.body.item.multiple[1]._id).toBe(target2._id)
+        expect(res.body.item.multiple[1].name).toBe('target-item')
+        expect(res.body.item.multiple[1].num).toBeUndefined()
       })
     })
 
@@ -420,11 +469,11 @@ describe('EntityController', () => {
         const item = await getDao().findOne({ name: 'item' })
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeCreate', expect.objectContaining({
           name: 'item'
-        }))
+        }), undefined)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterCreate', expect.objectContaining({
           _id: item!._id!.toString(),
           name: 'item'
-        }))
+        }), undefined)
       })
     })
 
@@ -546,8 +595,8 @@ describe('EntityController', () => {
           .send({ name: 'updated' })
           .expect(200)
         const updatedItem = await getDao().findOneById(item._id!)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem, undefined)
       })
     })
 
@@ -677,8 +726,8 @@ describe('EntityController', () => {
         await request().delete(`${baseUrl}/${item._id}`)
           .expect(200)
         const updatedItem = await getDao().findOneById(item._id!)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item, undefined)
       })
     })
 
