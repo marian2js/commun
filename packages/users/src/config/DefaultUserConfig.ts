@@ -6,6 +6,9 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
   collectionName: 'users',
   apiKey: 'username',
   attributes: {
+    _id: {
+      type: 'user'
+    },
     username: {
       type: 'string',
       required: true,
