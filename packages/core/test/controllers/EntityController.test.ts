@@ -28,7 +28,7 @@ describe('EntityController', () => {
         entityName,
         collectionName,
         permissions,
-        attributes: attributes || {
+        attributes: {
           name: {
             type: 'string'
           },
@@ -45,7 +45,8 @@ describe('EntityController', () => {
           entityRef: {
             type: 'ref',
             entity: entityName,
-          }
+          },
+          ...(attributes || {})
         },
         joinAttributes,
       }
@@ -289,6 +290,17 @@ describe('EntityController', () => {
       const item = await getDao().insertOne({ name: 'item' })
       const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
       expect(res.body.item.name).toBe('item')
+    })
+
+    it('should return the default value if no value is given', async () => {
+      await registerTestEntity({ get: 'anyone' }, { name: { type: 'string', default: 'default-name' } })
+      const item = await getDao().insertOne({ name: 'item' })
+      const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+      expect(res.body.item.name).toBe('item')
+
+      const item2 = await getDao().insertOne({ name: null! })
+      const res2 = await request().get(`${baseUrl}/${item2._id}`).expect(200)
+      expect(res2.body.item.name).toBe('default-name')
     })
 
     describe('Hooks', () => {

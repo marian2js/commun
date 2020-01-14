@@ -3,6 +3,7 @@ import {
   Commun,
   DaoFilter,
   EntityModel,
+  getJoinAttribute,
   getModelAttribute,
   ModelAttribute,
   parseModelAttribute,
@@ -12,7 +13,6 @@ import {
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
-import { getJoinAttribute } from '../entity/joinAttributes'
 
 export class EntityController<T extends EntityModel> {
 
@@ -205,7 +205,7 @@ export class EntityController<T extends EntityModel> {
     populate: { [P in keyof T]?: any }
   ): Promise<any> {
     if (key === '_id' || !['ref', 'user'].includes(attribute!.type)) {
-      return model[key]
+      return model[key] === undefined || model[key] === null ? attribute.default : model[key]
     }
     if (!populate[key] || !model[key]) {
       return model[key] ? { _id: model[key] } : undefined
