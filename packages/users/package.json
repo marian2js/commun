@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@commun/core": "0.0.0",
+    "@commun/emails": "0.0.0",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "jsonwebtoken": "^8.5.1",

@@ -11,15 +11,19 @@ import {
 import { BaseUserModel, UserModule } from '..'
 import { AccessToken, UserTokens } from '../types/UserTokens'
 import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
+import { EmailClient } from '@commun/emails'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
   async create (req: Request, res: Response): Promise<{ item: MODEL }> {
     const { item } = await super.create(req, res)
     const plainVerificationCode = await SecurityUtils.generateRandomString(48)
     const verificationCode = await SecurityUtils.hashWithBcrypt(plainVerificationCode, 12)
-    await this.dao.updateOne(item._id!, { verificationCode, verified: false })
+    const user = await this.dao.updateOne(item._id!, { verificationCode, verified: false })
 
-    // TODO send verification email
+    EmailClient.sendEmail('emailVerification', user.email, {
+      verificationCode: plainVerificationCode,
+      ...item
+    })
 
     return { item }
   }
@@ -65,7 +69,8 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     if (await SecurityUtils.bcryptHashIsValid(req.body.code, user.verificationCode)) {
       await this.dao.updateOne(user._id!, { verified: true, verificationCode: undefined })
 
-      // TODO send welcome email
+      const userData = await this.prepareModelResponse(req, user, {})
+      EmailClient.sendEmail('welcomeEmail', user.email, userData)
 
       res.send({ result: true })
     } else {
@@ -89,7 +94,11 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     })
     await this.dao.updateOne(user._id!, { resetPasswordCodeHash })
 
-    // TODO send email with plainResetPasswordCode
+    const userData = await this.prepareModelResponse(req, user, {})
+    EmailClient.sendEmail('resetPassword', user.email, {
+      resetPasswordCode: plainResetPasswordCode,
+      ...userData,
+    })
 
     return { result: true }
   }

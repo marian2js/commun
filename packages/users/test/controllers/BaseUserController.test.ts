@@ -1,6 +1,7 @@
 import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { request } from '../test-helpers/requestHelpers'
+import { EmailClient } from '@commun/emails'
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never
 
@@ -37,8 +38,9 @@ describe('BaseUserController', () => {
 
   afterEach(async () => {
     try {
-      dbConnection.getDb().collection(collectionName).drop()
+      await dbConnection.getDb().collection(collectionName).drop()
     } catch (e) {}
+    jest.clearAllMocks()
   })
 
   afterAll(async () => {
@@ -71,7 +73,7 @@ describe('BaseUserController', () => {
         username: 'user',
         password: 'password',
       }
-      const res = await request().post(`${baseUrl}/password`)
+      await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
     })
@@ -82,7 +84,7 @@ describe('BaseUserController', () => {
         email: 'user@example.org',
         password: 'password',
       }
-      const res = await request().post(`${baseUrl}/password`)
+      await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
     })
@@ -96,6 +98,26 @@ describe('BaseUserController', () => {
       await request().post(`${baseUrl}/password`)
         .send(userData)
         .expect(400)
+    })
+
+    it('should send a verification email', async () => {
+      jest.spyOn(EmailClient, 'sendEmail')
+      SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('plain-code'))
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      const userData = {
+        username: 'user',
+        email: 'user@example.org',
+        password: 'password',
+      }
+      const res = await request().post(`${baseUrl}/password`)
+        .send(userData)
+        .expect(200)
+      expect(EmailClient.sendEmail).toHaveBeenCalledWith('emailVerification', 'user@example.org', {
+        _id: res.body.item._id,
+        username: 'user',
+        verificationCode: 'plain-code',
+      })
     })
   })
 
@@ -177,78 +199,117 @@ describe('BaseUserController', () => {
   })
 
   describe('verify - [POST] /auth/verify', () => {
-    let userData: BaseUserModel
+    let fakeUser: BaseUserModel
 
     beforeEach(async () => {
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
       await registerUserEntity({ get: 'anyone', create: 'anyone' })
-      userData = {
+      const userData = {
         username: 'user',
         email: 'user@example.org',
         password: 'password',
         verified: false,
         verificationCode: 'hashed(CODE)'
       }
-      await getDao().insertOne(userData)
+      fakeUser = await getDao().insertOne(userData)
     })
 
     it('should verify an user given a valid verification code', async () => {
       await request().post(`${baseUrl}/verify`)
-        .send({ code: 'CODE', username: userData.username })
+        .send({ code: 'CODE', username: fakeUser.username })
         .expect(200)
-      const user = (await getDao().findOne({ username: userData.username }))!
+      const user = (await getDao().findOne({ username: fakeUser.username }))!
       expect(user.verified).toBe(true)
       expect(user.verificationCode).toBeFalsy()
     })
 
     it('should return an error if the verification code is invalid', async () => {
       await request().post(`${baseUrl}/verify`)
-        .send({ code: 'wrong-code', username: userData.username })
+        .send({ code: 'wrong-code', username: fakeUser.username })
         .expect(400)
-      const user = (await getDao().findOne({ username: userData.username }))!
+      const user = (await getDao().findOne({ username: fakeUser.username }))!
       expect(user.verified).toBe(false)
       expect(user.verificationCode).toBe('hashed(CODE)')
+    })
+
+    it('should send a welcome email', async () => {
+      jest.spyOn(EmailClient, 'sendEmail')
+
+      await request().post(`${baseUrl}/verify`)
+        .send({ code: 'CODE', username: fakeUser.username })
+        .expect(200)
+
+      expect(EmailClient.sendEmail).toHaveBeenCalledWith('welcomeEmail', 'user@example.org', {
+        _id: fakeUser._id,
+        username: 'user',
+      })
     })
   })
 
   describe('reset password - [POST] /auth/password/reset', () => {
-    let userData: BaseUserModel
+    let fakeUser: BaseUserModel
 
     beforeEach(async () => {
       SecurityUtils.hashWithBcrypt = jest.fn((str, saltRounds) => Promise.resolve(`hashed(${str}:${saltRounds})`))
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
       await registerUserEntity({ get: 'anyone', create: 'anyone' })
-      userData = {
+      const userData = {
         username: 'user',
         email: 'user@example.org',
         password: 'old-password',
         verified: true,
         resetPasswordCodeHash: 'hashed(RESET_CODE)'
       }
-      await getDao().insertOne(userData)
+      fakeUser = await getDao().insertOne(userData)
     })
 
     it('should set the new password given a valid reset code', async () => {
       await request().post(`${baseUrl}/password/reset`)
-        .send({ username: userData.username, code: 'RESET_CODE', password: 'new-password' })
+        .send({ username: fakeUser.username, code: 'RESET_CODE', password: 'new-password' })
         .expect(200)
-      const user = await getDao().findOne({ username: userData.username })
+      const user = await getDao().findOne({ username: fakeUser.username })
       expect(user!.password).toBe('hashed(new-password:12)')
     })
 
     it('should return an error if the reset code is invalid', async () => {
       await request().post(`${baseUrl}/password/reset`)
-        .send({ username: userData.username, code: 'INVALID_CODE' })
+        .send({ username: fakeUser.username, code: 'INVALID_CODE' })
         .expect(401)
-      const user = await getDao().findOne({ username: userData.username })
+      const user = await getDao().findOne({ username: fakeUser.username })
       expect(user!.password).toBe('old-password')
+    })
+  })
+
+  describe('forgot password - [POST] /auth/password/forgot', () => {
+    it('should send a reset password email', async () => {
+      jest.spyOn(EmailClient, 'sendEmail')
+      SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('plain-code'))
+
+      const userData = {
+        username: 'user',
+        email: 'user@example.org',
+        password: 'old-password',
+        verified: true
+      }
+      const user = await getDao().insertOne(userData)
+
+      await request().post(`${baseUrl}/password/forgot`)
+        .send({ username: user.username })
+        .expect(200)
+
+      expect(EmailClient.sendEmail).toHaveBeenCalledWith('resetPassword', 'user@example.org', {
+        _id: user._id,
+        username: 'user',
+        resetPasswordCode: 'plain-code',
+      })
     })
   })
 
   describe('get - [GET] /users/:id', () => {
     it('should return an user by username', async () => {
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
       const userData = {
         username: 'test-username',
         email: 'test-username@example.org',

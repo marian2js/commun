@@ -10,6 +10,7 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
       type: 'string',
       required: true,
       unique: true,
+      readonly: true,
     },
     email: {
       type: 'email',
