@@ -1,11 +1,11 @@
 import { Commun, EntityDao } from '../../src'
-import { dbHelpers } from '../test-helpers/dbHelpers'
 import { MongoDbConnection } from '../../src/dao/MongoDbConnection'
 import { Collection } from 'mongodb'
+import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('EntityDao', () => {
-  const entityName = 'test'
-  const collectionName = 'test'
+  const entityName = 'entityDao'
+  const collectionName = 'entityDao'
   let dao: EntityDao<{ _id?: string, name: string }>
   let collection: Collection
 
@@ -14,17 +14,9 @@ describe('EntityDao', () => {
     collection = MongoDbConnection.getDb().collection(collectionName)
   })
 
-  beforeAll(async () => {
-    await Commun.connectDb()
-  })
-
-  afterEach(async () => {
-    await dbHelpers.dropCollection(collectionName)
-  })
-
-  afterAll(async () => {
-    await Commun.closeDb()
-  })
+  beforeAll(async () => await startTestApp(Commun))
+  afterEach(async () => await stopTestApp(collectionName))
+  afterAll(closeTestApp)
 
   describe('find', () => {
     it('should return multiple elements from mongodb', async () => {

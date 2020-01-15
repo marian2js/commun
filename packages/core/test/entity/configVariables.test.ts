@@ -2,7 +2,7 @@ import { Commun } from '../../src'
 import { parseConfigString } from '../../src/entity/configVariables'
 import { EntityModel } from '../../src/types'
 import { ObjectId } from 'mongodb'
-import { dbHelpers } from '../test-helpers/dbHelpers'
+import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('configVariables', () => {
   const entityName = 'configVariables'
@@ -17,17 +17,9 @@ describe('configVariables', () => {
 
   const getDao = (entity: string = entityName) => Commun.getEntityDao<TestEntity>(entity)
 
-  beforeAll(async () => {
-    await Commun.connectDb()
-  })
-
-  afterEach(async () => {
-    await dbHelpers.dropCollection(collectionName)
-  })
-
-  afterAll(async () => {
-    await Commun.closeDb()
-  })
+  beforeAll(async () => await startTestApp(Commun))
+  afterEach(async () => await stopTestApp(collectionName))
+  afterAll(closeTestApp)
 
   const registerTestEntity = (entity: string = entityName) => {
     Commun.registerEntity<TestEntity>({

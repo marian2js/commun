@@ -1,15 +1,12 @@
 import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
-import { request } from '../test-helpers/requestHelpers'
 import { EmailClient } from '@commun/emails'
-
-type PromiseType<T> = T extends Promise<infer U> ? U : never
+import { closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('BaseUserController', () => {
   const baseUrl = '/api/v1/auth'
   const entityName = 'users'
   const collectionName = 'users'
-  let dbConnection: PromiseType<ReturnType<typeof Commun.connectDb>>
 
   const registerUserEntity = async (
     permissions: EntityActionPermissions,
@@ -32,20 +29,9 @@ describe('BaseUserController', () => {
   const getDao = () => Commun.getEntityDao<BaseUserModel>(entityName)
   const getController = () => Commun.getEntityDao<BaseUserModel>(entityName)
 
-  beforeAll(async () => {
-    dbConnection = await Commun.connectDb()
-  })
-
-  afterEach(async () => {
-    try {
-      await dbConnection.getDb().collection(collectionName).drop()
-    } catch (e) {}
-    jest.clearAllMocks()
-  })
-
-  afterAll(async () => {
-    await Commun.closeDb()
-  })
+  beforeAll(async () => await startTestApp(Commun))
+  afterEach(async () => await stopTestApp(collectionName))
+  afterAll(closeTestApp)
 
   describe('register with password - [POST] /auth/password', () => {
     it('should create an user', async () => {

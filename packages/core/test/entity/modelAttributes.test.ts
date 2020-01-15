@@ -1,9 +1,16 @@
 import { Commun, getModelAttribute, parseModelAttribute } from '../../src'
 import { SecurityUtils } from '../../src/utils'
 import { ObjectId } from 'mongodb'
-import { dbHelpers } from '../test-helpers/dbHelpers'
+import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('modelAttributes', () => {
+  const entityName = 'modelAttributes'
+  const collectionName = entityName
+
+  beforeAll(async () => await startTestApp(Commun))
+  afterEach(async () => await stopTestApp(collectionName))
+  afterAll(closeTestApp)
+
   describe('Boolean', () => {
     it('should return true for a truly value', async () => {
       expect(await getModelAttribute({ type: 'boolean' }, 'key', { key: 'true' })).toBe(true)
@@ -174,28 +181,18 @@ describe('modelAttributes', () => {
   })
 
   describe('Ref', () => {
-    const entityName = 'attributes'
     let itemId: string
 
     beforeEach(async () => {
-      await Commun.connectDb()
       Commun.registerEntity({
         config: {
           entityName,
-          collectionName: entityName,
+          collectionName,
           attributes: {},
         }
       })
       const item = await Commun.getEntityDao(entityName).insertOne({})
       itemId = item._id!
-    })
-
-    afterEach(async () => {
-      await dbHelpers.dropCollection(entityName)
-    })
-
-    afterAll(async () => {
-      await Commun.closeDb()
     })
 
     it('should return an ObjectId with the referenced value', async () => {

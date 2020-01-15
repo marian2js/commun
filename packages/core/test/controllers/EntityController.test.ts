@@ -1,10 +1,9 @@
 import { Commun, EntityController, EntityModel, EntityPermission } from '../../src'
-import { authenticatedRequest, request } from '../test-helpers/requestHelpers'
 import { EntityActionPermissions, ModelAttribute } from '../../src/types'
-import { dbHelpers } from '../test-helpers/dbHelpers'
 import { ObjectId } from 'mongodb'
 import { entityHooks } from '../../src/entity/entityHooks'
 import { JoinAttribute } from '../../src/types/JoinAttributes'
+import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('EntityController', () => {
   const entityName = 'items'
@@ -82,17 +81,9 @@ describe('EntityController', () => {
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
   const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
-  beforeAll(async () => {
-    await Commun.connectDb()
-  })
-
-  afterEach(async () => {
-    await dbHelpers.dropCollection(collectionName)
-  })
-
-  afterAll(async () => {
-    await Commun.closeDb()
-  })
+  beforeAll(async () => await startTestApp(Commun))
+  afterEach(async () => await stopTestApp(collectionName))
+  afterAll(closeTestApp)
 
   describe('list - [GET] /:entity', () => {
     it('should return a list of entity items', async () => {

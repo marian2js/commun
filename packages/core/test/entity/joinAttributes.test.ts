@@ -1,8 +1,7 @@
-import { Commun, EntityModel } from '../../src'
-import { dbHelpers } from '../test-helpers/dbHelpers'
+import { Commun, EntityModel, getJoinAttribute } from '../../src'
 import { FindManyJoinAttribute, FindOneJoinAttribute, JoinAttribute } from '../../src/types/JoinAttributes'
-import { getJoinAttribute } from '../../src/entity/joinAttributes'
 import { ObjectId } from 'mongodb'
+import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('joinAttributes', () => {
   describe('getJoinAttribute', () => {
@@ -45,17 +44,9 @@ describe('joinAttributes', () => {
 
     const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
 
-    beforeAll(async () => {
-      await Commun.connectDb()
-    })
-
-    afterEach(async () => {
-      await dbHelpers.dropCollection(collectionName)
-    })
-
-    afterAll(async () => {
-      await Commun.closeDb()
-    })
+    beforeAll(async () => await startTestApp(Commun))
+    afterEach(async () => await stopTestApp(collectionName))
+    afterAll(closeTestApp)
 
     describe('findOne', () => {
       it('should find and return a single item', async () => {

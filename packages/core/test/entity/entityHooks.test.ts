@@ -1,6 +1,6 @@
 import { Commun, EntityHook, EntityLifecycle, EntityModel } from '../../src'
-import { dbHelpers } from '../test-helpers/dbHelpers'
 import { entityHooks } from '../../src/entity/entityHooks'
+import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('entityHooks', () => {
   describe('run', () => {
@@ -48,17 +48,9 @@ describe('entityHooks', () => {
     const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
     const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
-    beforeAll(async () => {
-      await Commun.connectDb()
-    })
-
-    afterEach(async () => {
-      await dbHelpers.dropCollection(collectionName)
-    })
-
-    afterAll(async () => {
-      await Commun.closeDb()
-    })
+    beforeAll(async () => await startTestApp(Commun))
+    afterEach(async () => await stopTestApp(collectionName))
+    afterAll(closeTestApp)
 
     describe('Hook Conditions', () => {
       it('should run the hook if the condition is true', async () => {
