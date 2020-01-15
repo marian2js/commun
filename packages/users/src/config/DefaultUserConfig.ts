@@ -73,6 +73,15 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
         create: 'system',
         update: 'system',
       },
+    },
+    admin: {
+      type: 'boolean',
+      default: false,
+      permissions: {
+        get: 'own',
+        create: 'system',
+        update: 'system',
+      },
     }
   },
 }
