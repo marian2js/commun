@@ -1,4 +1,4 @@
-export * from './controllers/EntityController'
+export * from './controllers'
 export * from './dao/EntityDao'
 export * from './entity/joinAttributes'
 export * from './entity/modelAttributes'

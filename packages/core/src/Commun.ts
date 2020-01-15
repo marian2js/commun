@@ -3,14 +3,17 @@ import compression from 'compression'
 import bodyParser from 'body-parser'
 import lusca from 'lusca'
 import morgan from 'morgan'
-import { Entity, EntityConfig, EntityModel, RegisterEntityOptions } from './types'
+import { Entity, EntityConfig, EntityModel, Plugin, RegisterEntityOptions, RegisterPluginOptions } from './types'
 import errorHandler from 'errorhandler'
 import { MongoClient, MongoClientCommonOption } from 'mongodb'
 import { MongoDbConnection } from './dao/MongoDbConnection'
-import { EntityController } from './controllers/EntityController'
+import { EntityController, PluginController } from './controllers'
 import { EntityDao } from './dao/EntityDao'
+import { NotFoundError } from './errors'
 
-const entities: { [key: string]: Entity<EntityModel> } = {}
+let entities: { [key: string]: Entity<EntityModel> } = {}
+let plugins: { [key: string]: Plugin } = {}
+
 let app: Express
 
 type CommunOptions = {
@@ -52,12 +55,12 @@ export const Commun = {
   },
 
   configureRoutes () {
-    app.use('/api/v1', require('./routes/ApiRoutes').default)
-    for (const entity of Object.values(entities)) {
-      if (entity.router) {
-        app.use('/api/v1', entity.router)
+    for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
+      if (module.router) {
+        app.use('/api/v1', module.router)
       }
     }
+    app.use('/api/v1', require('./routes/ApiRoutes').default)
   },
 
   async connectDb () {
@@ -84,9 +87,10 @@ export const Commun = {
   async startServer (options: CommunOptions, expressApp?: Express) {
     this.setOptions(options)
     app = expressApp || app || this.createExpressApp()
-    for (const entity of Object.values(entities)) {
-      if (entity.onExpressAppCreated) {
-        await entity.onExpressAppCreated(app)
+
+    for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
+      if (module.onExpressAppCreated) {
+        await module.onExpressAppCreated(app)
       }
     }
     this.configureRoutes()
@@ -118,18 +122,19 @@ export const Commun = {
         permissions: { get: entity.config.permissions?.get }
       }
     }
-    entities[entity.config.entityName] = {
+    const registeredEntity: Entity<MODEL> = {
       ...entity,
       dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),
       controller: entity.controller || new EntityController<MODEL>(entity.config.entityName),
     }
-    return entities[entity.config.entityName] as Entity<MODEL>
+    entities[entity.config.entityName] = registeredEntity
+    return registeredEntity
   },
 
   getEntity<MODEL extends EntityModel> (entityName: string): Entity<MODEL> {
     const entity = entities[entityName] as Entity<MODEL>
     if (!entity) {
-      throw new Error(`Entity ${entityName} not registered`)
+      throw new NotFoundError(`Entity ${entityName} not registered`)
     }
     return entity
   },
@@ -150,6 +155,26 @@ export const Commun = {
     return this.getEntity<MODEL>(entityName).router
   },
 
+  getEntities () {
+    return entities
+  },
+
+  registerPlugin (pluginName: string, plugin: RegisterPluginOptions) {
+    plugins[pluginName] = {
+      controller: plugin.controller || new PluginController(),
+      ...plugin
+    }
+    return plugins[pluginName]
+  },
+
+  getPlugin (pluginName: string) {
+    const plugin = plugins[pluginName]
+    if (!plugin) {
+      throw new NotFoundError(`Plugin ${pluginName} not registered`)
+    }
+    return plugin
+  },
+
   getOptions () {
     return communOptions
   },
@@ -157,4 +182,9 @@ export const Commun = {
   setOptions (options: CommunOptions) {
     communOptions = options
   },
+
+  deregisterAll () {
+    entities = {}
+    plugins = {}
+  }
 }

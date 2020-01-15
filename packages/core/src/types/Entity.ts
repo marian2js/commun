@@ -1,20 +1,17 @@
-import express, { Express } from 'express'
 import { EntityModel } from './EntityModel'
 import { EntityConfig } from './EntityConfig'
-import { EntityController, EntityDao } from '..'
+import { EntityController, EntityDao, OptionalKeys } from '..'
+import { Module } from './Module'
 
-export interface Entity<MODEL extends EntityModel> {
+interface RegisterEntityRequiredProps<MODEL extends EntityModel> {
   config: EntityConfig<MODEL>
+}
+
+export interface Entity<MODEL extends EntityModel> extends Module, RegisterEntityRequiredProps<MODEL> {
   dao: EntityDao<MODEL>
   controller: EntityController<MODEL>
-  router?: express.Router
-  onExpressAppCreated?: (app: Express) => Promise<void> | void
 }
 
-export type RegisterEntityOptions<MODEL extends EntityModel> = {
-  config: EntityConfig<MODEL>
-  dao?: EntityDao<MODEL>
-  controller?: EntityController<MODEL>
-  router?: express.Router
-  onExpressAppCreated?: (app: Express) => Promise<void> | void
-}
+export type RegisterEntityOptions<MODEL extends EntityModel> =
+  RegisterEntityRequiredProps<MODEL>
+  & OptionalKeys<Entity<MODEL>>
