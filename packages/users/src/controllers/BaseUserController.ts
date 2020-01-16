@@ -29,7 +29,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
-    const user = await this.findUserByEmailOrUsername(req.body.username)
+    const user = await this.findUserByEmailOrUsername(req.body.username || '')
 
     if (!user || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
       throw new UnauthorizedError('Invalid username or password')
