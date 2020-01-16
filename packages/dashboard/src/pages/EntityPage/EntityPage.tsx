@@ -15,6 +15,7 @@ import { Layout } from '../../components/Layout/Layout'
 import { EntitySettings } from './EntitySettings'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { EntityPermissions } from './EntityPermissions'
+import { EntityAttributes } from './EntityAttributes'
 
 const useStyles = makeStyles(theme => ({
   container: {},
@@ -94,7 +95,7 @@ export const EntityPage = () => {
             <Typography className={classes.expansionPanelHeading}>Attributes</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
-            Not implemented yet!
+            <EntityAttributes entity={entity}/>
           </ExpansionPanelDetails>
         </ExpansionPanel>
 
