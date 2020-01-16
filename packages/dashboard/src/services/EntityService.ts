@@ -9,4 +9,8 @@ export const EntityService = {
   async getEntity (entityName: string): Promise<{ item: EntityConfig<EntityModel> }> {
     return request('GET', `/admin/entities/${entityName}`)
   },
+
+  async updateEntity<T extends EntityModel> (entityName: string, data: { [key in keyof EntityConfig<T>]?: any }) {
+    return request('PUT', `/admin/entities/${entityName}`, data)
+  }
 }
