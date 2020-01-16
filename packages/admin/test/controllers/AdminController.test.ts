@@ -1,10 +1,10 @@
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
-import { Commun } from '@commun/core'
+import { Commun, ConfigManager, EntityConfig } from '@commun/core'
 import { AdminModule } from '../../src'
-import { BaseUserModel, DefaultUserConfig, UserModule } from '@commun/users'
+import { BaseUserModel, DefaultUserConfig } from '@commun/users'
 
 describe('AdminController', () => {
-  const collectionName = 'adminController'
+  const collectionName = 'users'
   const baseUrl = '/api/v1/admin'
   let adminUser: BaseUserModel
   let nonAdminUser: BaseUserModel
@@ -22,9 +22,9 @@ describe('AdminController', () => {
     })
     nonAdminUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
       admin: false,
-      username: 'user',
-      email: 'user@example.org',
-      password: 'user',
+      username: 'non-admin',
+      email: 'non-admin@example.org',
+      password: 'non-admin',
       verified: true,
     })
   })
@@ -49,7 +49,7 @@ describe('AdminController', () => {
     })
   })
 
-  describe('get - [GET] /admin/entities/:id', () => {
+  describe('get - [GET] /admin/entities/:entityName', () => {
     it('should return a single entity', async () => {
       const res = await authenticatedRequest(adminUser._id)
         .get(`${baseUrl}/entities/users`)
@@ -70,6 +70,19 @@ describe('AdminController', () => {
       await authenticatedRequest(nonAdminUser._id)
         .get(`${baseUrl}/entities`)
         .expect(401)
+    })
+  })
+
+  describe('update - [PUT] /admin/entities/:entityName', () => {
+    it('should update a single entity', async () => {
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+        Promise.resolve({ ...DefaultUserConfig, ...config }))
+
+      const res = await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/entities/users`)
+        .send({ test: 123 })
+        .expect(200)
+      expect(res.body.item).toEqual({ ...DefaultUserConfig, ...{ test: 123 } })
     })
   })
 })

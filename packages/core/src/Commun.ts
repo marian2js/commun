@@ -10,9 +10,11 @@ import { MongoDbConnection } from './dao/MongoDbConnection'
 import { EntityController, PluginController } from './controllers'
 import { EntityDao } from './dao/EntityDao'
 import { NotFoundError } from './errors'
+import { ConfigManager } from './ConfigManager'
 
 let entities: { [key: string]: Entity<EntityModel> } = {}
 let plugins: { [key: string]: Plugin } = {}
+let communOptions: CommunOptions
 
 let app: Express
 
@@ -26,8 +28,6 @@ type CommunOptions = {
     options?: MongoClientCommonOption
   }
 }
-
-let communOptions: CommunOptions
 
 export const Commun = {
   createExpressApp (): Express {
@@ -84,8 +84,9 @@ export const Commun = {
     await MongoDbConnection.getClient().close()
   },
 
-  async startServer (options: CommunOptions, expressApp?: Express) {
-    this.setOptions(options)
+  async startServer (dirname: string, options?: CommunOptions, expressApp?: Express) {
+    ConfigManager.setRootPath(dirname)
+    this.setOptions(options || await ConfigManager.readEnvConfig())
     app = expressApp || app || this.createExpressApp()
 
     for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
