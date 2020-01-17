@@ -85,4 +85,27 @@ describe('AdminController', () => {
       expect(res.body.item).toEqual({ ...DefaultUserConfig, ...{ test: 123 } })
     })
   })
+
+  describe('updateAttribute - [PUT] /admin/entities/:entityName/attributes/:attributeKey', () => {
+    it('should update a single attribute', async () => {
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+        Promise.resolve({ ...DefaultUserConfig, ...config }))
+
+      const res = await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/entities/users/attributes/username`)
+        .send({ ...DefaultUserConfig.attributes.username, default: 'default-username' })
+        .expect(200)
+      expect(res.body.item).toEqual({
+        ...DefaultUserConfig,
+        attributes: {
+          ...DefaultUserConfig.attributes,
+          username: {
+            ...DefaultUserConfig.attributes.username,
+            default: 'default-username'
+          }
+        }
+      })
+    })
+  })
 })

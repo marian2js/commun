@@ -13,3 +13,5 @@ export const AdminEntityRouter = express.Router()
     sendResponse(req, res, next, new AdminController().updateEntity(req, res)))
   .delete('/:entityName', (req, res, next) =>
     sendResponse(req, res, next, new AdminController().deleteEntity(req, res)))
+  .put('/:entityName/attributes/:attributeKey', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().updateEntityAttribute(req, res)))

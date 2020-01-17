@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { BadRequestError, Commun, ConfigManager, PluginController, UnauthorizedError } from '@commun/core'
+import { Commun, ConfigManager, PluginController, UnauthorizedError } from '@commun/core'
 import { BaseUserModel } from '@commun/users'
 
 export class AdminController extends PluginController {
@@ -40,5 +40,15 @@ export class AdminController extends PluginController {
   async deleteEntity (req: Request, res: Response) {
     // TODO
     return {}
+  }
+
+  async updateEntityAttribute (req: Request, res: Response) {
+    const originalEntityConfig = await ConfigManager.readEntityConfig(req.params.entityName)
+    const attributes = {
+      ...originalEntityConfig.attributes,
+      [req.params.attributeKey]: req.body
+    }
+    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { attributes })
+    return { item: entityConfig }
   }
 }
