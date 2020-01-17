@@ -80,11 +80,15 @@ export const EntityAttributes = (props: Props) => {
 
   return (
     <Grid container>
-      <UpdateAttributeDialog
-        attributeKey={selected}
-        attribute={selected ? attributes[selected as keyof EntityModel] : undefined}
-        open={updateDialogOpen}
-        onClose={() => setUpdateDialogOpen(false)}/>
+      {
+        selected ?
+          <UpdateAttributeDialog
+            entityName={entity.entityName}
+            attributeKey={selected}
+            attribute={attributes[selected as keyof EntityModel]!}
+            open={updateDialogOpen}
+            onClose={() => setUpdateDialogOpen(false)}/> : ''
+      }
 
       {getActionButtons('top')}
 

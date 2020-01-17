@@ -1,4 +1,4 @@
-import { EntityConfig, EntityModel } from '@commun/core'
+import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import { request } from '../utils/apiUtils'
 
 export const EntityService = {
@@ -12,5 +12,9 @@ export const EntityService = {
 
   async updateEntity<T extends EntityModel> (entityName: string, data: { [key in keyof EntityConfig<T>]?: any }) {
     return request('PUT', `/admin/entities/${entityName}`, data)
-  }
+  },
+
+  async updateEntityAttribute (entityName: string, attributeKey: string, attribute: ModelAttribute) {
+    return request('PUT', `/admin/entities/${entityName}/attributes/${attributeKey}`, attribute)
+  },
 }
