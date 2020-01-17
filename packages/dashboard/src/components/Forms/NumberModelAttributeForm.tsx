@@ -1,14 +1,8 @@
 import React, { useState } from 'react'
-import { ModelAttribute, NumberModelAttribute } from '@commun/core'
-import { Grid, makeStyles, TextField } from '@material-ui/core'
+import { NumberModelAttribute } from '@commun/core'
+import { Grid, TextField } from '@material-ui/core'
 import { TextDivider } from '../TextDivider'
 import { handleNumberAttrChange } from '../../utils/attributes'
-
-const useStyles = makeStyles(theme => ({
-  hashAlgorithmSelectorFormControl: {
-    width: '100%',
-  },
-}))
 
 interface Props {
   attribute: NumberModelAttribute
@@ -16,7 +10,6 @@ interface Props {
 }
 
 export const NumberModelAttributeForm = (props: Props) => {
-  const classes = useStyles()
   const { attribute, onChange } = props
   const [min, setMin] = useState(attribute.min)
   const [max, setMax] = useState(attribute.max)

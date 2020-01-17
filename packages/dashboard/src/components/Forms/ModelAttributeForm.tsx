@@ -16,6 +16,7 @@ import { ModelAttribute } from '@commun/core'
 import { StringModelAttributeForm } from './StringModelAttributeForm'
 import { handleAttrChange } from '../../utils/attributes'
 import { NumberModelAttributeForm } from './NumberModelAttributeForm'
+import { EnumModelAttributeForm } from './EnumModelAttributeForm'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -41,6 +42,9 @@ export const ModelAttributeForm = (props: Props) => {
 
   let attributeTypeForm
   switch (attribute.type) {
+    case 'enum':
+      attributeTypeForm = <EnumModelAttributeForm attribute={attribute} onChange={props.onChange}/>
+      break
     case 'number':
       attributeTypeForm = <NumberModelAttributeForm attribute={attribute} onChange={props.onChange}/>
       break
