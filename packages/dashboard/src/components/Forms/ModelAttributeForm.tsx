@@ -12,9 +12,10 @@ import {
   TextField
 } from '@material-ui/core'
 import React, { useState } from 'react'
-import { ModelAttribute, StringModelAttribute } from '@commun/core'
+import { ModelAttribute } from '@commun/core'
 import { StringModelAttributeForm } from './StringModelAttributeForm'
 import { handleAttrChange } from '../../utils/attributes'
+import { NumberModelAttributeForm } from './NumberModelAttributeForm'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -24,14 +25,13 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface Props {
-  attributeKey: string
   attribute: ModelAttribute
-  onChange: (key: keyof StringModelAttribute, value: any) => void
+  onChange: <T extends ModelAttribute>(key: keyof T, value: any) => void
 }
 
 export const ModelAttributeForm = (props: Props) => {
   const classes = useStyles()
-  const { attributeKey, attribute, onChange } = props
+  const { attribute, onChange } = props
   const [type, setType] = useState<string>(attribute.type)
   const [required, setRequired] = useState(attribute.required)
   const [unique, setUnique] = useState(attribute.unique)
@@ -41,8 +41,12 @@ export const ModelAttributeForm = (props: Props) => {
 
   let attributeTypeForm
   switch (attribute.type) {
+    case 'number':
+      attributeTypeForm = <NumberModelAttributeForm attribute={attribute} onChange={props.onChange}/>
+      break
     case 'string':
       attributeTypeForm = <StringModelAttributeForm attribute={attribute} onChange={props.onChange}/>
+      break
   }
 
   return (
@@ -78,7 +82,7 @@ export const ModelAttributeForm = (props: Props) => {
             <FormControlLabel
               control={
                 <Checkbox checked={required}
-                          onChange={() => handleAttrChange<boolean | undefined>(onChange, 'required', !required, setRequired)}/>
+                          onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(onChange, 'required', !required, setRequired)}/>
               }
               label="Required"/>
           </FormGroup>
@@ -91,7 +95,7 @@ export const ModelAttributeForm = (props: Props) => {
             <FormControlLabel
               control={
                 <Checkbox checked={unique}
-                          onChange={() => handleAttrChange<boolean | undefined>(onChange, 'unique', !unique, setUnique)}/>
+                          onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(onChange, 'unique', !unique, setUnique)}/>
               }
               label="Unique"/>
           </FormGroup>
@@ -117,7 +121,7 @@ export const ModelAttributeForm = (props: Props) => {
             <FormControlLabel
               control={
                 <Checkbox checked={index}
-                          onChange={() => handleAttrChange<boolean | undefined>(onChange, 'index', !index, setIndex)}/>
+                          onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(onChange, 'index', !index, setIndex)}/>
               }
               label="Index"/>
           </FormGroup>
@@ -130,7 +134,7 @@ export const ModelAttributeForm = (props: Props) => {
             <FormControlLabel
               control={
                 <Checkbox checked={readonly}
-                          onChange={() => handleAttrChange<boolean | undefined>(onChange, 'readonly', !readonly, setReadonly)}/>
+                          onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(onChange, 'readonly', !readonly, setReadonly)}/>
               }
               label="Read only"/>
           </FormGroup>

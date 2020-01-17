@@ -1,11 +1,9 @@
 import React from 'react'
-import { StringModelAttribute } from '@commun/core'
+import { ModelAttribute } from '@commun/core'
 
-export type HandleAttrChangeKey = keyof StringModelAttribute
-
-export function handleAttrChange<T> (
-  onChange: (key: keyof StringModelAttribute, value: T) => void,
-  key: HandleAttrChangeKey,
+export function handleAttrChange<M extends ModelAttribute, T> (
+  onChange: (key: keyof M, value: T) => void,
+  key: keyof M,
   value: T,
   setter: React.Dispatch<React.SetStateAction<T>>
 ) {
@@ -13,11 +11,11 @@ export function handleAttrChange<T> (
   onChange(key, value)
 }
 
-export function handleNumberAttrChange (
-  onChange: (key: keyof StringModelAttribute, value: (number | undefined)) => void,
-  key: keyof StringModelAttribute,
+export function handleNumberAttrChange<M extends ModelAttribute> (
+  onChange: (key: keyof M, value: (number | undefined)) => void,
+  key: keyof M,
   value: string,
   setter: React.Dispatch<React.SetStateAction<number | undefined>>
 ) {
-  handleAttrChange<number | undefined>(onChange, key, value ? Number(value) : undefined, setter)
+  handleAttrChange<M, number | undefined>(onChange, key, value ? Number(value) : undefined, setter)
 }

@@ -7,7 +7,7 @@ import DialogContentText from '@material-ui/core/DialogContentText'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { useTheme } from '@material-ui/core/styles'
-import { ModelAttribute, StringModelAttribute } from '@commun/core'
+import { ModelAttribute } from '@commun/core'
 import { ModelAttributeForm } from '../Forms/ModelAttributeForm'
 import { EntityService } from '../../services/EntityService'
 
@@ -32,7 +32,7 @@ export const UpdateAttributeDialog = (props: Props) => {
     props.onClose()
   }
 
-  const handleAttributeChange = (key: keyof StringModelAttribute, value: any) => {
+  const handleAttributeChange = (key: string | number | symbol, value: any) => {
     updatedAttribute[key as keyof ModelAttribute] = value
     setUpdatedAttribute(updatedAttribute)
   }
@@ -51,7 +51,7 @@ export const UpdateAttributeDialog = (props: Props) => {
       <DialogContent>
         <DialogContentText>
 
-          <ModelAttributeForm attributeKey={attributeKey} attribute={attribute} onChange={handleAttributeChange}/>
+          <ModelAttributeForm attribute={attribute} onChange={handleAttributeChange}/>
 
         </DialogContentText>
       </DialogContent>
