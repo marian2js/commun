@@ -17,6 +17,7 @@ import { StringModelAttributeForm } from './StringModelAttributeForm'
 import { handleAttrChange } from '../../utils/attributes'
 import { NumberModelAttributeForm } from './NumberModelAttributeForm'
 import { EnumModelAttributeForm } from './EnumModelAttributeForm'
+import { RefModelAttributeForm } from './RefModelAttributeForm'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -41,12 +42,17 @@ export const ModelAttributeForm = (props: Props) => {
   const [readonly, setReadonly] = useState(attribute.readonly)
 
   let attributeTypeForm
+  let showDefault = true
   switch (attribute.type) {
     case 'enum':
       attributeTypeForm = <EnumModelAttributeForm attribute={attribute} onChange={props.onChange}/>
       break
     case 'number':
       attributeTypeForm = <NumberModelAttributeForm attribute={attribute} onChange={props.onChange}/>
+      break
+    case 'ref':
+      attributeTypeForm = <RefModelAttributeForm attribute={attribute} onChange={props.onChange}/>
+      showDefault = false
       break
     case 'string':
       attributeTypeForm = <StringModelAttributeForm attribute={attribute} onChange={props.onChange}/>
@@ -71,7 +77,7 @@ export const ModelAttributeForm = (props: Props) => {
             <MenuItem value="email">Email</MenuItem>
             <MenuItem value="enum">Enum</MenuItem>
             <MenuItem value="number">Number</MenuItem>
-            <MenuItem value="ref">Ref</MenuItem>
+            <MenuItem value="ref">Entity Reference</MenuItem>
             <MenuItem value="slug">Slug</MenuItem>
             <MenuItem value="string">String</MenuItem>
             <MenuItem value="user">User</MenuItem>
@@ -106,16 +112,19 @@ export const ModelAttributeForm = (props: Props) => {
         </FormControl>
       </Grid>
 
-      <Grid item xs={12}>
-        <TextField
-          onChange={e => handleAttrChange(onChange, 'default', e.target.value, setAttributeDefault)}
-          value={attributeDefault}
-          name="default"
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          label="Default"/>
-      </Grid>
+      {
+        showDefault ?
+          <Grid item xs={12}>
+            <TextField
+              onChange={e => handleAttrChange(onChange, 'default', e.target.value, setAttributeDefault)}
+              value={attributeDefault}
+              name="default"
+              variant="outlined"
+              margin="normal"
+              fullWidth
+              label="Default"/>
+          </Grid> : ''
+      }
 
       {attributeTypeForm || ''}
 

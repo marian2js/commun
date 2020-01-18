@@ -11,7 +11,7 @@ import {
   TableHead,
   TableRow
 } from '@material-ui/core'
-import { EntityConfig, EntityModel } from '@commun/core'
+import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import capitalize from '@material-ui/core/utils/capitalize'
 import { UpdateAttributeDialog } from '../../components/Dialogs/UpdateAttributeDialog'
 
@@ -76,6 +76,17 @@ export const EntityAttributes = (props: Props) => {
     )
   }
 
+  const getAttributeTypeLabel = (attribute: ModelAttribute) => {
+    switch (attribute.type) {
+      case 'id':
+        return 'ID'
+      case 'ref':
+        return `Reference to ${capitalize(attribute.entity)}`
+      default:
+        return capitalize(attribute!.type)
+    }
+  }
+
   const attributeEntries = Object.entries(attributes).sort(([key]) => key === '_id' ? -1 : 1)
 
   return (
@@ -116,7 +127,7 @@ export const EntityAttributes = (props: Props) => {
                   <TableCell component="th" id={`${key}-label`} scope="row" padding="none">
                     {key}
                   </TableCell>
-                  <TableCell>{key === '_id' ? 'ID' : capitalize(attribute!.type)}</TableCell>
+                  <TableCell>{getAttributeTypeLabel(attribute!)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
