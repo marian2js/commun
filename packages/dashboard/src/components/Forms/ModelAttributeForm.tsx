@@ -12,12 +12,13 @@ import {
   TextField
 } from '@material-ui/core'
 import React, { useState } from 'react'
-import { ModelAttribute } from '@commun/core'
+import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import { StringModelAttributeForm } from './StringModelAttributeForm'
 import { handleAttrChange } from '../../utils/attributes'
 import { NumberModelAttributeForm } from './NumberModelAttributeForm'
 import { EnumModelAttributeForm } from './EnumModelAttributeForm'
 import { RefModelAttributeForm } from './RefModelAttributeForm'
+import { SlugModelAttributeForm } from './SlugModelAttributeForm'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -27,13 +28,14 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface Props {
+  entity: EntityConfig<EntityModel>
   attribute: ModelAttribute
   onChange: <T extends ModelAttribute>(key: keyof T, value: any) => void
 }
 
 export const ModelAttributeForm = (props: Props) => {
   const classes = useStyles()
-  const { attribute, onChange } = props
+  const { entity, attribute, onChange } = props
   const [type, setType] = useState<string>(attribute.type)
   const [required, setRequired] = useState(attribute.required)
   const [unique, setUnique] = useState(attribute.unique)
@@ -53,6 +55,9 @@ export const ModelAttributeForm = (props: Props) => {
     case 'ref':
       attributeTypeForm = <RefModelAttributeForm attribute={attribute} onChange={props.onChange}/>
       showDefault = false
+      break
+    case 'slug':
+      attributeTypeForm = <SlugModelAttributeForm entity={entity} attribute={attribute} onChange={props.onChange}/>
       break
     case 'string':
       attributeTypeForm = <StringModelAttributeForm attribute={attribute} onChange={props.onChange}/>

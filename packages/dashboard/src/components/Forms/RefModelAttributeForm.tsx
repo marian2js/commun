@@ -49,7 +49,9 @@ export const RefModelAttributeForm = (props: Props) => {
             id="entity-selector"
             fullWidth>
             {
-              entities.map(entity => <MenuItem value={entity.entityName}>{capitalize(entity.entityName)}</MenuItem>)
+              entities.map(entity => (
+                <MenuItem key={entity.entityName} value={entity.entityName}>{capitalize(entity.entityName)}</MenuItem>
+              ))
             }
           </Select>
         </FormControl>

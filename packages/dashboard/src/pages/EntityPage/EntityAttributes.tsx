@@ -82,6 +82,8 @@ export const EntityAttributes = (props: Props) => {
         return 'ID'
       case 'ref':
         return `Reference to ${capitalize(attribute.entity)}`
+      case 'slug':
+        return `Slug from ${attribute.setFrom}`
       default:
         return capitalize(attribute!.type)
     }
@@ -94,7 +96,7 @@ export const EntityAttributes = (props: Props) => {
       {
         selected ?
           <UpdateAttributeDialog
-            entityName={entity.entityName}
+            entity={entity}
             attributeKey={selected}
             attribute={attributes[selected as keyof EntityModel]!}
             open={updateDialogOpen}

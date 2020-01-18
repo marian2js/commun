@@ -7,12 +7,12 @@ import DialogContentText from '@material-ui/core/DialogContentText'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { useTheme } from '@material-ui/core/styles'
-import { ModelAttribute } from '@commun/core'
+import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import { ModelAttributeForm } from '../Forms/ModelAttributeForm'
 import { EntityService } from '../../services/EntityService'
 
 interface Props {
-  entityName: string
+  entity: EntityConfig<EntityModel>
   attributeKey: string
   attribute: ModelAttribute
   open: boolean
@@ -21,14 +21,14 @@ interface Props {
 
 export const UpdateAttributeDialog = (props: Props) => {
   const theme = useTheme()
-  const { entityName, attributeKey, attribute, open, onClose } = props
+  const { entity, attributeKey, attribute, open, onClose } = props
   const [updatedAttribute, setUpdatedAttribute] = useState(attribute)
 
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
 
   const handleUpdateClick = async (e: React.MouseEvent) => {
     e.preventDefault()
-    await EntityService.updateEntityAttribute(entityName, attributeKey, updatedAttribute)
+    await EntityService.updateEntityAttribute(entity.entityName, attributeKey, updatedAttribute)
     props.onClose()
   }
 
@@ -51,7 +51,7 @@ export const UpdateAttributeDialog = (props: Props) => {
       <DialogContent>
         <DialogContentText>
 
-          <ModelAttributeForm attribute={attribute} onChange={handleAttributeChange}/>
+          <ModelAttributeForm entity={entity} attribute={attribute} onChange={handleAttributeChange}/>
 
         </DialogContentText>
       </DialogContent>
