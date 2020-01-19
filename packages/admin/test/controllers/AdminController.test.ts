@@ -128,4 +128,61 @@ describe('AdminController', () => {
       })
     })
   })
+
+  describe('updateEntityJoinAttribute - [PUT] /admin/entities/:entityName/joinAttributes/:attributeKey', () => {
+    it('should update a single attribute', async () => {
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({})) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+        Promise.resolve({ ...config })) as jest.Mock
+
+      const res = await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/entities/users/joinAttributes/test`)
+        .send({ type: 'findOne', entity: 'user', query: {} })
+        .expect(200)
+      expect(res.body.item).toEqual({
+        joinAttributes: {
+          test: {
+            type: 'findOne',
+            entity: 'user',
+            query: {},
+          },
+        }
+      })
+    })
+  })
+
+  describe('deleteEntityJoinAttribute - [DELETE] /admin/entities/:entityName/joinAttributes/:attributeKey', () => {
+    it('should delete a single attribute', async () => {
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
+        joinAttributes: {
+          test: {
+            type: 'findOne',
+            entity: 'user',
+            query: {},
+          },
+          test2: {
+            type: 'findOne',
+            entity: 'user',
+            query: {},
+          },
+        },
+      })) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+        Promise.resolve({ ...config })) as jest.Mock
+
+      const res = await authenticatedRequest(adminUser._id)
+        .delete(`${baseUrl}/entities/users/joinAttributes/test`)
+        .expect(200)
+
+      expect(res.body.item).toEqual({
+        joinAttributes: {
+          test2: {
+            type: 'findOne',
+            entity: 'user',
+            query: {},
+          }
+        }
+      })
+    })
+  })
 })

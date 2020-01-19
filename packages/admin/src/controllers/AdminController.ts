@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { Commun, ConfigManager, EntityModel, PluginController, UnauthorizedError } from '@commun/core'
+import { Commun, ConfigManager, EntityModel, JoinAttribute, PluginController, UnauthorizedError } from '@commun/core'
 import { BaseUserModel } from '@commun/users'
 
 export class AdminController extends PluginController {
@@ -58,5 +58,26 @@ export class AdminController extends PluginController {
     delete attributes[req.params.attributeKey as keyof EntityModel]
     const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { attributes })
     return { item: entityConfig }
+  }
+
+  async updateEntityJoinAttribute (req: Request, res: Response) {
+    const originalEntityConfig = await ConfigManager.readEntityConfig(req.params.entityName)
+    const joinAttributes = {
+      ...originalEntityConfig.joinAttributes,
+      [req.params.attributeKey]: req.body
+    }
+    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinAttributes })
+    return { item: entityConfig }
+  }
+
+  async deleteEntityJoinAttribute (req: Request, res: Response) {
+    const originalEntityConfig = await ConfigManager.readEntityConfig<EntityModel>(req.params.entityName)
+    const joinAttributes = originalEntityConfig.joinAttributes
+    if (joinAttributes) {
+      delete joinAttributes[req.params.attributeKey]
+      const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinAttributes })
+      return { item: entityConfig }
+    }
+    return { item: originalEntityConfig }
   }
 }
