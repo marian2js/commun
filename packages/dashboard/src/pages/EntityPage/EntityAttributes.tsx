@@ -14,6 +14,7 @@ import {
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import capitalize from '@material-ui/core/utils/capitalize'
 import { AttributeDialog } from '../../components/Dialogs/AttributeDialog'
+import { EntityService } from '../../services/EntityService'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -57,8 +58,10 @@ export const EntityAttributes = (props: Props) => {
     setAttributeDialogOpen(true)
   }
 
-  const handleDeleteClicked = () => {
-    // TODO
+  const handleDeleteClicked = async () => {
+    const res = await EntityService.deleteEntityAttribute(entity.entityName, selected)
+    setAttributes(res.item.attributes)
+    setSelected('')
   }
 
   const handleAttributesChange = (attributeKey: string, attribute: ModelAttribute) => {
