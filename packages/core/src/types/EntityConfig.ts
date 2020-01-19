@@ -1,7 +1,7 @@
 import { EntityModel } from './EntityModel'
 import { EntityActionPermissions } from './EntityPermission'
 import { ModelAttribute } from './ModelAttribute'
-import { EntityHook } from './EntityHooks'
+import { LifecycleEntityHooks } from './EntityHooks'
 import { JoinAttribute } from './JoinAttributes'
 
 export interface EntityConfig<MODEL extends EntityModel> {
@@ -26,12 +26,5 @@ export interface EntityConfig<MODEL extends EntityModel> {
     name?: string
     default_language?: string
   }[]
-  beforeGet?: EntityHook[]
-  afterGet?: EntityHook[]
-  beforeCreate?: EntityHook[]
-  afterCreate?: EntityHook[]
-  beforeUpdate?: EntityHook[]
-  afterUpdate?: EntityHook[]
-  beforeDelete?: EntityHook[]
-  afterDelete?: EntityHook[]
+  hooks?: LifecycleEntityHooks
 }

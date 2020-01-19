@@ -1,4 +1,4 @@
-import { Commun, EntityHook, EntityLifecycle, EntityModel } from '../../src'
+import { Commun, EntityHook, EntityModel, LifecycleEntityHooks } from '../../src'
 import { entityHooks } from '../../src/entity/entityHooks'
 import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
@@ -14,7 +14,7 @@ describe('entityHooks', () => {
       ref?: string
     }
 
-    const registerTestEntity = (lifecycle: EntityLifecycle, hook: EntityHook[]) => {
+    const registerTestEntity = (lifecycle: keyof LifecycleEntityHooks, hook: EntityHook[]) => {
       Commun.registerEntity<TestEntity>({
         config: {
           entityName,
@@ -40,7 +40,9 @@ describe('entityHooks', () => {
               entity: entityName
             }
           },
-          [lifecycle]: hook
+          hooks: {
+            [lifecycle]: hook
+          }
         }
       })
     }

@@ -26,12 +26,13 @@ export type EntityHook =
   IncrementEntityHook |
   SetEntityHook
 
-export type EntityLifecycle =
-  'beforeGet' |
-  'afterGet' |
-  'beforeCreate' |
-  'afterCreate' |
-  'beforeUpdate' |
-  'afterUpdate' |
-  'beforeDelete' |
-  'afterDelete'
+export type LifecycleEntityHooks = {
+  beforeGet?: EntityHook[]
+  afterGet?: EntityHook[]
+  beforeCreate?: EntityHook[]
+  afterCreate?: EntityHook[]
+  beforeUpdate?: EntityHook[]
+  afterUpdate?: EntityHook[]
+  beforeDelete?: EntityHook[]
+  afterDelete?: EntityHook[]
+}

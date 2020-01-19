@@ -1,9 +1,9 @@
 import {
   EntityHook,
   EntityHookCondition,
-  EntityLifecycle,
   EntityModel,
   IncrementEntityHook,
+  LifecycleEntityHooks,
   SetEntityHook
 } from '../types'
 import { Commun } from '../Commun'
@@ -12,9 +12,9 @@ import { parseModelAttribute } from './modelAttributes'
 import { getVariableData, parseConfigString } from './configVariables'
 
 export const entityHooks = {
-  async run<T extends EntityModel> (entityName: string, lifecycle: EntityLifecycle, model: T, userId?: string) {
+  async run<T extends EntityModel> (entityName: string, lifecycle: keyof LifecycleEntityHooks, model: T, userId?: string) {
     const config = Commun.getEntityConfig(entityName)
-    const lifecycleHooks = config[lifecycle]
+    const lifecycleHooks = config.hooks && config.hooks[lifecycle]
     if (!lifecycleHooks) {
       return
     }
