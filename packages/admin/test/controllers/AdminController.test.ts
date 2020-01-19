@@ -86,7 +86,7 @@ describe('AdminController', () => {
     })
   })
 
-  describe('updateAttribute - [PUT] /admin/entities/:entityName/attributes/:attributeKey', () => {
+  describe('updateEntityAttribute - [PUT] /admin/entities/:entityName/attributes/:attributeKey', () => {
     it('should update a single attribute', async () => {
       ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
@@ -105,6 +105,26 @@ describe('AdminController', () => {
             default: 'default-username'
           }
         }
+      })
+    })
+  })
+
+  describe('deleteEntityAttribute - [DELETE] /admin/entities/:entityName/attributes/:attributeKey', () => {
+    it('should delete a single attribute', async () => {
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+        Promise.resolve({ ...DefaultUserConfig, ...config }))
+
+      const res = await authenticatedRequest(adminUser._id)
+        .delete(`${baseUrl}/entities/users/attributes/username`)
+        .expect(200)
+
+      const expectedAttributes = { ...DefaultUserConfig.attributes }
+      delete expectedAttributes.username
+
+      expect(res.body.item).toEqual({
+        ...DefaultUserConfig,
+        attributes: expectedAttributes
       })
     })
   })
