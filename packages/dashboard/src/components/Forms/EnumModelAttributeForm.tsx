@@ -20,8 +20,8 @@ interface Props {
 export const EnumModelAttributeForm = (props: Props) => {
   const classes = useStyles()
   const { attribute, onChange } = props
-  const [values, setValues] = useState([...attribute.values, ''])
-  const [types, setTypes] = useState<EnumType[]>([...attribute.values.map(value => typeof value as EnumType), 'string'])
+  const [values, setValues] = useState([...(attribute.values || []), ''])
+  const [types, setTypes] = useState<EnumType[]>([...(attribute.values || []).map(value => typeof value as EnumType), 'string'])
 
   const sendOnChange = (index: number) => {
     switch (types[index]) {

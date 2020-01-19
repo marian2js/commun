@@ -13,7 +13,7 @@ import {
 } from '@material-ui/core'
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import capitalize from '@material-ui/core/utils/capitalize'
-import { UpdateAttributeDialog } from '../../components/Dialogs/UpdateAttributeDialog'
+import { AttributeDialog } from '../../components/Dialogs/AttributeDialog'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -45,32 +45,54 @@ export const EntityAttributes = (props: Props) => {
   const { entity } = props
   const [attributes, setAttributes] = useState(entity.attributes)
   const [selected, setSelected] = useState<string>('')
-  const [updateDialogOpen, setUpdateDialogOpen] = useState<boolean>(false)
+  const [attributeDialogOpen, setAttributeDialogOpen] = useState<boolean>(false)
 
   useEffect(() => setAttributes(entity.attributes), [entity])
 
+  const handleAddClicked = () => {
+    setAttributeDialogOpen(true)
+  }
+
   const handleUpdateClicked = () => {
-    setUpdateDialogOpen(true)
+    setAttributeDialogOpen(true)
   }
 
   const handleDeleteClicked = () => {
     // TODO
   }
 
+  const handleAttributesChange = (attributeKey: string, attribute: ModelAttribute) => {
+    attributes[attributeKey as keyof EntityModel] = attribute
+    setAttributes(attributes)
+    setAttributeDialogOpen(false)
+  }
+
   const getActionButtons = (position: 'top' | 'bottom') => {
-    if (!selected) {
-      return ''
-    }
-    return (
-      <Grid item xs={12}>
-        <div
-          className={`${classes.actionButtons} ${position === 'top' ? classes.actionButtonsTop : classes.actionButtonsBottom}`}>
+    let buttons
+    if (selected) {
+      buttons = (
+        <>
           <Button onClick={handleUpdateClicked} variant="contained" color="primary" className={classes.updateButton}>
             Update
           </Button>
           <Button onClick={handleDeleteClicked} variant="contained" color="secondary">
             Delete
           </Button>
+        </>
+      )
+    } else {
+      buttons = (
+        <Button onClick={handleAddClicked} variant="contained" color="primary">
+          Add Attribute
+        </Button>
+      )
+    }
+
+    return (
+      <Grid item xs={12}>
+        <div
+          className={`${classes.actionButtons} ${position === 'top' ? classes.actionButtonsTop : classes.actionButtonsBottom}`}>
+          {buttons}
         </div>
       </Grid>
     )
@@ -93,15 +115,13 @@ export const EntityAttributes = (props: Props) => {
 
   return (
     <Grid container>
-      {
-        selected ?
-          <UpdateAttributeDialog
-            entity={entity}
-            attributeKey={selected}
-            attribute={attributes[selected as keyof EntityModel]!}
-            open={updateDialogOpen}
-            onClose={() => setUpdateDialogOpen(false)}/> : ''
-      }
+      <AttributeDialog
+        entity={entity}
+        attributeKey={selected || undefined}
+        attribute={selected ? attributes[selected as keyof EntityModel] : undefined}
+        open={attributeDialogOpen}
+        onChange={handleAttributesChange}
+        onCancel={() => setAttributeDialogOpen(false)}/>
 
       {getActionButtons('top')}
 
@@ -118,7 +138,7 @@ export const EntityAttributes = (props: Props) => {
             <TableBody>
               {attributeEntries.map(([key, attribute]) => (
                 <TableRow key={key}
-                          onClick={e => setSelected(key)}
+                          onClick={() => selected === key ? setSelected('') : setSelected(key)}
                           selected={selected === key}>
                   <TableCell padding="checkbox">
                     <Radio
