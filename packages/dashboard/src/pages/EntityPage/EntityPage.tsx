@@ -17,6 +17,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { EntityPermissions } from './EntityPermissions'
 import { EntityAttributes } from './EntityAttributes'
 import { EntityJoinAttributes } from './EntityJoinAttributes'
+import { EntityHooks } from './EntityHooks'
 
 const useStyles = makeStyles(theme => ({
   container: {},
@@ -124,7 +125,7 @@ export const EntityPage = () => {
             <Typography className={classes.expansionPanelHeading}>Hooks</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
-            Not implemented yet!
+            <EntityHooks entity={entity}/>
           </ExpansionPanelDetails>
         </ExpansionPanel>
 
