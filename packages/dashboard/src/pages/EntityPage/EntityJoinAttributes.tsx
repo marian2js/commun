@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import {
-  Button,
-  Grid,
-  makeStyles,
-  Radio,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
-} from '@material-ui/core'
+import { Button, Grid, makeStyles } from '@material-ui/core'
 import { EntityConfig, EntityModel, JoinAttribute } from '@commun/core'
 import { JoinAttributeDialog } from '../../components/Dialogs/JoinAttributeDialog'
 import { EntityService } from '../../services/EntityService'
+import { SelectTable } from '../../components/Table/SelectTable'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -127,6 +117,21 @@ export const EntityJoinAttributes = (props: Props) => {
       onCancel={() => setAttributeDialogOpen(false)}/>
   )
 
+  const tableHeaderKeys = [{
+    key: 'key',
+    label: 'Key'
+  }, {
+    key: 'type',
+    label: 'Type'
+  }]
+
+  const tableAttributes = Object.entries(joinAttributes)
+    .sort(([key]) => key === '_id' ? -1 : 1)
+    .map(([key, attribute]) => ({
+      key: key,
+      type: `${attribute.type} on ${attribute.entity}`
+    }))
+
   if (!Object.keys(joinAttributes).length) {
     return (
       <Grid container>
@@ -143,35 +148,9 @@ export const EntityJoinAttributes = (props: Props) => {
       {getActionButtons('top')}
 
       <Grid item xs={12}>
-        <TableContainer>
-          <Table className={classes.table} aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                <TableCell/>
-                <TableCell>Key</TableCell>
-                <TableCell>Type</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.entries(joinAttributes).map(([key, attribute]) => (
-                <TableRow key={key}
-                          onClick={() => selected === key ? setSelected('') : setSelected(key)}
-                          selected={selected === key}>
-                  <TableCell padding="checkbox">
-                    <Radio
-                      checked={selected === key}
-                      inputProps={{ 'aria-label': `${key}-label` }}
-                    />
-                  </TableCell>
-                  <TableCell component="th" id={`${key}-label`} scope="row" padding="none">
-                    {key}
-                  </TableCell>
-                  <TableCell>{attribute.type} on {attribute.entity}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <SelectTable headerKeys={tableHeaderKeys}
+                     items={tableAttributes}
+                     onSelectChange={item => setSelected(item?.key || '')}/>
       </Grid>
 
       {getActionButtons('bottom')}
