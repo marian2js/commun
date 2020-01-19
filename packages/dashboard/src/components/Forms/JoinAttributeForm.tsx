@@ -15,6 +15,7 @@ import { EntityService } from '../../services/EntityService'
 import { handleAttrChange } from '../../utils/attributes'
 import { EntitySelector } from './Selectors/EntitySelector'
 import { AttributeSelector } from './Selectors/AttributeSelector'
+import DeleteIcon from '@material-ui/icons/Delete';
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -27,7 +28,10 @@ const useStyles = makeStyles(theme => ({
   },
   query: {
     margin: theme.spacing(3, 0, 0, 0),
-  }
+  },
+  deleteButton: {
+    margin: theme.spacing(4, 0, 0, 2),
+  },
 }))
 
 interface Props {
@@ -93,10 +97,18 @@ export const JoinAttributeForm = (props: Props) => {
     const newQuery = {
       ...query,
       [newKey]: oldKey,
-      '': query[''] || '',
     }
     onChange('query', { ...newQuery, '': undefined })
     delete newQuery[oldKey]
+    newQuery[''] = newQuery[''] || ''
+    setQuery(newQuery)
+  }
+
+  const handleQueryDeleteClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, key: string) => {
+    e.preventDefault()
+    const newQuery = { ...query }
+    delete newQuery[key]
+    onChange('query', { ...newQuery, '': undefined })
     setQuery(newQuery)
   }
 
@@ -156,7 +168,7 @@ export const JoinAttributeForm = (props: Props) => {
                                        onChange={newKey => handleQueryKeyChange(key, newKey)}
                                        className={classes.attributeSelectorFormControl}/>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={5}>
                     <TextField
                       onChange={e => handleQueryValueChange(key, e.target.value as string)}
                       value={value}
@@ -166,6 +178,14 @@ export const JoinAttributeForm = (props: Props) => {
                       fullWidth
                       required
                       label="Value"/>
+                  </Grid>
+                  <Grid item xs={1}>
+                    {
+                      key === '' ? '' :
+                        <a href="#" onClick={e => handleQueryDeleteClick(e, key)}>
+                          <DeleteIcon className={classes.deleteButton} />
+                        </a>
+                    }
                   </Grid>
                 </Grid>
               ))
