@@ -16,6 +16,7 @@ import { EntitySettings } from './EntitySettings'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { EntityPermissions } from './EntityPermissions'
 import { EntityAttributes } from './EntityAttributes'
+import { EntityJoinAttributes } from './EntityJoinAttributes'
 
 const useStyles = makeStyles(theme => ({
   container: {},
@@ -36,7 +37,7 @@ export const EntityPage = () => {
   const classes = useStyles()
   let { entityName } = useParams()
   const [entity, setEntity] = useState<EntityConfig<EntityModel>>()
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ attributes: true })
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ joinAttributes: true })
 
   useEffect(() => {
     (async () => {
@@ -109,7 +110,7 @@ export const EntityPage = () => {
             <Typography className={classes.expansionPanelHeading}>Join Attributes</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
-            Not implemented yet!
+            <EntityJoinAttributes entity={entity}/>
           </ExpansionPanelDetails>
         </ExpansionPanel>
 

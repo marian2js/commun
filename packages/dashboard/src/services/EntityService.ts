@@ -1,4 +1,4 @@
-import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
+import { EntityConfig, EntityModel, JoinAttribute, ModelAttribute } from '@commun/core'
 import { request } from '../utils/apiUtils'
 
 export const EntityService = {
@@ -20,5 +20,13 @@ export const EntityService = {
 
   async deleteEntityAttribute (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
     return request('DELETE', `/admin/entities/${entityName}/attributes/${attributeKey}`)
+  },
+
+  async updateEntityJoinAttribute (entityName: string, attributeKey: string, attribute: JoinAttribute): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('PUT', `/admin/entities/${entityName}/joinAttributes/${attributeKey}`, attribute)
+  },
+
+  async deleteEntityJoinAttribute (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('DELETE', `/admin/entities/${entityName}/joinAttributes/${attributeKey}`)
   },
 }

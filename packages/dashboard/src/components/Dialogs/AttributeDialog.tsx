@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Button from '@material-ui/core/Button'
 import Dialog from '@material-ui/core/Dialog'
 import DialogActions from '@material-ui/core/DialogActions'
@@ -26,6 +26,8 @@ export const AttributeDialog = (props: Props) => {
   const [newAttributeKey, setNewAttributeKey] = useState('')
 
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
+
+  useEffect(() => setAttributeData(attribute), [attribute])
 
   const handleAddClick = async (e: React.MouseEvent) => {
     e.preventDefault()
