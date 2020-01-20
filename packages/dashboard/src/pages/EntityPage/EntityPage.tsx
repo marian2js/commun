@@ -19,9 +19,13 @@ import { EntityAttributes } from './EntityAttributes'
 import { EntityJoinAttributes } from './EntityJoinAttributes'
 import { EntityHooks } from './EntityHooks'
 import { EntityIndexes } from './EntityIndexes'
+import capitalize from '@material-ui/core/utils/capitalize'
+import { EntityDangerZone } from './EntityDangerZone'
 
 const useStyles = makeStyles(theme => ({
-  container: {},
+  header: {
+    marginBottom: theme.spacing(2),
+  },
   permissions: {
     padding: theme.spacing(2),
     display: 'flex',
@@ -37,7 +41,7 @@ const useStyles = makeStyles(theme => ({
 
 export const EntityPage = () => {
   const classes = useStyles()
-  let { entityName } = useParams()
+  const { entityName } = useParams<{ entityName: string }>()
   const [entity, setEntity] = useState<EntityConfig<EntityModel>>()
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ settings: true })
 
@@ -58,7 +62,13 @@ export const EntityPage = () => {
 
   return (
     <Layout>
-      <Container maxWidth="lg" className={classes.container}>
+      <Container maxWidth="lg">
+
+        <header className={classes.header}>
+          <Typography variant="h5">
+            {capitalize(entityName)}
+          </Typography>
+        </header>
 
         <ExpansionPanel expanded={expanded.settings}
                         onChange={handleExpansion('settings')}
@@ -141,6 +151,20 @@ export const EntityPage = () => {
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <EntityIndexes entity={entity}/>
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+
+        <ExpansionPanel expanded={expanded.dangerZone}
+                        onChange={handleExpansion('dangerZone')}
+                        TransitionProps={{ unmountOnExit: true }}>
+          <ExpansionPanelSummary
+            expandIcon={<ExpandMoreIcon/>}
+            aria-controls="dangerZone-content"
+            id="dangerZone-header">
+            <Typography className={classes.expansionPanelHeading}>Danger Zone</Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails>
+            <EntityDangerZone entity={entity}/>
           </ExpansionPanelDetails>
         </ExpansionPanel>
 

@@ -18,6 +18,10 @@ export const EntityService = {
     return request('PUT', `/admin/entities/${entityName}`, data)
   },
 
+  async deleteEntity<T extends EntityModel> (entityName: string) {
+    return request('DELETE', `/admin/entities/${entityName}`)
+  },
+
   async updateEntityAttribute (entityName: string, attributeKey: string, attribute: ModelAttribute): Promise<{ item: EntityConfig<EntityModel> }> {
     return request('PUT', `/admin/entities/${entityName}/attributes/${attributeKey}`, attribute)
   },
