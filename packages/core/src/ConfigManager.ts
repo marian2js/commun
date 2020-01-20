@@ -22,6 +22,15 @@ export const ConfigManager = {
     return JSON.parse(configFile)
   },
 
+  async getEntityConfigs<T> () {
+    const entityDirs = await this._readdir(path.join(rootPath, 'entities'))
+    const entities = []
+    for (const entity of entityDirs) {
+      entities.push(await this.readEntityConfig<T>(entity))
+    }
+    return entities
+  },
+
   async readEntityConfig<T> (entityName: string): Promise<EntityConfig<T>> {
     const entityConfig = (await this._readFile(this.getEntityConfigFilePath(entityName))).toString()
     if (!entityConfig) {

@@ -1,4 +1,4 @@
-import { Commun, EntityController, EntityDao, PluginController } from '../src'
+import { Commun, ConfigManager, EntityController, EntityDao, PluginController } from '../src'
 
 describe('Commun', () => {
   beforeEach(() => {
@@ -33,6 +33,21 @@ describe('Commun', () => {
 
     it('should throw an error if an entity does not exist', async () => {
       expect(() => Commun.getEntity('test')).toThrow('Entity test not registered')
+    })
+  })
+
+  describe('_registerEntitiesFromConfigFiles', () => {
+    it('should register entities from config files', async () => {
+      const configFiles = ['entity-1', 'entity-2', 'entity-3'].map(name => ({
+        entityName: name,
+        collectionName: name,
+        attributes: {}
+      }))
+      ConfigManager.getEntityConfigs = jest.fn(() => Promise.resolve(configFiles)) as jest.Mock
+      await Commun._registerEntitiesFromConfigFiles()
+      expect(Commun.getEntityConfig('entity-1')).toEqual(configFiles[0])
+      expect(Commun.getEntityConfig('entity-2')).toEqual(configFiles[1])
+      expect(Commun.getEntityConfig('entity-3')).toEqual(configFiles[2])
     })
   })
 

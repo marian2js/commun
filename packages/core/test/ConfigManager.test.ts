@@ -27,6 +27,26 @@ describe('ConfigManager', () => {
     })
   })
 
+  describe('getEntityConfigs', () => {
+    it('should return the config files for all entities', async () => {
+      ConfigManager._readdir = jest.fn(() => Promise.resolve([
+        'entity-1', 'entity-2', 'entity-3'
+      ])) as jest.Mock
+
+      expect(await ConfigManager.getEntityConfigs()).toEqual([{
+        config: 'test'
+      }, {
+        config: 'test'
+      }, {
+        config: 'test'
+      }])
+
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-1/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-2/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-3/config.json')
+    })
+  })
+
   describe('readEntityConfig', () => {
     it('should return the config for a given entity', async () => {
       expect(await ConfigManager.readEntityConfig('test-entity')).toEqual({ config: 'test' })
