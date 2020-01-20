@@ -3,6 +3,7 @@ import { Route, Switch } from 'react-router-dom'
 import { HomePage } from './pages/HomePage/HomePage'
 import { EntityPage } from './pages/EntityPage/EntityPage'
 import { LoginPage } from './pages/LoginPage/LoginPage'
+import { AddEntityPage } from './pages/AddEntityPage/AddEntityPage'
 
 export const routes = {
   Home: {
@@ -19,6 +20,11 @@ export const routes = {
     path: '/entities/:entityName',
     exact: true,
     component: EntityPage
+  },
+  AddEntity: {
+    path: '/add-entity',
+    exact: true,
+    component: AddEntityPage
   },
 }
 

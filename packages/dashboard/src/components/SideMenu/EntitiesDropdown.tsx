@@ -8,6 +8,7 @@ import { CircularProgress, Collapse } from '@material-ui/core'
 import List from '@material-ui/core/List'
 import PeopleIcon from '@material-ui/icons/People'
 import CodeIcon from '@material-ui/icons/Code'
+import AddIcon from '@material-ui/icons/Add';
 import { EntityService } from '../../services/EntityService'
 import { EntityConfig, EntityModel } from '@commun/core'
 import capitalize from '@material-ui/core/utils/capitalize'
@@ -49,6 +50,10 @@ export function EntitiesDropdown () {
               </ListItem>
             ))
           }
+          <ListItem button component={Link} to="/add-entity">
+            <ListItemIcon><AddIcon/></ListItemIcon>
+            <ListItemText primary="Add entity"/>
+          </ListItem>
         </List>
       </Collapse>
     </>
