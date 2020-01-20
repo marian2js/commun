@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { EntityConfig, EntityModel, LifecycleEntityHooks } from '@commun/core'
 import { SelectTable } from '../../components/Table/SelectTable'
 import { HookDialog } from '../../components/Dialogs/HookDialog'
+import { EntityService } from '../../services/EntityService'
 
 interface Props {
   entity: EntityConfig<EntityModel>
@@ -22,7 +23,13 @@ export const EntityHooks = (props: Props) => {
   }
 
   const handleDeleteClicked = async () => {
-    // TODO
+    if (!selected) {
+      return
+    }
+    const newHooks = { ...(hooks || {}) }
+    newHooks[selected.lifecycle]!.splice(selected.index, 1)
+    const res = await EntityService.updateEntity(entity.entityName, { hooks: newHooks })
+    setHooks(res.item.hooks || {})
     setSelected(null)
   }
 
