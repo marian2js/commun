@@ -30,11 +30,21 @@ export const HookDialog = (props: Props) => {
 
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
 
-  const hookIsNew = !hookData
+  const hookIsNew = !hook
 
   const handleAddClick = async (e: React.MouseEvent) => {
     e.preventDefault()
-    // TODO
+    if (!newLifecycle) {
+      return
+    }
+    const newHooks = { ...(entity.hooks || {}) }
+    const hook = hookData as EntityHook
+    if (!newHooks[newLifecycle]) {
+      newHooks[newLifecycle] = []
+    }
+    newHooks[newLifecycle]!.push(hook)
+    const res = await EntityService.updateEntity(entity.entityName, { hooks: newHooks })
+    onChange(res.item.hooks || {})
   }
 
   const handleUpdateClick = async (e: React.MouseEvent) => {
