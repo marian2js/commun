@@ -1,5 +1,5 @@
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
-import { Commun, ConfigManager, EntityConfig } from '@commun/core'
+import { Commun, ConfigManager, EntityConfig, EntityModel } from '@commun/core'
 import { AdminModule } from '../../src'
 import { BaseUserModel, DefaultUserConfig } from '@commun/users'
 
@@ -46,6 +46,28 @@ describe('AdminController', () => {
       await authenticatedRequest(nonAdminUser._id)
         .get(`${baseUrl}/entities`)
         .expect(401)
+    })
+  })
+
+  describe('create - [POST] /admin/entities', () => {
+    it('should create a single entity', async () => {
+      ConfigManager.createEntityConfig = jest.fn(() => Promise.resolve())
+
+      const res = await authenticatedRequest(adminUser._id)
+        .post(`${baseUrl}/entities`)
+        .send({ entityName: 'test-entity' })
+        .expect(200)
+      expect(res.body.item).toEqual({
+        entityName: 'test-entity',
+        collectionName: 'test-entity',
+        attributes: {}
+      })
+
+      expect(ConfigManager.createEntityConfig).toHaveBeenCalledWith('test-entity', {
+        entityName: 'test-entity',
+        collectionName: 'test-entity',
+        attributes: {}
+      })
     })
   })
 

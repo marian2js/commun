@@ -3,8 +3,9 @@ import { ConfigManager } from '../src'
 describe('ConfigManager', () => {
   beforeEach(() => {
     ConfigManager.setRootPath('/test/')
-    spyOn(ConfigManager, 'writeFile')
-    ConfigManager.readFile = jest.fn(() =>
+    spyOn(ConfigManager, '_writeFile')
+    spyOn(ConfigManager, '_mkdir')
+    ConfigManager._readFile = jest.fn(() =>
       Promise.resolve(JSON.stringify({ config: 'test' }))) as jest.Mock
   })
   afterEach(() => jest.clearAllMocks())
@@ -20,14 +21,14 @@ describe('ConfigManager', () => {
     it('should return the config for the current environment', async () => {
       const config = await ConfigManager.readEnvConfig()
       expect(config).toEqual({ config: 'test' })
-      expect(ConfigManager.readFile).toHaveBeenCalledWith('/test/config/test.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/config/test.json')
     })
   })
 
   describe('readEntityConfig', () => {
     it('should return the config for a given entity', async () => {
       expect(await ConfigManager.readEntityConfig('test-entity')).toEqual({ config: 'test' })
-      expect(ConfigManager.readFile).toHaveBeenCalledWith('/test/entities/test-entity/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/test-entity/config.json')
     })
   })
 
@@ -35,7 +36,7 @@ describe('ConfigManager', () => {
     it('should write the configuration in the file', async () => {
       const config = { entityName: 'test', collectionName: 'test', attributes: {} }
       await ConfigManager.setEntityConfig('test-entity', config)
-      expect(ConfigManager.writeFile)
+      expect(ConfigManager._writeFile)
         .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify(config, null, 2))
     })
   })
@@ -44,11 +45,24 @@ describe('ConfigManager', () => {
     it('should merge entity config keys into the existent configuration', async () => {
       const config = { permissions: { get: 'anyone' } }
       await ConfigManager.mergeEntityConfig('test-entity', config)
-      expect(ConfigManager.writeFile)
+      expect(ConfigManager._writeFile)
         .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify({
           config: 'test',
           ...config,
         }, null, 2))
+    })
+  })
+
+  describe('createEntityConfig', () => {
+    it('should create an entity', async () => {
+      ConfigManager._exists = jest.fn(() => Promise.resolve(false))
+
+      const config = { entityName: 'tests', collectionName: 'tests', attributes: {} }
+      await ConfigManager.createEntityConfig('test-entity', config)
+      expect(ConfigManager._mkdir)
+        .toHaveBeenCalledWith('/test/entities/test-entity')
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify(config, null, 2))
     })
   })
 })

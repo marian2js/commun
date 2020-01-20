@@ -1,5 +1,13 @@
 import { NextFunction, Request, Response } from 'express'
-import { Commun, ConfigManager, EntityModel, JoinAttribute, PluginController, UnauthorizedError } from '@commun/core'
+import {
+  BadRequestError,
+  Commun,
+  ConfigManager,
+  EntityConfig,
+  EntityModel,
+  PluginController,
+  UnauthorizedError
+} from '@commun/core'
 import { BaseUserModel } from '@commun/users'
 
 export class AdminController extends PluginController {
@@ -28,8 +36,18 @@ export class AdminController extends PluginController {
   }
 
   async createEntity (req: Request, res: Response) {
-    // TODO
-    return {}
+    if (!req.body.entityName) {
+      throw new BadRequestError('Entity name must be provided')
+    }
+    const entityConfig: EntityConfig<EntityModel> = {
+      entityName: req.body.entityName,
+      collectionName: req.body.collectionName || req.body.entityName,
+      attributes: {},
+    }
+    await ConfigManager.createEntityConfig(req.body.entityName, entityConfig)
+    return {
+      item: entityConfig
+    }
   }
 
   async updateEntity (req: Request, res: Response) {
