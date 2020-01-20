@@ -51,12 +51,26 @@ export const ConfigManager = {
     await this.setEntityConfig(entityName, config)
   },
 
+  async deleteEntity (entityName: string) {
+    const entityPath = this.getEntityPath(entityName)
+    if (await this._exists(entityPath)) {
+      const files = await this._readdir(entityPath)
+      for (const file of files) {
+        await this._unlink(path.join(entityPath, file))
+      }
+      await this._rmdir(entityPath)
+    }
+  },
+
   setRootPath (path: string) {
     rootPath = path.replace(/\/dist$/, '/src')
   },
 
   _readFile: promisify(fs.readFile),
   _writeFile: promisify(fs.writeFile),
+  _unlink: promisify(fs.unlink),
   _exists: promisify(fs.exists),
+  _readdir: promisify(fs.readdir),
   _mkdir: promisify(fs.mkdir),
+  _rmdir: promisify(fs.rmdir),
 }

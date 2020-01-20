@@ -56,8 +56,8 @@ export class AdminController extends PluginController {
   }
 
   async deleteEntity (req: Request, res: Response) {
-    // TODO
-    return {}
+    await ConfigManager.deleteEntity(req.params.entityName)
+    return { ok: true }
   }
 
   async updateEntityAttribute (req: Request, res: Response) {

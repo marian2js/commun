@@ -5,6 +5,8 @@ describe('ConfigManager', () => {
     ConfigManager.setRootPath('/test/')
     spyOn(ConfigManager, '_writeFile')
     spyOn(ConfigManager, '_mkdir')
+    spyOn(ConfigManager, '_unlink')
+    spyOn(ConfigManager, '_rmdir')
     ConfigManager._readFile = jest.fn(() =>
       Promise.resolve(JSON.stringify({ config: 'test' }))) as jest.Mock
   })
@@ -63,6 +65,24 @@ describe('ConfigManager', () => {
         .toHaveBeenCalledWith('/test/entities/test-entity')
       expect(ConfigManager._writeFile)
         .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify(config, null, 2))
+    })
+  })
+
+  describe('deleteEntityConfig', () => {
+    it('should delete an entity', async () => {
+      ConfigManager._exists = jest.fn(() => Promise.resolve(true))
+      ConfigManager._readdir = jest.fn(() => Promise.resolve([
+        'config.json', 'another-file'
+      ])) as jest.Mock
+
+      await ConfigManager.deleteEntity('test-entity')
+
+      expect(ConfigManager._unlink)
+        .toHaveBeenCalledWith('/test/entities/test-entity/config.json')
+      expect(ConfigManager._unlink)
+        .toHaveBeenCalledWith('/test/entities/test-entity/another-file')
+      expect(ConfigManager._rmdir)
+        .toHaveBeenCalledWith('/test/entities/test-entity')
     })
   })
 })

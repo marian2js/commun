@@ -1,5 +1,5 @@
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
-import { Commun, ConfigManager, EntityConfig, EntityModel } from '@commun/core'
+import { Commun, ConfigManager, EntityConfig } from '@commun/core'
 import { AdminModule } from '../../src'
 import { BaseUserModel, DefaultUserConfig } from '@commun/users'
 
@@ -105,6 +105,18 @@ describe('AdminController', () => {
         .send({ test: 123 })
         .expect(200)
       expect(res.body.item).toEqual({ ...DefaultUserConfig, ...{ test: 123 } })
+    })
+  })
+
+  describe('delete - [DELETE] /admin/entities/:entityName', () => {
+    it('should delete a single entity', async () => {
+      spyOn(ConfigManager, 'deleteEntity')
+
+      const res = await authenticatedRequest(adminUser._id)
+        .delete(`${baseUrl}/entities/test-entity`)
+        .expect(200)
+
+      expect(ConfigManager.deleteEntity).toHaveBeenCalledWith('test-entity')
     })
   })
 
