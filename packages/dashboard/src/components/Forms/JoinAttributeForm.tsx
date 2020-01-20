@@ -15,7 +15,7 @@ import { EntityService } from '../../services/EntityService'
 import { handleAttrChange } from '../../utils/attributes'
 import { EntitySelector } from './Selectors/EntitySelector'
 import { AttributeSelector } from './Selectors/AttributeSelector'
-import DeleteIcon from '@material-ui/icons/Delete';
+import DeleteIcon from '@material-ui/icons/Delete'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -31,6 +31,7 @@ const useStyles = makeStyles(theme => ({
   },
   deleteButton: {
     margin: theme.spacing(4, 0, 0, 2),
+    cursor: 'pointer',
   },
 }))
 
@@ -104,8 +105,7 @@ export const JoinAttributeForm = (props: Props) => {
     setQuery(newQuery)
   }
 
-  const handleQueryDeleteClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, key: string) => {
-    e.preventDefault()
+  const handleQueryDeleteClick = (key: string) => {
     const newQuery = { ...query }
     delete newQuery[key]
     onChange('query', { ...newQuery, '': undefined })
@@ -182,9 +182,9 @@ export const JoinAttributeForm = (props: Props) => {
                   <Grid item xs={1}>
                     {
                       key === '' ? '' :
-                        <a href="#" onClick={e => handleQueryDeleteClick(e, key)}>
-                          <DeleteIcon className={classes.deleteButton} />
-                        </a>
+                        <div onClick={() => handleQueryDeleteClick(key)} className={classes.deleteButton}>
+                          <DeleteIcon/>
+                        </div>
                     }
                   </Grid>
                 </Grid>

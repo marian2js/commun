@@ -18,6 +18,7 @@ import { EntityPermissions } from './EntityPermissions'
 import { EntityAttributes } from './EntityAttributes'
 import { EntityJoinAttributes } from './EntityJoinAttributes'
 import { EntityHooks } from './EntityHooks'
+import { EntityIndexes } from './EntityIndexes'
 
 const useStyles = makeStyles(theme => ({
   container: {},
@@ -38,7 +39,7 @@ export const EntityPage = () => {
   const classes = useStyles()
   let { entityName } = useParams()
   const [entity, setEntity] = useState<EntityConfig<EntityModel>>()
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ joinAttributes: true })
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ settings: true })
 
   useEffect(() => {
     (async () => {
@@ -139,7 +140,7 @@ export const EntityPage = () => {
             <Typography className={classes.expansionPanelHeading}>Indexes</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
-            Not implemented yet!
+            <EntityIndexes entity={entity}/>
           </ExpansionPanelDetails>
         </ExpansionPanel>
 

@@ -3,6 +3,7 @@ import { EntityActionPermissions } from './EntityPermission'
 import { ModelAttribute } from './ModelAttribute'
 import { LifecycleEntityHooks } from './EntityHooks'
 import { JoinAttribute } from './JoinAttributes'
+import { EntityIndex } from './EntityIndex'
 
 export interface EntityConfig<MODEL extends EntityModel> {
   entityName: string
@@ -15,16 +16,6 @@ export interface EntityConfig<MODEL extends EntityModel> {
   joinAttributes?: {
     [key: string]: JoinAttribute
   }
-  indexes?: {
-    keys: {
-      [key in keyof MODEL]?: 1 | -1
-    }
-    unique?: boolean
-    sparse?: boolean
-    v?: number
-    expireAfterSeconds?: number
-    name?: string
-    default_language?: string
-  }[]
+  indexes?: EntityIndex<MODEL>[]
   hooks?: LifecycleEntityHooks
 }
