@@ -2,18 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { EntityService } from '../../services/EntityService'
 import { EntityConfig, EntityModel } from '@commun/core'
-import {
-  CircularProgress,
-  Container,
-  ExpansionPanel,
-  ExpansionPanelDetails,
-  ExpansionPanelSummary,
-  makeStyles,
-  Typography
-} from '@material-ui/core'
+import { CircularProgress, Container, makeStyles, Typography } from '@material-ui/core'
 import { Layout } from '../../components/Layout/Layout'
 import { EntitySettings } from './EntitySettings'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { EntityPermissions } from './EntityPermissions'
 import { EntityAttributes } from './EntityAttributes'
 import { EntityJoinAttributes } from './EntityJoinAttributes'
@@ -21,21 +12,11 @@ import { EntityHooks } from './EntityHooks'
 import { EntityIndexes } from './EntityIndexes'
 import capitalize from '@material-ui/core/utils/capitalize'
 import { EntityDangerZone } from './EntityDangerZone'
+import { ExpansionMenu } from '../../components/ExpansionMenu'
 
 const useStyles = makeStyles(theme => ({
   header: {
     marginBottom: theme.spacing(2),
-  },
-  permissions: {
-    padding: theme.spacing(2),
-    display: 'flex',
-    overflow: 'auto',
-    flexDirection: 'column',
-  },
-
-  expansionPanelHeading: {
-    fontSize: theme.typography.pxToRem(18),
-    flexShrink: 0,
   },
 }))
 
@@ -52,13 +33,40 @@ export const EntityPage = () => {
     })()
   }, [entityName])
 
-  const handleExpansion = (panelKey: string) => (event: React.ChangeEvent<{}>, isExpanded: boolean) => {
-    setExpanded({ ...expanded, [panelKey]: !expanded[panelKey] })
-  }
-
   if (!entity) {
     return <CircularProgress/>
   }
+
+  const menuItems = [{
+    key: 'settings',
+    label: 'General settings',
+    component: <EntitySettings entity={entity}/>,
+    expanded: true,
+  }, {
+    key: 'permissions',
+    label: 'Permissions',
+    component: <EntityPermissions entity={entity}/>,
+  }, {
+    key: 'attributes',
+    label: 'Attributes',
+    component: <EntityAttributes entity={entity}/>,
+  }, {
+    key: 'joinAttributes',
+    label: 'Join Attributes',
+    component: <EntityJoinAttributes entity={entity}/>,
+  }, {
+    key: 'hooks',
+    label: 'Hooks',
+    component: <EntityHooks entity={entity}/>,
+  }, {
+    key: 'indexes',
+    label: 'Indexes',
+    component: <EntityIndexes entity={entity}/>,
+  }, {
+    key: 'dangerZone',
+    label: 'Danger Zone',
+    component: <EntityDangerZone entity={entity}/>
+  }]
 
   return (
     <Layout>
@@ -70,103 +78,7 @@ export const EntityPage = () => {
           </Typography>
         </header>
 
-        <ExpansionPanel expanded={expanded.settings}
-                        onChange={handleExpansion('settings')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="settings-content"
-            id="settings-header">
-            <Typography className={classes.expansionPanelHeading}>General settings</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntitySettings entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.permissions}
-                        onChange={handleExpansion('permissions')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="permissions-content"
-            id="permissions-header">
-            <Typography className={classes.expansionPanelHeading}>Permissions</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityPermissions entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.attributes}
-                        onChange={handleExpansion('attributes')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="attributes-content"
-            id="attributes-header">
-            <Typography className={classes.expansionPanelHeading}>Attributes</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityAttributes entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.joinAttributes}
-                        onChange={handleExpansion('joinAttributes')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="joinAttributes-content"
-            id="joinAttributes-header">
-            <Typography className={classes.expansionPanelHeading}>Join Attributes</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityJoinAttributes entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.hooks}
-                        onChange={handleExpansion('hooks')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="hooks-content"
-            id="hooks-header">
-            <Typography className={classes.expansionPanelHeading}>Hooks</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityHooks entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.indexes}
-                        onChange={handleExpansion('indexes')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="indexes-content"
-            id="indexes-header">
-            <Typography className={classes.expansionPanelHeading}>Indexes</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityIndexes entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-
-        <ExpansionPanel expanded={expanded.dangerZone}
-                        onChange={handleExpansion('dangerZone')}
-                        TransitionProps={{ unmountOnExit: true }}>
-          <ExpansionPanelSummary
-            expandIcon={<ExpandMoreIcon/>}
-            aria-controls="dangerZone-content"
-            id="dangerZone-header">
-            <Typography className={classes.expansionPanelHeading}>Danger Zone</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <EntityDangerZone entity={entity}/>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
+        <ExpansionMenu items={menuItems}/>
 
       </Container>
     </Layout>
