@@ -2,7 +2,7 @@ import { ConfigManager } from '../src'
 
 describe('ConfigManager', () => {
   beforeEach(() => {
-    ConfigManager.setRootPath('/test/')
+    ConfigManager.setRootPath('/test/dist')
     spyOn(ConfigManager, '_writeFile')
     spyOn(ConfigManager, '_mkdir')
     spyOn(ConfigManager, '_unlink')
@@ -15,7 +15,7 @@ describe('ConfigManager', () => {
   describe('getEntityConfigFilePath', () => {
     it('should return the path for a given entity', async () => {
       expect(ConfigManager.getEntityConfigFilePath('test-entity'))
-        .toBe('/test/entities/test-entity/config.json')
+        .toBe('/test/src/entities/test-entity/config.json')
     })
   })
 
@@ -23,7 +23,7 @@ describe('ConfigManager', () => {
     it('should return the config for the current environment', async () => {
       const config = await ConfigManager.readEnvConfig()
       expect(config).toEqual({ config: 'test' })
-      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/config/test.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/config/test.json')
     })
   })
 
@@ -41,16 +41,16 @@ describe('ConfigManager', () => {
         config: 'test'
       }])
 
-      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-1/config.json')
-      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-2/config.json')
-      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/entity-3/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/entities/entity-1/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/entities/entity-2/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/entities/entity-3/config.json')
     })
   })
 
   describe('readEntityConfig', () => {
     it('should return the config for a given entity', async () => {
       expect(await ConfigManager.readEntityConfig('test-entity')).toEqual({ config: 'test' })
-      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/entities/test-entity/config.json')
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/entities/test-entity/config.json')
     })
   })
 
@@ -59,7 +59,7 @@ describe('ConfigManager', () => {
       const config = { entityName: 'test', collectionName: 'test', attributes: {} }
       await ConfigManager.setEntityConfig('test-entity', config)
       expect(ConfigManager._writeFile)
-        .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify(config, null, 2))
+        .toHaveBeenCalledWith('/test/src/entities/test-entity/config.json', JSON.stringify(config, null, 2))
     })
   })
 
@@ -68,7 +68,7 @@ describe('ConfigManager', () => {
       const config = { permissions: { get: 'anyone' } }
       await ConfigManager.mergeEntityConfig('test-entity', config)
       expect(ConfigManager._writeFile)
-        .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify({
+        .toHaveBeenCalledWith('/test/src/entities/test-entity/config.json', JSON.stringify({
           config: 'test',
           ...config,
         }, null, 2))
@@ -82,9 +82,9 @@ describe('ConfigManager', () => {
       const config = { entityName: 'tests', collectionName: 'tests', attributes: {} }
       await ConfigManager.createEntityConfig('test-entity', config)
       expect(ConfigManager._mkdir)
-        .toHaveBeenCalledWith('/test/entities/test-entity')
+        .toHaveBeenCalledWith('/test/src/entities/test-entity')
       expect(ConfigManager._writeFile)
-        .toHaveBeenCalledWith('/test/entities/test-entity/config.json', JSON.stringify(config, null, 2))
+        .toHaveBeenCalledWith('/test/src/entities/test-entity/config.json', JSON.stringify(config, null, 2))
     })
   })
 
@@ -98,11 +98,45 @@ describe('ConfigManager', () => {
       await ConfigManager.deleteEntity('test-entity')
 
       expect(ConfigManager._unlink)
-        .toHaveBeenCalledWith('/test/entities/test-entity/config.json')
+        .toHaveBeenCalledWith('/test/src/entities/test-entity/config.json')
       expect(ConfigManager._unlink)
-        .toHaveBeenCalledWith('/test/entities/test-entity/another-file')
+        .toHaveBeenCalledWith('/test/src/entities/test-entity/another-file')
       expect(ConfigManager._rmdir)
-        .toHaveBeenCalledWith('/test/entities/test-entity')
+        .toHaveBeenCalledWith('/test/src/entities/test-entity')
+    })
+  })
+
+  describe('getPluginPath', () => {
+    it('should return the path for a plugin', async () => {
+      expect(ConfigManager.getPluginPath('test-plugin')).toBe('/test/src/plugins/test-plugin')
+    })
+  })
+
+  describe('getPluginSetupModulePath', () => {
+    it('should return the path for the setup module of a plugin', async () => {
+      expect(ConfigManager.getPluginSetupModulePath('test-plugin')).toBe('/test/dist/plugins/test-plugin/setup.js')
+    })
+  })
+
+  describe('getPluginNames', () => {
+    it('should return a list of plugins', async () => {
+      ConfigManager._readdir = jest.fn(() => Promise.resolve([
+        'plugin-1', 'plugin-2'
+      ])) as jest.Mock
+
+      expect(await ConfigManager.getPluginNames()).toEqual(['plugin-1', 'plugin-2'])
+    })
+  })
+
+  describe('runPluginSetup', () => {
+    it('should run a plugin setup', async () => {
+      const setupPluginFn = jest.fn(() => {})
+      jest.mock('/test/dist/plugins/plugin-1/setup.js', () => ({
+        default: setupPluginFn
+      }), { virtual: true })
+
+      await ConfigManager.runPluginSetup('plugin-1')
+      expect(setupPluginFn).toHaveBeenCalledWith()
     })
   })
 })

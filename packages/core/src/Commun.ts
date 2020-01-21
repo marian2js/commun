@@ -87,6 +87,7 @@ export const Commun = {
   async startServer (dirname: string, options?: CommunOptions, expressApp?: Express) {
     ConfigManager.setRootPath(dirname)
     this.setOptions(options || await ConfigManager.readEnvConfig())
+    await this._setupPlugins()
     await this._registerEntitiesFromConfigFiles()
 
     app = expressApp || app || this.createExpressApp()
@@ -118,6 +119,13 @@ export const Commun = {
       if (!entities[config.entityName]) {
         await this.registerEntity<EntityModel>({ config })
       }
+    }
+  },
+
+  async _setupPlugins () {
+    const plugins = await ConfigManager.getPluginNames()
+    for (const pluginName of plugins) {
+      await ConfigManager.runPluginSetup(pluginName)
     }
   },
 

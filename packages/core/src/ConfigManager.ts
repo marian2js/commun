@@ -3,19 +3,20 @@ import fs from 'fs'
 import { promisify } from 'util'
 import { EntityConfig, EntityModel } from './types'
 
-let rootPath: string
+let srcRootPath: string
+let distRootPath: string
 
 export const ConfigManager = {
   getEntityPath (entityName: string) {
-    return path.join(rootPath, `entities/${entityName}`)
+    return path.join(srcRootPath, `entities/${entityName}`)
   },
 
   getEntityConfigFilePath (entityName: string) {
-    return path.join(rootPath, `entities/${entityName}/config.json`)
+    return path.join(srcRootPath, `entities/${entityName}/config.json`)
   },
 
   async readEnvConfig () {
-    const configFile = (await this._readFile(path.join(rootPath, `config/${process.env.NODE_ENV}.json`))).toString()
+    const configFile = (await this._readFile(path.join(srcRootPath, `config/${process.env.NODE_ENV}.json`))).toString()
     if (!configFile) {
       throw new Error(`Config file for environment ${process.env.NODE_ENV} not found`)
     }
@@ -23,7 +24,7 @@ export const ConfigManager = {
   },
 
   async getEntityConfigs<T> () {
-    const entityDirs = await this._readdir(path.join(rootPath, 'entities'))
+    const entityDirs = await this._readdir(path.join(srcRootPath, 'entities'))
     const entities = []
     for (const entity of entityDirs) {
       entities.push(await this.readEntityConfig<T>(entity))
@@ -71,8 +72,29 @@ export const ConfigManager = {
     }
   },
 
+  getPluginPath (pluginName: string) {
+    return path.join(srcRootPath, `plugins/${pluginName}`)
+  },
+
+  getPluginSetupModulePath (pluginName: string) {
+    return path.join(distRootPath, `plugins/${pluginName}/setup.js`)
+  },
+
+  getPluginNames () {
+    return this._readdir(path.join(srcRootPath, 'plugins'))
+  },
+
+  async runPluginSetup (pluginName: string): Promise<void> {
+    const pluginSetup = this.getPluginSetupModulePath(pluginName)
+    if (!pluginSetup) {
+      throw new Error(`Config file for plugin ${pluginName} not found`)
+    }
+    return await require(pluginSetup).default()
+  },
+
   setRootPath (path: string) {
-    rootPath = path.replace(/\/dist$/, '/src')
+    distRootPath = path
+    srcRootPath = path.replace(/\/dist$/, '/src')
   },
 
   _readFile: promisify(fs.readFile),

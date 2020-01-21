@@ -51,6 +51,17 @@ describe('Commun', () => {
     })
   })
 
+  describe('_setupPlugins', () => {
+    it('should register entities from config files', async () => {
+      const plugins = ['plugin-1', 'plugin-2']
+      ConfigManager.getPluginNames = jest.fn(() => Promise.resolve(plugins))
+      spyOn(ConfigManager, 'runPluginSetup')
+      await Commun._setupPlugins()
+      expect(ConfigManager.runPluginSetup).toHaveBeenCalledWith('plugin-1')
+      expect(ConfigManager.runPluginSetup).toHaveBeenCalledWith('plugin-2')
+    })
+  })
+
   describe('registerPlugin', () => {
     it('should register an entity with defaults', async () => {
       Commun.registerPlugin('test', {})
