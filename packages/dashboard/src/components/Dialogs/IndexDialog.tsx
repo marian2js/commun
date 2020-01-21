@@ -47,7 +47,6 @@ export const IndexDialog = (props: Props) => {
   const handleUpdateClick = async (e: React.MouseEvent) => {
     e.preventDefault()
     entity.indexes![indexPosition!]! = indexData as EntityIndex<EntityModel>
-    console.log('Index Position ===> ', indexPosition)
     const res = await EntityService.updateEntity(entity.entityName, { indexes: entity.indexes })
     onChange(res.item.indexes || [])
   }
@@ -83,7 +82,7 @@ export const IndexDialog = (props: Props) => {
         {
           indexIsNew ?
             <Button onClick={handleAddClick} color="primary" autoFocus>
-              Add hook
+              Add index
             </Button> :
             <Button onClick={handleUpdateClick} color="primary" autoFocus>
               Update

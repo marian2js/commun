@@ -40,7 +40,8 @@ export const ExpansionMenu = (props: Props) => {
     <>
       {
         items.map(item => (
-          <ExpansionPanel expanded={expanded[item.key]}
+          <ExpansionPanel key={item.key}
+                          expanded={expanded[item.key]}
                           onChange={handleExpansion(item.key)}
                           TransitionProps={{ unmountOnExit: true }}>
             <ExpansionPanelSummary

@@ -11,13 +11,18 @@ export type EmailTemplate = {
   text: string
 }
 
+type EmailTemplates = {
+  [key: string]: EmailTemplate
+}
+
 export type EmailConfig = {
+  templates: EmailTemplates
   transporter: nodemailer.Transporter,
   sendFrom: string
 }
 
 let emailModuleOptions: EmailConfig
-let emailTemplates: { [key: string]: EmailTemplate } = {}
+let emailTemplates: EmailTemplates = {}
 
 export const EmailModule = {
   wasSetup: false,
@@ -27,6 +32,7 @@ export const EmailModule = {
     await registerTemplates()
     await Commun.registerPlugin('emails', {
       config: {
+        templates: emailTemplates,
         ...options,
         transporter: undefined
       }

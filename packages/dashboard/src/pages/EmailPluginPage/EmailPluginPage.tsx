@@ -5,6 +5,7 @@ import { PluginService } from '../../services/PluginService'
 import { ExpansionMenu } from '../../components/ExpansionMenu'
 import { EmailConfig } from '@commun/emails'
 import { EmailPluginSettings } from './EmailPluginSettings'
+import { EmailPluginTemplates } from './EmailPluginTemplates'
 
 const useStyles = makeStyles(theme => ({
   header: {
@@ -35,7 +36,7 @@ export const EmailPluginPage = () => {
   }, {
     key: 'templates',
     label: 'Templates',
-    component: <div>Not implemented yet</div>,
+    component: <EmailPluginTemplates plugin={plugin}/>,
   }]
 
   return (

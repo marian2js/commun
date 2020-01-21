@@ -8,9 +8,6 @@ const useStyles = makeStyles(theme => ({
   form: {
     width: '100%',
   },
-  card: {
-    padding: theme.spacing(5),
-  },
   submitButton: {
     float: 'right',
     margin: theme.spacing(3, 0, 0, 0),

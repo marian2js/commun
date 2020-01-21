@@ -24,7 +24,6 @@ export const EntityPage = () => {
   const classes = useStyles()
   const { entityName } = useParams<{ entityName: string }>()
   const [entity, setEntity] = useState<EntityConfig<EntityModel>>()
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({ settings: true })
 
   useEffect(() => {
     (async () => {
