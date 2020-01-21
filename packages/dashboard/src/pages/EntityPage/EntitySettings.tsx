@@ -3,9 +3,14 @@ import { Button, Grid, makeStyles, TextField } from '@material-ui/core'
 import { EntityConfig, EntityModel } from '@commun/core'
 import { EntityService } from '../../services/EntityService'
 import { Alert, Color } from '@material-ui/lab'
+import { AttributeSelector } from '../../components/Forms/Selectors/AttributeSelector'
 
 const useStyles = makeStyles(theme => ({
   form: {
+    width: '100%',
+  },
+  apiAttributeSelectorFormControl: {
+    margin: theme.spacing(2, 1, 2),
     width: '100%',
   },
   submitButton: {
@@ -74,14 +79,11 @@ export const EntitySettings = (props: Props) => {
         </Grid>
 
         <Grid item xs={12}>
-          <TextField
-            onChange={e => setApiKey(e.target.value)}
-            value={apiKey}
-            name="apiKey"
-            variant="outlined"
-            margin="normal"
-            fullWidth
-            label="Api Key"/>
+          <AttributeSelector value={apiKey || '_id'}
+                             label="Attribute used by API endpoints"
+                             entity={entity}
+                             onChange={setApiKey}
+                             className={classes.apiAttributeSelectorFormControl}/>
         </Grid>
 
         {
