@@ -6,6 +6,11 @@ import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List'
 import { EntitiesDropdown } from './EntitiesDropdown'
 import { PluginsDropdown } from './PluginsDropdown'
+import { Link } from 'react-router-dom'
+import ListItemIcon from '@material-ui/core/ListItemIcon'
+import SettingsIcon from '@material-ui/icons/Settings'
+import ListItemText from '@material-ui/core/ListItemText'
+import ListItem from '@material-ui/core/ListItem'
 
 const drawerWidth = 240
 
@@ -41,6 +46,11 @@ export function SideMenu (props: Props) {
         <EntitiesDropdown/>
         <Divider/>
         <PluginsDropdown/>
+        <Divider/>
+        <ListItem button component={Link} to="/settings">
+          <ListItemIcon><SettingsIcon/></ListItemIcon>
+          <ListItemText primary="Settings"/>
+        </ListItem>
       </List>
     </div>
   )

@@ -30,17 +30,21 @@ const useStyles = makeStyles((theme: Theme) =>
     toolbar: theme.mixins.toolbar,
     content: {
       flexGrow: 1,
-      padding: theme.spacing(3),
     },
+    contentPadding: {
+      padding: theme.spacing(3),
+    }
   }),
 )
 
 interface Props {
   children: JSX.Element[] | JSX.Element
+  noPadding?: boolean
 }
 
 export function Layout (props: Props) {
   const classes = useStyles()
+  const { noPadding } = props
   const [mobileOpen, setMobileOpen] = React.useState(false)
 
   const handleDrawerToggle = () => {
@@ -66,7 +70,7 @@ export function Layout (props: Props) {
         </Toolbar>
       </AppBar>
       <SideMenu onDrawerToggle={handleDrawerToggle} open={mobileOpen}/>
-      <main className={classes.content}>
+      <main className={`${classes.content} ${noPadding ? '' : classes.contentPadding}`}>
         <div className={classes.toolbar}/>
         {props.children}
       </main>
