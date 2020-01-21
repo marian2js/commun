@@ -12,6 +12,7 @@ describe('AdminController', () => {
   beforeEach(async () => {
     AdminModule.setup()
     Commun.registerEntity({ config: DefaultUserConfig })
+    Commun.registerPlugin('test-plugin', { config: { key: 123 } })
     await startTestApp(Commun)
     adminUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
       admin: true,
@@ -217,6 +218,43 @@ describe('AdminController', () => {
           }
         }
       })
+    })
+  })
+
+  describe('getPlugin - [GET] /admin/plugins/:pluginName', () => {
+    it('should return a single plugin', async () => {
+      const res = await authenticatedRequest(adminUser._id)
+        .get(`${baseUrl}/plugins/test-plugin`)
+        .expect(200)
+      expect(res.body.item).toEqual({ key: 123 })
+    })
+
+    it('should throw a not found error if the plugin does not exist', async () => {
+      await authenticatedRequest(adminUser._id)
+        .get(`${baseUrl}/plugins/404-entity`)
+        .expect(404)
+    })
+
+    it('should throw unauthorized error if the user is not admin', async () => {
+      await request()
+        .get(`${baseUrl}/plugins`)
+        .expect(401)
+      await authenticatedRequest(nonAdminUser._id)
+        .get(`${baseUrl}/plugins`)
+        .expect(401)
+    })
+  })
+
+  describe('updatePlugin - [PUT] /admin/plugins/:pluginName', () => {
+    it('should update a single plugin', async () => {
+      ConfigManager.mergePluginConfig = jest.fn((name: string, config: any) =>
+        Promise.resolve({ ...{ key: 123 }, ...config }))
+
+      const res = await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/plugins/test-plugin`)
+        .send({ test: 123 })
+        .expect(200)
+      expect(res.body.item).toEqual({ test: 123, key: 123 })
     })
   })
 })

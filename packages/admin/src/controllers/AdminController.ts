@@ -98,4 +98,16 @@ export class AdminController extends PluginController {
     }
     return { item: originalEntityConfig }
   }
+
+  async getPlugin (req: Request, res: Response) {
+    const plugin = Commun.getPlugin(req.params.pluginName)
+    return {
+      item: plugin.config
+    }
+  }
+
+  async updatePlugin (req: Request, res: Response) {
+    const pluginConfig = await ConfigManager.mergePluginConfig(req.params.pluginName, req.body)
+    return { item: pluginConfig }
+  }
 }

@@ -118,6 +118,12 @@ describe('ConfigManager', () => {
     })
   })
 
+  describe('getPluginConfigFilePath', () => {
+    it('should return the path for the config file of a plugin', async () => {
+      expect(ConfigManager.getPluginConfigFilePath('test-plugin')).toBe('/test/src/plugins/test-plugin/config.json')
+    })
+  })
+
   describe('getPluginNames', () => {
     it('should return a list of plugins', async () => {
       ConfigManager._readdir = jest.fn(() => Promise.resolve([
@@ -137,6 +143,34 @@ describe('ConfigManager', () => {
 
       await ConfigManager.runPluginSetup('plugin-1')
       expect(setupPluginFn).toHaveBeenCalledWith()
+    })
+  })
+
+  describe('readPluginConfig', () => {
+    it('should return the config for a given plugin', async () => {
+      expect(await ConfigManager.readPluginConfig('test-plugin')).toEqual({ config: 'test' })
+      expect(ConfigManager._readFile).toHaveBeenCalledWith('/test/src/plugins/test-plugin/config.json')
+    })
+  })
+
+  describe('setPluginConfig', () => {
+    it('should write the configuration in the file', async () => {
+      const config = { key: 123 }
+      await ConfigManager.setPluginConfig('test-plugin', config)
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test/src/plugins/test-plugin/config.json', JSON.stringify(config, null, 2))
+    })
+  })
+
+  describe('mergePluginConfig', () => {
+    it('should merge plugin config keys into the existent configuration', async () => {
+      const config = { key: 123 }
+      await ConfigManager.mergePluginConfig('test-plugin', config)
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test/src/plugins/test-plugin/config.json', JSON.stringify({
+          config: 'test',
+          ...config,
+        }, null, 2))
     })
   })
 })

@@ -80,6 +80,10 @@ export const ConfigManager = {
     return path.join(distRootPath, `plugins/${pluginName}/setup.js`)
   },
 
+  getPluginConfigFilePath (pluginName: string) {
+    return path.join(this.getPluginPath(pluginName), 'config.json')
+  },
+
   getPluginNames () {
     return this._readdir(path.join(srcRootPath, 'plugins'))
   },
@@ -90,6 +94,27 @@ export const ConfigManager = {
       throw new Error(`Config file for plugin ${pluginName} not found`)
     }
     return await require(pluginSetup).default()
+  },
+
+  async readPluginConfig<T> (pluginName: string): Promise<T> {
+    const pluginConfig = (await this._readFile(this.getPluginConfigFilePath(pluginName))).toString()
+    if (!pluginConfig) {
+      throw new Error(`Config file for plugin ${pluginName} not found`)
+    }
+    return JSON.parse(pluginConfig)
+  },
+
+  async setPluginConfig<T> (pluginName: string, config: T) {
+    await (this._writeFile(this.getPluginConfigFilePath(pluginName), JSON.stringify(config, null, 2)))
+  },
+
+  async mergePluginConfig<T> (pluginName: string, config: Partial<T>) {
+    const pluginConfig = await this.readPluginConfig<T>(pluginName)
+    for (const key of Object.keys(config)) {
+      pluginConfig[key as keyof T] = config[key as keyof T]!
+    }
+    await this.setPluginConfig<T>(pluginName, pluginConfig)
+    return pluginConfig
   },
 
   setRootPath (path: string) {

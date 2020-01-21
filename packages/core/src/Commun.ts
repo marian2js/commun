@@ -182,6 +182,7 @@ export const Commun = {
   registerPlugin (pluginName: string, plugin: RegisterPluginOptions) {
     plugins[pluginName] = {
       controller: plugin.controller || new PluginController(),
+      config: plugin.config || {},
       ...plugin
     }
     return plugins[pluginName]
