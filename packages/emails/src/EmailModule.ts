@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { ConfigManager } from '@commun/core'
+import { Commun, ConfigManager } from '@commun/core'
 import path from 'path'
 import fs from 'fs'
 import { promisify } from 'util'
@@ -11,20 +11,26 @@ export type EmailTemplate = {
   text: string
 }
 
-type SetupEmailOptions = {
+export type EmailConfig = {
   transporter: nodemailer.Transporter,
   sendFrom: string
 }
 
-let emailModuleOptions: SetupEmailOptions
+let emailModuleOptions: EmailConfig
 let emailTemplates: { [key: string]: EmailTemplate } = {}
 
 export const EmailModule = {
   wasSetup: false,
 
-  async setup (options: SetupEmailOptions) {
+  async setup (options: EmailConfig) {
     emailModuleOptions = options
     await registerTemplates()
+    await Commun.registerPlugin('emails', {
+      config: {
+        ...options,
+        transporter: undefined
+      }
+    })
     this.wasSetup = true
   },
 

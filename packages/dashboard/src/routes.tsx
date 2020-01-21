@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage/HomePage'
 import { EntityPage } from './pages/EntityPage/EntityPage'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { AddEntityPage } from './pages/AddEntityPage/AddEntityPage'
+import { EmailPluginPage } from './pages/EmailPluginPage/EmailPluginPage'
 
 export const routes = {
   Home: {
@@ -25,6 +26,11 @@ export const routes = {
     path: '/add-entity',
     exact: true,
     component: AddEntityPage
+  },
+  EmailPlugin: {
+    path: '/plugins/emails',
+    exact: true,
+    component: EmailPluginPage
   },
 }
 
