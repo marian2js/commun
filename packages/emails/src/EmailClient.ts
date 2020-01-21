@@ -10,7 +10,8 @@ export const EmailClient = {
     if (!EmailModule.wasSetup) {
       return
     }
-    const { sendFrom, transporter, templates } = EmailModule.getOptions()
+    const { sendFrom, transporter } = EmailModule.getOptions()
+    const templates = EmailModule.getTemplates()
     const template = templates[templateName]
     if (!template || !template.enabled) {
       return
