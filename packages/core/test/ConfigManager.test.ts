@@ -1,4 +1,4 @@
-import { ConfigManager } from '../src'
+import { CommunOptions, ConfigManager } from '../src'
 
 describe('ConfigManager', () => {
   beforeEach(() => {
@@ -170,7 +170,6 @@ describe('ConfigManager', () => {
     })
   })
 
-
   describe('setPluginConfig', () => {
     it('should write the configuration in the file', async () => {
       const config = { key: 123 }
@@ -189,6 +188,31 @@ describe('ConfigManager', () => {
           config: 'test',
           ...config,
         }, null, 2))
+    })
+  })
+
+  describe('getCommunOptions', () => {
+    it('should return the environment options', async () => {
+      ConfigManager._readdir = jest.fn(() => Promise.resolve([
+        'env-1', 'env-2'
+      ])) as jest.Mock
+
+      expect(await ConfigManager.getCommunOptions()).toEqual({
+        'env-1': {
+          config: 'test'
+        },
+        'env-2': {
+          config: 'test'
+        }
+      })
+    })
+  })
+
+  describe('setCommunOptions', () => {
+    it('should sve the options for a given environment', async () => {
+      await ConfigManager.setCommunOptions('test-env', { appName: 'test' } as CommunOptions)
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test/src/config/test-env.json', JSON.stringify({ appName: 'test' }, null, 2))
     })
   })
 })

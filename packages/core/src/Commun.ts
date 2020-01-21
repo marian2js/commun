@@ -18,7 +18,7 @@ let communOptions: CommunOptions
 
 let app: Express
 
-type CommunOptions = {
+export type CommunOptions = {
   port?: number
   endpoint?: string
   appName?: string

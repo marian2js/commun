@@ -297,4 +297,29 @@ describe('AdminController', () => {
       expect(ConfigManager.deletePluginFile).toHaveBeenCalledWith('test-plugin', 'templates/test-template.json')
     })
   })
+
+  describe('getCommunSettings - [GET] /admin/settings', () => {
+    it('should return settings for all environments', async () => {
+      ConfigManager.getCommunOptions = jest.fn(() => Promise.resolve({ env: { test: 1 } })) as jest.Mock
+
+      const res = await authenticatedRequest(adminUser._id)
+        .get(`${baseUrl}/settings`)
+        .expect(200)
+
+      expect(res.body).toEqual({ env: { test: 1 } })
+    })
+  })
+
+  describe('setCommunSettings - [POST] /admin/settings/:env', () => {
+    it('should set settings for a given environment', async () => {
+      ConfigManager.setCommunOptions = jest.fn(() => Promise.resolve())
+
+      await authenticatedRequest(adminUser._id)
+        .post(`${baseUrl}/settings/test-env`)
+        .send({ test: 1 })
+        .expect(200)
+
+      expect(ConfigManager.setCommunOptions).toHaveBeenCalledWith('test-env', { test: 1 })
+    })
+  })
 })

@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { promisify } from 'util'
 import { EntityConfig, EntityModel } from './types'
+import { CommunOptions } from './Commun'
 
 let srcRootPath: string
 let distRootPath: string
@@ -123,6 +124,22 @@ export const ConfigManager = {
     }
     await this.setPluginConfig<T>(pluginName, pluginConfig)
     return pluginConfig
+  },
+
+  async getCommunOptions (): Promise<{ [key: string]: CommunOptions }> {
+    const configPath = path.join(srcRootPath, 'config')
+    const envFiles = await this._readdir(configPath)
+    const options: { [key: string]: CommunOptions } = {}
+    for (const file of envFiles) {
+      const envName = file.replace(/\.json$/, '')
+      options[envName] = JSON.parse((await this._readFile(path.join(configPath, file))).toString())
+    }
+    return options
+  },
+
+  async setCommunOptions (environment: string, options: CommunOptions) {
+    const configPath = path.join(srcRootPath, `config/${environment}.json`)
+    await this._writeFile(configPath, JSON.stringify(options, null, 2))
   },
 
   setRootPath (path: string) {

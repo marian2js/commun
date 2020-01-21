@@ -122,4 +122,13 @@ export class AdminController extends PluginController {
     await ConfigManager.deletePluginFile(req.params.pluginName, `templates/${req.params.templateName}.json`)
     return { ok: true }
   }
+
+  async getCommunSettings (req: Request, res: Response) {
+    return await ConfigManager.getCommunOptions()
+  }
+
+  async setCommunSettings (req: Request, res: Response) {
+    await ConfigManager.setCommunOptions(req.params.env, req.body)
+    return { ok: true }
+  }
 }
