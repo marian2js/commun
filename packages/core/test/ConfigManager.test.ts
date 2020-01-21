@@ -153,6 +153,24 @@ describe('ConfigManager', () => {
     })
   })
 
+  describe('setPluginFile', () => {
+    it('should write a file in the plugin directory', async () => {
+      const config = { key: 123 }
+      await ConfigManager.setPluginFile('test-plugin', 'folder/file.json', config)
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test/src/plugins/test-plugin/folder/file.json', JSON.stringify(config, null, 2))
+    })
+  })
+
+  describe('deletePluginFile', () => {
+    it('should write a file in the plugin directory', async () => {
+      await ConfigManager.deletePluginFile('test-plugin', 'folder/file.json')
+      expect(ConfigManager._unlink)
+        .toHaveBeenCalledWith('/test/src/plugins/test-plugin/folder/file.json')
+    })
+  })
+
+
   describe('setPluginConfig', () => {
     it('should write the configuration in the file', async () => {
       const config = { key: 123 }

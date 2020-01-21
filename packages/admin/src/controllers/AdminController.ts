@@ -110,4 +110,16 @@ export class AdminController extends PluginController {
     const pluginConfig = await ConfigManager.mergePluginConfig(req.params.pluginName, req.body)
     return { item: pluginConfig }
   }
+
+  async createOrUpdateEmailTemplate (req: Request, res: Response) {
+    const templateName = req.params.templateName || req.body.templateName
+    delete req.body.templateName
+    await ConfigManager.setPluginFile(req.params.pluginName, `templates/${templateName}.json`, req.body)
+    return { ok: true }
+  }
+
+  async deleteEmailTemplate (req: Request, res: Response) {
+    await ConfigManager.deletePluginFile(req.params.pluginName, `templates/${req.params.templateName}.json`)
+    return { ok: true }
+  }
 }

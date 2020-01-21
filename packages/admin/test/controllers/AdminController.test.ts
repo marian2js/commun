@@ -257,4 +257,44 @@ describe('AdminController', () => {
       expect(res.body.item).toEqual({ test: 123, key: 123 })
     })
   })
+
+  describe('createOrUpdateEmailTemplate - [POST] /admin/plugins/:pluginName/templates', () => {
+    it('should create a single template', async () => {
+      ConfigManager.setPluginFile = jest.fn(() => Promise.resolve())
+
+      await authenticatedRequest(adminUser._id)
+        .post(`${baseUrl}/plugins/test-plugin/templates`)
+        .send({ templateName: 'test-template', subject: 'email' })
+        .expect(200)
+
+      expect(ConfigManager.setPluginFile).toHaveBeenCalledWith('test-plugin', 'templates/test-template.json', {
+        subject: 'email'
+      })
+    })
+
+    it('should update a single template', async () => {
+      ConfigManager.setPluginFile = jest.fn(() => Promise.resolve())
+
+      await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/plugins/test-plugin/templates/test-template`)
+        .send({ subject: 'email' })
+        .expect(200)
+
+      expect(ConfigManager.setPluginFile).toHaveBeenCalledWith('test-plugin', 'templates/test-template.json', {
+        subject: 'email'
+      })
+    })
+  })
+
+  describe('deleteEmailTemplate - [DELETE] /admin/plugins/:pluginName/templates/:templateName', () => {
+    it('should delete a single template', async () => {
+      ConfigManager.deletePluginFile = jest.fn(() => Promise.resolve())
+
+      await authenticatedRequest(adminUser._id)
+        .delete(`${baseUrl}/plugins/test-plugin/templates/test-template`)
+        .expect(200)
+
+      expect(ConfigManager.deletePluginFile).toHaveBeenCalledWith('test-plugin', 'templates/test-template.json')
+    })
+  })
 })

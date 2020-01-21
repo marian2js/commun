@@ -104,8 +104,16 @@ export const ConfigManager = {
     return JSON.parse(pluginConfig)
   },
 
-  async setPluginConfig<T> (pluginName: string, config: T) {
-    await (this._writeFile(this.getPluginConfigFilePath(pluginName), JSON.stringify(config, null, 2)))
+  async setPluginFile<T> (pluginName: string, filePath: string, content: T) {
+    await this._writeFile(path.join(this.getPluginPath(pluginName), filePath), JSON.stringify(content, null, 2))
+  },
+
+  async deletePluginFile (pluginName: string, filePath: string) {
+    await this._unlink(path.join(this.getPluginPath(pluginName), filePath))
+  },
+
+  setPluginConfig<T> (pluginName: string, config: T) {
+    return this.setPluginFile<T>(pluginName, 'config.json', config)
   },
 
   async mergePluginConfig<T> (pluginName: string, config: Partial<T>) {
