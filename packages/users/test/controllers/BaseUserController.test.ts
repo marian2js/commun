@@ -11,15 +11,21 @@ describe('BaseUserController', () => {
   const registerUserEntity = async (
     permissions: EntityActionPermissions,
     attributes: { [key in keyof BaseUserModel]: ModelAttribute } = DefaultUserConfig.attributes) => {
-    UserModule.setup({
+    await UserModule.setup({
+      accessToken: {
+        secretOrPrivateKey: 'SECRET',
+        signOptions: {
+          expiresIn: '3 days'
+        }
+      },
+      refreshToken: {
+        enabled: true
+      }
+    }, {
       config: {
         ...DefaultUserConfig,
         permissions,
         attributes,
-      }
-    }, {
-      accessToken: {
-        secretOrPrivateKey: 'SECRET'
       }
     })
     await Commun.createDbIndexes()

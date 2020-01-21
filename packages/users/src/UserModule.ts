@@ -1,4 +1,4 @@
-import { Commun, OptionalKeys, RegisterEntityOptions } from '@commun/core'
+import { Commun, ConfigManager, RegisterEntityOptions } from '@commun/core'
 import { BaseUserModel } from './types/BaseUserModel'
 import { BaseUserController } from './controllers/BaseUserController'
 import { BaseUserRouter } from './routers/BaseUserRouter'
@@ -6,43 +6,23 @@ import { DefaultUserConfig } from './config/DefaultUserConfig'
 import jwt from 'jsonwebtoken'
 import { AccessTokenSecurity } from './security/AccessTokenSecurity'
 
-type UserModuleRequiredOptions = {
+type UserModuleOptions = {
   accessToken: {
     secretOrPrivateKey: jwt.Secret,
-  }
-}
-
-type UserModuleDefaultOptions = {
-  accessToken: {
     secretOrPublicKey?: jwt.Secret | jwt.GetPublicKeyOrSecret,
-    signOptions?: jwt.SignOptions
+    signOptions: jwt.SignOptions,
   }
   refreshToken: {
     enabled: boolean
   }
 }
 
-type UserModuleOptions = UserModuleRequiredOptions & UserModuleDefaultOptions
-
-type UserModuleOptionsWithOptionalDefaults = UserModuleRequiredOptions & OptionalKeys<UserModuleDefaultOptions>
-
 let userModuleOptions: UserModuleOptions
 let entityName: string
 
-let defaultOptions: UserModuleDefaultOptions = {
-  accessToken: {
-    signOptions: {
-      expiresIn: '3 days'
-    },
-  },
-  refreshToken: {
-    enabled: true
-  },
-}
-
 export const UserModule = {
-  setup<MODEL extends BaseUserModel> (entityOptions: RegisterEntityOptions<MODEL>, options: UserModuleOptionsWithOptionalDefaults) {
-    const config = entityOptions.config || DefaultUserConfig
+  async setup<MODEL extends BaseUserModel> (options: UserModuleOptions, entityOptions?: RegisterEntityOptions<MODEL>) {
+    const config = entityOptions?.config || await getUserEntityConfig<MODEL>()
     entityName = config.entityName
     this.setOptions(options)
 
@@ -59,20 +39,23 @@ export const UserModule = {
     return userModuleOptions
   },
 
-  setOptions (options: UserModuleOptionsWithOptionalDefaults) {
-    userModuleOptions = {
-      accessToken: {
-        ...defaultOptions.accessToken,
-        ...options.accessToken,
-      },
-      refreshToken: {
-        ...defaultOptions.refreshToken,
-        ...options.refreshToken,
-      },
-    }
+  setOptions (options: UserModuleOptions) {
+    userModuleOptions = options
   },
 
   get entityName () {
     return entityName
   },
+}
+
+async function getUserEntityConfig<MODEL extends BaseUserModel> () {
+  const config = await ConfigManager.readEntityConfig<MODEL>('users')
+  return {
+    ...DefaultUserConfig,
+    ...config,
+    attributes: {
+      ...DefaultUserConfig.attributes,
+      ...config.attributes
+    }
+  }
 }

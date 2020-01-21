@@ -18,7 +18,11 @@ describe('AccessTokenSecurity', () => {
   beforeEach(() => {
     UserModule.setOptions({
       accessToken: {
-        secretOrPrivateKey: secretOrPrivateKey
+        secretOrPrivateKey: secretOrPrivateKey,
+        signOptions: {}
+      },
+      refreshToken: {
+        enabled: true
       }
     })
   })
