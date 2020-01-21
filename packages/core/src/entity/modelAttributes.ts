@@ -13,7 +13,6 @@ import { BadRequestError, NotFoundError } from '../errors'
 import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
 import { ObjectId } from 'mongodb'
-import S from 'string'
 import { Commun } from '../Commun'
 
 type ModelData<T> = { [P in keyof T]?: T[P] }
@@ -137,7 +136,7 @@ async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: key
   const targetData = (data[attribute.setFrom as keyof T] || '') as string
   let slug: string = ''
   if (targetData) {
-    slug = S(targetData.trim()).slugify().s
+    slug = targetData.toLowerCase().trim().replace(/\s/, '-')
   }
   if (!slug) {
     slug = defaultValue

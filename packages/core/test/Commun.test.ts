@@ -67,6 +67,7 @@ describe('Commun', () => {
       Commun.registerPlugin('test', {})
 
       expect(Commun.getPlugin('test')).toEqual({
+        config: {},
         controller: expect.any(PluginController),
       })
     })
