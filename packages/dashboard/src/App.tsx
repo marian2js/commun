@@ -1,11 +1,11 @@
 import React from 'react'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import { dashboardRouterSwitch } from './routes'
 
 const App: React.FC = () => (
-  <Router>
+  <BrowserRouter basename={process.env.PUBLIC_URL || '/'}>
     {dashboardRouterSwitch}
-  </Router>
+  </BrowserRouter>
 )
 
 export default App

@@ -27,7 +27,7 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
 
   if (!res.ok) {
     if (res.status === 401) {
-      window.location.href = routes.Login.path
+      window.location.href = process.env.PUBLIC_URL + routes.Login.path
     }
 
     // Client Error

@@ -27,8 +27,6 @@ export const UsersPluginPage = () => {
     return <CircularProgress/>
   }
 
-  console.log(plugin)
-
   const menuItems = [{
     key: 'security',
     label: 'Token settings',
