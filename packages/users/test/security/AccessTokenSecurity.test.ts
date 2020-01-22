@@ -9,18 +9,24 @@ import jwt, {
   SignOptions,
   VerifyCallback
 } from 'jsonwebtoken'
+import { AccessTokenKeys } from '../../src/types/UserTokens'
 
 describe('AccessTokenSecurity', () => {
-  const secretOrPrivateKey = 'private'
-  const secretOrPublicKey = 'public'
+  const privateKey = 'private'
+  const privateKeyPassphrase = 'secret'
+  const publicKey = 'public'
   const userId = '123456'
 
   beforeEach(() => {
+    UserModule.accessTokenKeys = {
+      publicKey: publicKey,
+      privateKey: {
+        key: privateKey,
+        passphrase: privateKeyPassphrase
+      }
+    }
     UserModule.setOptions({
-      accessToken: {
-        secretOrPrivateKey: secretOrPrivateKey,
-        signOptions: {}
-      },
+      accessToken: {},
       refreshToken: {
         enabled: true
       }
@@ -31,15 +37,15 @@ describe('AccessTokenSecurity', () => {
     it('should return a jwt signed token', async () => {
       jwt.sign = <jest.Mock>jest.fn((
         payload: { _id: string },
-        secretOrPrivateKey: Secret,
+        secretOrPrivateKey: AccessTokenKeys['privateKey'],
         options: SignOptions,
         callback: SignCallback
       ) => {
-        callback(null!, `SIGN(${payload._id}:${secretOrPrivateKey})`)
+        callback(null!, `SIGN(${payload._id}:${secretOrPrivateKey.key}:${secretOrPrivateKey.passphrase})`)
       })
 
       const signed = await AccessTokenSecurity.sign({ _id: userId })
-      expect(signed).toBe(`SIGN(${userId}:${secretOrPrivateKey})`)
+      expect(signed).toBe(`SIGN(${userId}:${privateKey}:${privateKeyPassphrase})`)
     })
 
     it('should return an error if the sign fails', async () => {
@@ -60,26 +66,25 @@ describe('AccessTokenSecurity', () => {
     it('should return the information from a valid token using a private secret', async () => {
       jwt.verify = <jest.Mock>jest.fn((
         token: string,
-        secretOrPublicKey: Secret | GetPublicKeyOrSecret,
+        secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
         callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
       })
 
-      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${secretOrPrivateKey})`)
+      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
     })
 
     it('should return the information from a valid token using a public key', async () => {
       jwt.verify = <jest.Mock>jest.fn((
         token: string,
-        secretOrPublicKey: Secret | GetPublicKeyOrSecret,
+        secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
         callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
       })
 
-      UserModule.getOptions().accessToken.secretOrPublicKey = secretOrPublicKey
-      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${secretOrPublicKey})`)
+      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
     })
 
     it('should throw an error if the token cannot be verified', async () => {

@@ -5,9 +5,9 @@ import RequestAuth = Express.RequestAuth
 
 export const AccessTokenSecurity = {
   sign: (payload: RequestAuth): Promise<string> => {
-    const options = UserModule.getOptions()
+    const signOptions = UserModule.getOptions().accessToken || {}
     return new Promise(((resolve, reject) => {
-      jwt.sign(payload, options.accessToken.secretOrPrivateKey, options.accessToken.signOptions || {}, (err, token) => {
+      jwt.sign(payload, UserModule.accessTokenKeys.privateKey, signOptions, (err, token) => {
         if (err) {
           return reject(err)
         }
@@ -18,9 +18,7 @@ export const AccessTokenSecurity = {
 
   verify: (token: string): Promise<RequestAuth> => {
     return new Promise((resolve, reject) => {
-      const accessTokenOptions = UserModule.getOptions().accessToken
-      const secret = accessTokenOptions.secretOrPublicKey || accessTokenOptions.secretOrPrivateKey
-      jwt.verify(token, secret, (err, data) => {
+      jwt.verify(token, UserModule.accessTokenKeys.publicKey, (err, data) => {
         if (err) {
           return reject(err)
         }

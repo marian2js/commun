@@ -142,6 +142,16 @@ export const ConfigManager = {
     await this._writeFile(configPath, JSON.stringify(options, null, 2))
   },
 
+  async getKeys (name: string) {
+    const keysPath = path.join(srcRootPath, '../keys')
+    const publicKey = (await this._readFile(path.join(keysPath, `${name}.pub`))).toString()
+    const privateKey = (await this._readFile(path.join(keysPath, `${name}.pem`))).toString()
+    return {
+      publicKey,
+      privateKey
+    }
+  },
+
   setRootPath (path: string) {
     distRootPath = path
     srcRootPath = path.replace(/\/dist$/, '/src')

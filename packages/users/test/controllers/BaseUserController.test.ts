@@ -1,7 +1,8 @@
-import { Commun, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
+import { Commun, ConfigManager, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { EmailClient } from '@commun/emails'
 import { closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
+import { AccessTokenSecurity } from '../../src/security/AccessTokenSecurity'
 
 describe('BaseUserController', () => {
   const baseUrl = '/api/v1/auth'
@@ -13,10 +14,8 @@ describe('BaseUserController', () => {
     attributes: { [key in keyof BaseUserModel]: ModelAttribute } = DefaultUserConfig.attributes) => {
     await UserModule.setup({
       accessToken: {
-        secretOrPrivateKey: 'SECRET',
-        signOptions: {
-          expiresIn: '3 days'
-        }
+        expiresIn: '3 days',
+        algorithm: 'RS256',
       },
       refreshToken: {
         enabled: true
@@ -28,6 +27,14 @@ describe('BaseUserController', () => {
         attributes,
       }
     })
+    UserModule.accessTokenKeys = {
+      publicKey: 'public',
+      privateKey: {
+        key: 'private',
+        passphrase: 'secret'
+      }
+    }
+    AccessTokenSecurity.sign = jest.fn(() => Promise.resolve('signed-token'))
     await Commun.createDbIndexes()
     Commun.configureRoutes()
   }
@@ -35,7 +42,10 @@ describe('BaseUserController', () => {
   const getDao = () => Commun.getEntityDao<BaseUserModel>(entityName)
   const getController = () => Commun.getEntityDao<BaseUserModel>(entityName)
 
-  beforeAll(async () => await startTestApp(Commun))
+  beforeAll(async () => {
+    ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
+    await startTestApp(Commun)
+  })
   afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
@@ -137,6 +147,7 @@ describe('BaseUserController', () => {
       expect(res.body.tokens.accessToken).toBeDefined()
       expect(res.body.tokens.accessTokenExpiration).toBeDefined()
       expect(res.body.tokens.refreshToken).toBeDefined()
+      expect(AccessTokenSecurity.sign).toHaveBeenCalledWith({ _id: res.body.user._id })
     })
 
     it('should return user and tokens if email and password are valid', async () => {

@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from 'react'
-import { UserModuleOptions } from '@commun/users'
+import { UserModuleSettings } from '@commun/users'
 import {
   Button,
   Checkbox,
@@ -28,17 +28,17 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface Props {
-  plugin: UserModuleOptions
+  plugin: UserModuleSettings
 }
 
 export const UsersTokenSettings = (props: Props) => {
   const classes = useStyles()
   const { plugin } = props
-  const [accessTokenExpiration, setAccessTokenExpiration] = useState(plugin.accessToken.signOptions.expiresIn)
+  const [accessTokenExpiration, setAccessTokenExpiration] = useState(plugin.accessToken.expiresIn)
   const [refreshTokenEnabled, setRefreshTokenEnabled] = useState(plugin.refreshToken.enabled)
   const [message, setMessage] = useState<{ text: string, severity: Color }>()
 
-  useEffect(() => setAccessTokenExpiration(props.plugin.accessToken.signOptions.expiresIn), [props.plugin])
+  useEffect(() => setAccessTokenExpiration(props.plugin.accessToken.expiresIn), [props.plugin])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -46,10 +46,7 @@ export const UsersTokenSettings = (props: Props) => {
       await PluginService.updatePlugin('users', {
         accessToken: {
           ...plugin.accessToken,
-          signOptions: {
-            ...(plugin.accessToken.signOptions || {}),
-            expiresIn: accessTokenExpiration,
-          },
+          expiresIn: accessTokenExpiration,
         },
         refreshToken: {
           ...(plugin.refreshToken || {}),

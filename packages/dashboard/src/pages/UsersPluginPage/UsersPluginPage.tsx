@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { CircularProgress, Container, makeStyles, Typography } from '@material-ui/core'
 import { Layout } from '../../components/Layout/Layout'
 import { PluginService } from '../../services/PluginService'
-import { UserModuleOptions } from '@commun/users'
+import { UserModuleSettings } from '@commun/users'
 import { ExpansionMenu } from '../../components/ExpansionMenu'
 import { UsersTokenSettings } from './UsersTokenSettings'
 
@@ -14,11 +14,11 @@ const useStyles = makeStyles(theme => ({
 
 export const UsersPluginPage = () => {
   const classes = useStyles()
-  const [plugin, setPlugin] = useState<UserModuleOptions | undefined>()
+  const [plugin, setPlugin] = useState<UserModuleSettings | undefined>()
 
   useEffect(() => {
     (async () => {
-      const res = await PluginService.getPlugin<UserModuleOptions>('users')
+      const res = await PluginService.getPlugin<UserModuleSettings>('users')
       setPlugin(res.item)
     })()
   }, [])

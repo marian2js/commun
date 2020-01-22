@@ -6,3 +6,11 @@ export interface AccessToken {
 export interface UserTokens extends AccessToken {
   refreshToken?: string
 }
+
+export interface AccessTokenKeys {
+  publicKey: string
+  privateKey: {
+    key: string
+    passphrase: string
+  }
+}

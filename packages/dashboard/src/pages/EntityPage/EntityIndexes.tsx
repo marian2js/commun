@@ -44,7 +44,7 @@ export const EntityIndexes = (props: Props) => {
 
   const tableAttributes = indexes.map((index, i) => ({
     position: i,
-    keys: Object.keys(index.keys).join(', '),
+    accessTokenKeys: Object.keys(index.keys).join(', '),
     type: `${index.unique ? 'Unique' : ''} ${index.sparse ? 'Sparse' : ''}`,
   }))
 

@@ -5,25 +5,33 @@ import { BaseUserRouter } from './routers/BaseUserRouter'
 import { DefaultUserConfig } from './config/DefaultUserConfig'
 import jwt from 'jsonwebtoken'
 import { AccessTokenSecurity } from './security/AccessTokenSecurity'
+import { AccessTokenKeys } from './types/UserTokens'
 
-export type UserModuleOptions = {
-  accessToken: {
-    secretOrPrivateKey: jwt.Secret,
-    secretOrPublicKey?: jwt.Secret | jwt.GetPublicKeyOrSecret,
-    signOptions: jwt.SignOptions,
-  }
+export type UserModuleSettings = {
+  accessToken: jwt.SignOptions,
   refreshToken: {
     enabled: boolean
   }
 }
 
-let userModuleOptions: UserModuleOptions
+let userModuleSettings: UserModuleSettings
 let entityName: string
+let keys: AccessTokenKeys
 
 export const UserModule = {
-  async setup<MODEL extends BaseUserModel> (options: UserModuleOptions, entityOptions?: RegisterEntityOptions<MODEL>) {
+  async setup<MODEL extends BaseUserModel> (options: UserModuleSettings, entityOptions?: RegisterEntityOptions<MODEL>) {
     const config = entityOptions?.config || await getUserEntityConfig<MODEL>()
     entityName = config.entityName
+
+    const { publicKey, privateKey } = await ConfigManager.getKeys('accessToken')
+    this.accessTokenKeys = {
+      publicKey,
+      privateKey: {
+        key: privateKey,
+        passphrase: process.env.COMMUN_ACCESS_TOKEN_PK_PASSPHRASE!,
+      }
+    }
+
     this.setOptions(options)
 
     Commun.registerEntity<MODEL>({
@@ -33,17 +41,23 @@ export const UserModule = {
       onExpressAppCreated: app => { app.use(AccessTokenSecurity.setRequestAuthMiddleware) },
       ...entityOptions
     })
-    await Commun.registerPlugin('users', {
-      config: options
-    })
+    await Commun.registerPlugin('users', { config: options })
   },
 
   getOptions () {
-    return userModuleOptions
+    return userModuleSettings
   },
 
-  setOptions (options: UserModuleOptions) {
-    userModuleOptions = options
+  setOptions (options: UserModuleSettings) {
+    userModuleSettings = options
+  },
+
+  get accessTokenKeys () {
+    return keys
+  },
+
+  set accessTokenKeys (accessTokenKeys: AccessTokenKeys) {
+    keys = accessTokenKeys
   },
 
   get entityName () {

@@ -209,10 +209,23 @@ describe('ConfigManager', () => {
   })
 
   describe('setCommunOptions', () => {
-    it('should sve the options for a given environment', async () => {
+    it('should save the options for a given environment', async () => {
       await ConfigManager.setCommunOptions('test-env', { appName: 'test' } as CommunOptions)
       expect(ConfigManager._writeFile)
         .toHaveBeenCalledWith('/test/src/config/test-env.json', JSON.stringify({ appName: 'test' }, null, 2))
+    })
+  })
+
+  describe('getKeys', () => {
+    it('should return public and private keys', async () => {
+      expect(await ConfigManager.getKeys('test-key')).toEqual({
+        privateKey: JSON.stringify({ config: 'test' }),
+        publicKey: JSON.stringify({ config: 'test' }),
+      })
+      expect(ConfigManager._readFile)
+        .toHaveBeenCalledWith('/test/keys/test-key.pem')
+      expect(ConfigManager._readFile)
+        .toHaveBeenCalledWith('/test/keys/test-key.pub')
     })
   })
 })

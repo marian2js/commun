@@ -131,7 +131,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     const accessToken = await AccessTokenSecurity.sign({ _id: user._id! })
     return {
       accessToken,
-      accessTokenExpiration: UserModule.getOptions().accessToken.signOptions?.expiresIn
+      accessTokenExpiration: UserModule.getOptions().accessToken?.expiresIn
     }
   }
 
