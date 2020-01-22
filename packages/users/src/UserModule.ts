@@ -6,7 +6,7 @@ import { DefaultUserConfig } from './config/DefaultUserConfig'
 import jwt from 'jsonwebtoken'
 import { AccessTokenSecurity } from './security/AccessTokenSecurity'
 
-type UserModuleOptions = {
+export type UserModuleOptions = {
   accessToken: {
     secretOrPrivateKey: jwt.Secret,
     secretOrPublicKey?: jwt.Secret | jwt.GetPublicKeyOrSecret,
@@ -32,6 +32,9 @@ export const UserModule = {
       router: BaseUserRouter,
       onExpressAppCreated: app => { app.use(AccessTokenSecurity.setRequestAuthMiddleware) },
       ...entityOptions
+    })
+    await Commun.registerPlugin('users', {
+      config: options
     })
   },
 

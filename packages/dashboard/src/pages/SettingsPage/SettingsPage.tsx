@@ -4,8 +4,6 @@ import { Layout } from '../../components/Layout/Layout'
 import { SettingsService } from '../../services/SettingsService'
 import { CommunOptions } from '@commun/core'
 import { SettingsEnvForm } from './SettingsEnvForm'
-import useMediaQuery from '@material-ui/core/useMediaQuery'
-import { useTheme } from '@material-ui/core/styles'
 import AddIcon from '@material-ui/icons/Add'
 import { SettingsAddEnvForm } from './SettingsAddEnvForm'
 import { Alert } from '@material-ui/lab'
@@ -40,13 +38,10 @@ function TabPanel (props: TabPanelProps) {
 }
 
 export const SettingsPage = () => {
-  const theme = useTheme()
   const [settings, setSettings] = useState<{ [key: string]: CommunOptions }>()
   const [environments, setEnvironments] = useState<string[]>([])
   const [tabIndex, setTabIndex] = useState(0)
   const [snackbarOpen, setSnackbarOpen] = useState(false)
-
-  const smDownScreen = useMediaQuery(theme.breakpoints.down('sm'))
 
   useEffect(() => {
     (async () => {

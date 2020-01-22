@@ -7,7 +7,6 @@ import { Collapse } from '@material-ui/core'
 import List from '@material-ui/core/List'
 import EmailIcon from '@material-ui/icons/Email'
 import VpnKeyIcon from '@material-ui/icons/VpnKey'
-import DashboardIcon from '@material-ui/icons/Dashboard'
 import React from 'react'
 import { Link } from 'react-router-dom'
 
@@ -29,13 +28,9 @@ export function PluginsDropdown () {
             <ListItemIcon><EmailIcon/></ListItemIcon>
             <ListItemText primary="Emails"/>
           </ListItem>
-          <ListItem button>
+          <ListItem button component={Link} to="/plugins/users">
             <ListItemIcon><VpnKeyIcon/></ListItemIcon>
-            <ListItemText primary="Admin"/>
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon><DashboardIcon/></ListItemIcon>
-            <ListItemText primary="Dashboard"/>
+            <ListItemText primary="Users"/>
           </ListItem>
         </List>
       </Collapse>

@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage/LoginPage'
 import { AddEntityPage } from './pages/AddEntityPage/AddEntityPage'
 import { EmailPluginPage } from './pages/EmailPluginPage/EmailPluginPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
+import { UsersPluginPage } from './pages/UsersPluginPage/UsersPluginPage'
 
 export const routes = {
   Home: {
@@ -32,6 +33,11 @@ export const routes = {
     path: '/plugins/emails',
     exact: true,
     component: EmailPluginPage
+  },
+  UsersPlugin: {
+    path: '/plugins/users',
+    exact: true,
+    component: UsersPluginPage,
   },
   Settings: {
     path: '/settings',
