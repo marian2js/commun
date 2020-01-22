@@ -19,11 +19,12 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   settings: CommunOptions
   environment: string
+  onUpdate: (environment: string, settings: CommunOptions) => void
 }
 
 export const SettingsEnvForm = (props: Props) => {
   const classes = useStyles()
-  const { settings, environment } = props
+  const { settings, environment, onUpdate } = props
   const [appName, setAppName] = useState(settings.appName)
   const [endpoint, setEndpoint] = useState(settings.endpoint)
   const [port, setPort] = useState(settings.port)
@@ -32,7 +33,7 @@ export const SettingsEnvForm = (props: Props) => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await SettingsService.setSettings(environment, {
+    const newSettings = {
       appName,
       endpoint,
       port,
@@ -41,7 +42,9 @@ export const SettingsEnvForm = (props: Props) => {
         uri: mongoDbUri,
         dbName: mongoDbName,
       }
-    })
+    }
+    await SettingsService.setSettings(environment, newSettings)
+    onUpdate(environment, newSettings)
   }
 
   return (
