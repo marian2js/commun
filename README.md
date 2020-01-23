@@ -8,7 +8,7 @@ Commun helps you build scalable APIs in hours instead of months by giving you po
 
 #### Quick start
 
-You need to install [Node.js](https://nodejs.org/en/download/) first, then just run:
+You need to install [Node.js](https://nodejs.org/en/download/) and [MongoDB](https://docs.mongodb.com/manual/installation/) first, then just run:
 
 ```
 npx create-commun-app my-app
