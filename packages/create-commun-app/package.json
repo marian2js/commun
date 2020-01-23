@@ -5,10 +5,10 @@
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
   "license": "MIT",
-  "main": "lib/src/index.js",
-  "typings": "lib/src/index.d.ts",
+  "main": "create-commun-app/lib/src/index.js",
+  "typings": "create-commun-app/lib/src/index.d.ts",
   "bin": {
-    "create-commun-app": "./lib/src/index.js"
+    "create-commun-app": "./create-commun-app/lib/src/index.js"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   },
   "scripts": {
     "prepublishOnly": "npm run tsc",
-    "tsc": "tsc && cp -r resources lib/resources",
+    "tsc": "tsc && cp -r resources lib/create-commun-app/resources",
     "test": "jest --forceExit --coverage --verbose"
   },
   "bugs": {

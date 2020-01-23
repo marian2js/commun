@@ -1,4 +1,9 @@
 import packageJson from '../package.json'
+import adminPackageJson from '../../admin/package.json'
+import corePackageJson from '../../core/package.json'
+import dashboardPackageJson from '../../dashboard/package.json'
+import emailsPackageJson from '../../emails/package.json'
+import usersPackageJson from '../../users/package.json'
 import chalk from 'chalk'
 import fs from 'fs'
 import path from 'path'
@@ -39,6 +44,11 @@ export const CreateCommunApp = async (appName: string, commandArgs: { [key: stri
   await copyDirectory(resourcesPath, appPath, '.', {
     appName,
     version: packageJson.version,
+    adminVersion: adminPackageJson.version,
+    coreVersion: corePackageJson.version,
+    dashboardVersion: dashboardPackageJson.version,
+    emailsVersion: emailsPackageJson.version,
+    usersVersion: usersPackageJson.version,
     ...commandArgs,
   })
 
