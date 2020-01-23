@@ -22,12 +22,7 @@ export const AdminModule = {
     }
     if (!await dao.getEstimatedCount()) {
       firstRunCode = await SecurityUtils.generateRandomString(36)
-      console.log()
-      console.log('🙏 Thank you for setting up your Commun server')
-      console.log()
-      console.log('🔑 To get started you need to register an admin account:')
-      console.log()
-      console.log(`${Commun.getOptions().endpoint}/dashboard/signup?code=${firstRunCode}`)
+      console.log(`    🔑 Register your first admin account: ${Commun.getOptions().endpoint}/dashboard/signup?code=${firstRunCode}`)
       console.log()
     }
   },

@@ -14,6 +14,7 @@ import {
 } from './types'
 import errorHandler from 'errorhandler'
 import { MongoClient, MongoClientCommonOption } from 'mongodb'
+import chalk from 'chalk'
 import { MongoDbConnection } from './dao/MongoDbConnection'
 import { EntityController, PluginController } from './controllers'
 import { EntityDao } from './dao/EntityDao'
@@ -72,13 +73,14 @@ export const Commun = {
   },
 
   async connectDb () {
+    console.log(chalk.cyan('Connecting to MongoDB...'))
     const client = new MongoClient(communOptions.mongoDB.uri, {
       useUnifiedTopology: true
     })
     await client.connect()
     MongoDbConnection.setClient(client)
     MongoDbConnection.setDb(client.db(communOptions.mongoDB.dbName, communOptions.mongoDB.options || {}))
-    console.log('Connected to MongoDB')
+    console.log(chalk.cyanBright('Successfully connected to MongoDB'))
     return MongoDbConnection
   },
 
@@ -93,6 +95,8 @@ export const Commun = {
   },
 
   async startServer (dirname: string, options?: CommunOptions, expressApp?: Express) {
+    console.log(chalk.cyan(`Starting ${process.env.NODE_ENV} server...`))
+
     ConfigManager.setRootPath(dirname)
     this.setOptions(options || await ConfigManager.readEnvConfig())
     await this._setupPlugins()
@@ -111,8 +115,16 @@ export const Commun = {
     await this.createDbIndexes()
 
     await this._runOnModules(module => module.beforeServerStart?.())
+
     app.listen(app.get('port'), async () => {
-      console.log(`${app.get('env')} server started at http://localhost:${app.get('port')}`)
+      console.log()
+      console.log(chalk.green(`🚀 ${app.get('env')} server started at http://localhost:${app.get('port')}`))
+      console.log()
+      console.log(`    🎩‍Admin dashboard: ${communOptions.endpoint}/dashboard`)
+      console.log()
+      console.log(`    💪 API endpoint: ${communOptions.endpoint}/api/v1/:entity`)
+      console.log()
+
       await this._runOnModules(module => module.afterServerStart?.())
     })
 
