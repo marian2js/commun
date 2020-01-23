@@ -61,9 +61,9 @@ export function LoginPage () {
     setError(null)
   }
 
-  // if (loggedIn) {
-  //   return <Redirect to={routes.Home.path}/>
-  // }
+  if (loggedIn) {
+    return <Redirect to={routes.Home.path}/>
+  }
 
   return (
     <Container component="main" maxWidth="xs">
