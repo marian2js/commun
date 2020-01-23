@@ -40,3 +40,23 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
 
   return await res.json()
 }
+
+export async function requestUntilSuccess (
+  { waitBetweenRetries, maxRetries }: {
+    waitBetweenRetries: number,
+    maxRetries: number,
+  },
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  path: string,
+  data?: any
+): Promise<any> {
+  try {
+    return await request(method, path, data)
+  } catch (e) {
+    return new Promise(resolve => {
+      setTimeout(async () => {
+        resolve(await requestUntilSuccess({ waitBetweenRetries, maxRetries: maxRetries - 1 }, method, path, data))
+      }, waitBetweenRetries)
+    })
+  }
+}

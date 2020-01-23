@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react'
-import { Button, Card, Container, Grid, makeStyles, TextField } from '@material-ui/core'
+import { Button, Card, CircularProgress, Container, Grid, makeStyles, TextField } from '@material-ui/core'
 import { Layout } from '../../components/Layout/Layout'
 import { EntityService } from '../../services/EntityService'
 import { Redirect } from 'react-router'
@@ -21,14 +21,22 @@ export const AddEntityPage = () => {
   const classes = useStyles()
   const [entityName, setEntityName] = useState('')
   const [entityCreated, setEntityCreated] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!entityName) {
       return
     }
+    setLoading(true)
     await EntityService.createEntity(entityName)
+    await EntityService.waitUntilEntityExist(entityName)
+    setLoading(false)
     setEntityCreated(true)
+  }
+
+  if (loading) {
+    return <CircularProgress/>
   }
 
   if (entityCreated) {

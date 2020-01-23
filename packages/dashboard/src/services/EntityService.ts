@@ -1,5 +1,5 @@
 import { EntityConfig, EntityModel, JoinAttribute, ModelAttribute } from '@commun/core'
-import { request } from '../utils/apiUtils'
+import { request, requestUntilSuccess } from '../utils/apiUtils'
 
 export const EntityService = {
   async getEntities (): Promise<{ items: EntityConfig<EntityModel>[] }> {
@@ -37,4 +37,11 @@ export const EntityService = {
   async deleteEntityJoinAttribute (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
     return request('DELETE', `/admin/entities/${entityName}/joinAttributes/${attributeKey}`)
   },
+
+  async waitUntilEntityExist (entityName: string) {
+    return requestUntilSuccess({
+      waitBetweenRetries: 500,
+      maxRetries: 20
+    }, 'GET', `/admin/entities/${entityName}`)
+  }
 }
