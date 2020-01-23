@@ -10,7 +10,7 @@ describe('AdminController', () => {
   let nonAdminUser: BaseUserModel
 
   beforeEach(async () => {
-    AdminModule.setup()
+    await AdminModule.setup()
     Commun.registerEntity({ config: DefaultUserConfig })
     Commun.registerPlugin('test-plugin', { config: { key: 123 } })
     await startTestApp(Commun)

@@ -6,9 +6,11 @@ import {
   EntityConfig,
   EntityModel,
   PluginController,
+  ServerError,
   UnauthorizedError
 } from '@commun/core'
 import { BaseUserModel } from '@commun/users'
+import { AdminModule } from '../AdminModule'
 
 export class AdminController extends PluginController {
   async validateAdminPermissions (req: Request, res: Response, next: NextFunction) {
@@ -130,5 +132,17 @@ export class AdminController extends PluginController {
   async setCommunSettings (req: Request, res: Response) {
     await ConfigManager.setCommunOptions(req.params.env, req.body)
     return { ok: true }
+  }
+
+  async createAdmin (req: Request, res: Response) {
+    AdminModule.validateFirstRunCode(req.body.code)
+    const usersEntity = Commun.getEntity<BaseUserModel>('users')
+    const result = await usersEntity.controller.create(req, res)
+    console.log('RESULT =>', result.item)
+    if (!result.item._id) {
+      throw new ServerError('Error occurred when creating the account, please try again')
+    }
+    await usersEntity.dao.updateOne(result.item._id, { admin: true })
+    return result
   }
 }

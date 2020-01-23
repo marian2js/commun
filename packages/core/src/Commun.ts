@@ -3,7 +3,15 @@ import compression from 'compression'
 import bodyParser from 'body-parser'
 import lusca from 'lusca'
 import morgan from 'morgan'
-import { Entity, EntityConfig, EntityModel, Plugin, RegisterEntityOptions, RegisterPluginOptions } from './types'
+import {
+  Entity,
+  EntityConfig,
+  EntityModel,
+  Module,
+  Plugin,
+  RegisterEntityOptions,
+  RegisterPluginOptions
+} from './types'
 import errorHandler from 'errorhandler'
 import { MongoClient, MongoClientCommonOption } from 'mongodb'
 import { MongoDbConnection } from './dao/MongoDbConnection'
@@ -92,11 +100,7 @@ export const Commun = {
 
     app = expressApp || app || this.createExpressApp()
 
-    for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
-      if (module.onExpressAppCreated) {
-        await module.onExpressAppCreated(app)
-      }
-    }
+    await this._runOnModules(module => module.onExpressAppCreated?.(app))
     this.configureRoutes()
 
     if (process.env.NODE_ENV !== 'production') {
@@ -106,8 +110,10 @@ export const Commun = {
     await this.connectDb()
     await this.createDbIndexes()
 
-    app.listen(app.get('port'), () => {
+    await this._runOnModules(module => module.beforeServerStart?.())
+    app.listen(app.get('port'), async () => {
       console.log(`${app.get('env')} server started at http://localhost:${app.get('port')}`)
+      await this._runOnModules(module => module.afterServerStart?.())
     })
 
     return app
@@ -126,6 +132,12 @@ export const Commun = {
     const plugins = await ConfigManager.getPluginNames()
     for (const pluginName of plugins) {
       await ConfigManager.runPluginSetup(pluginName)
+    }
+  },
+
+  async _runOnModules (cb: (module: Module) => any) {
+    for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
+      await cb(module)
     }
   },
 

@@ -73,6 +73,10 @@ export class EntityDao<T extends EntityModel> {
     return res && res.result && !!res.result.ok
   }
 
+  async getEstimatedCount () {
+    return await this.collection.estimatedDocumentCount()
+  }
+
   async createIndexes (config: EntityConfig<T>) {
     for (const [key, attribute] of Object.entries(config.attributes)) {
       if (attribute!.unique) {
