@@ -1,6 +1,6 @@
 {
   "name": "@commun/dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Commun dashboard module",
   "author": "Commun <admin@commun.dev>",
   "license": "MIT",
@@ -24,9 +24,9 @@
   "homepage": "/dashboard",
   "proxy": "http://localhost:8000",
   "dependencies": {
-    "@commun/core": "^0.1.0",
-    "@commun/emails": "^0.1.0",
-    "@commun/users": "^0.1.0",
+    "@commun/core": "^0.2.0",
+    "@commun/emails": "^0.2.0",
+    "@commun/users": "^0.2.0",
     "@material-ui/core": "^4.8.3",
     "@material-ui/icons": "^4.5.1",
     "@material-ui/lab": "^4.0.0-alpha.39",
