@@ -7,6 +7,9 @@
   "license": "MIT",
   "main": "lib/src/index.js",
   "typings": "lib/src/index.d.ts",
+  "bin": {
+    "create-commun-app": "./lib/src/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/commundev/commun.git"
