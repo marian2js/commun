@@ -5,10 +5,10 @@
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
   "license": "MIT",
-  "main": "create-commun-app/lib/src/index.js",
-  "typings": "create-commun-app/lib/src/index.d.ts",
+  "main": "lib/create-commun-app/src/index.js",
+  "typings": "lib/create-commun-app/src/index.d.ts",
   "bin": {
-    "create-commun-app": "./create-commun-app/lib/src/index.js"
+    "create-commun-app": "./lib/create-commun-app/src/index.js"
   },
   "repository": {
     "type": "git",
