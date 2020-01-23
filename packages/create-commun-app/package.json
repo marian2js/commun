@@ -1,6 +1,6 @@
 {
   "name": "create-commun-app",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Package for creating a new Commun app",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
