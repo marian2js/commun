@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme: Theme) =>
         flexShrink: 0,
       },
     },
-    toolbar: theme.mixins.toolbar,
+    toolbar: theme.mixins.toolbar as any,
     drawerPaper: {
       width: drawerWidth,
     },
