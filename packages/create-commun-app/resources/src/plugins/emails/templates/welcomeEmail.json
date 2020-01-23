@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "subject": "Welcome to {appName}",
+  "text": "Hello {username},\n\nThanks for joining {appName}. we want you to have an amazing experience using our platform. Please let us know if you have any questions.\nBest regards,\n{appName}",
+  "templateName": "welcomeEmail"
+}

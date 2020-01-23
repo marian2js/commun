@@ -1,0 +1,9 @@
+{
+  "accessToken": {
+    "expiresIn": "3 days",
+    "algorithm": "RS256"
+  },
+  "refreshToken": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "extends": [],
+  "defaultSeverity": "warning",
+  "linterOptions": {
+    "exclude": [
+      "node_modules/**/*.ts",
+      "coverage/**/*.js"
+    ]
+  }
+}

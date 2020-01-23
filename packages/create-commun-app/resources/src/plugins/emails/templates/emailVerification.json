@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "subject": "Verify your email for {appName}",
+  "text": "Thank you for creating an account on {appName}.\n\nFollow this link to verify your email: {endpoint}/complete-signup?username={username}&code={verificationCode}\n\nThanks for joining the community."
+}

@@ -1,0 +1,24 @@
+{
+  "name": "{{appName}}",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "start": "npm run watch",
+    "start:production": "npm run build && node dist/server.js",
+    "build": "tsc",
+    "watch": "tsc-watch --onSuccess \"node ./dist/server.js\""
+  },
+  "dependencies": {
+    "@commun/admin": "^{{version}}",
+    "@commun/core": "^{{version}}",
+    "@commun/dashboard": "^{{version}}",
+    "@commun/emails": "^{{version}}",
+    "@commun/users": "^{{version}}",
+    "dotenv": "^8.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^3.7.4",
+    "tsc-watch": "^4.0.0"
+  }
+}

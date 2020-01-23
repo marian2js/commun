@@ -1,0 +1,10 @@
+{
+  "entityName": "users",
+  "collectionName": "users",
+  "permissions": {
+    "get": "anyone",
+    "create": "anyone",
+    "update": "own",
+    "delete": "own"
+  }
+}

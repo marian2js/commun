@@ -1,0 +1,10 @@
+{
+  "appName": "{{appName}}",
+  "endpoint": "http://localhost:{{port}}",
+  "port": {{port}},
+  "mongoDB": {
+    "uri": "mongodb://{{dbhost}}:{{dbport}}",
+    "dbName": "{{dbname}}",
+    "options": {}
+  }
+}
