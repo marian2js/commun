@@ -7,4 +7,9 @@ export const UserService = {
     localStorage.setItem(STORE_TOKENS_KEY, JSON.stringify(res.tokens))
     return res
   },
+
+  async register (data: { email: string, username: string, password: string, code: string }) {
+    await request('POST', '/admin', data)
+    return await this.login({ username: data.username, password: data.password })
+  }
 }

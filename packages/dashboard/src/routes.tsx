@@ -7,6 +7,7 @@ import { AddEntityPage } from './pages/AddEntityPage/AddEntityPage'
 import { EmailPluginPage } from './pages/EmailPluginPage/EmailPluginPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
 import { UsersPluginPage } from './pages/UsersPluginPage/UsersPluginPage'
+import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 
 export const routes = {
   Home: {
@@ -18,6 +19,11 @@ export const routes = {
     path: '/login',
     exact: true,
     component: LoginPage
+  },
+  SignUp: {
+    path: '/signup',
+    exact: true,
+    component: SignUpPage
   },
   Entity: {
     path: '/entities/:entityName',
