@@ -1,6 +1,6 @@
 {
   "name": "@commun/admin",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Commun admin module",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@commun/core": "^0.2.0",
-    "@commun/users": "^0.2.0",
+    "@commun/users": "^0.2.2",
     "express": "^4.17.1"
   },
   "devDependencies": {
