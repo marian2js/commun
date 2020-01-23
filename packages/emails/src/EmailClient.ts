@@ -17,6 +17,11 @@ export const EmailClient = {
       return
     }
 
+    if (!transporter) {
+      console.warn('Skipping email send, transporter not set')
+      return
+    }
+
     const communOptions = Commun.getOptions()
 
     const templateVars = {
