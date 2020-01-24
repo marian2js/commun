@@ -9,9 +9,11 @@ import EmailIcon from '@material-ui/icons/Email'
 import VpnKeyIcon from '@material-ui/icons/VpnKey'
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useLocation } from 'react-router'
 
 export function PluginsDropdown () {
   const [open, setOpen] = React.useState(true)
+  const location = useLocation()
 
   return (
     <>
@@ -24,11 +26,11 @@ export function PluginsDropdown () {
       </ListItem>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
-          <ListItem button component={Link} to="/plugins/emails">
+          <ListItem button component={Link} to="/plugins/emails" selected={location.pathname === '/plugins/emails'}>
             <ListItemIcon><EmailIcon/></ListItemIcon>
             <ListItemText primary="Emails"/>
           </ListItem>
-          <ListItem button component={Link} to="/plugins/users">
+          <ListItem button component={Link} to="/plugins/users" selected={location.pathname === '/plugins/users'}>
             <ListItemIcon><VpnKeyIcon/></ListItemIcon>
             <ListItemText primary="Users"/>
           </ListItem>

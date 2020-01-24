@@ -11,6 +11,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon'
 import SettingsIcon from '@material-ui/icons/Settings'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListItem from '@material-ui/core/ListItem'
+import { useLocation } from 'react-router'
 
 const drawerWidth = 240
 
@@ -37,6 +38,7 @@ interface Props {
 export function SideMenu (props: Props) {
   const classes = useStyles()
   const theme = useTheme()
+  const location = useLocation()
 
   const drawer = (
     <div>
@@ -47,7 +49,7 @@ export function SideMenu (props: Props) {
         <Divider/>
         <PluginsDropdown/>
         <Divider/>
-        <ListItem button component={Link} to="/settings">
+        <ListItem button component={Link} to="/settings" selected={location.pathname === '/settings'}>
           <ListItemIcon><SettingsIcon/></ListItemIcon>
           <ListItemText primary="Settings"/>
         </ListItem>
