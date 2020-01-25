@@ -31,6 +31,12 @@ export type IdModelAttribute = BaseModelAttribute & {
   permissions?: EntityActionPermissions
 }
 
+export type ListModelAttribute = BaseModelAttribute & {
+  type: 'list'
+  listType: ModelAttribute
+  maxItems?: number
+}
+
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
@@ -78,6 +84,7 @@ export type ModelAttribute =
   EmailModelAttribute |
   EnumModelAttribute |
   IdModelAttribute |
+  ListModelAttribute |
   NumberModelAttribute |
   RefModelAttribute |
   SlugModelAttribute |

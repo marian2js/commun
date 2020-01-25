@@ -2,6 +2,7 @@ import {
   BooleanModelAttribute,
   EmailModelAttribute,
   EnumModelAttribute,
+  ListModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
   RefModelAttribute,
@@ -22,7 +23,7 @@ export async function getModelAttribute<T> (
   key: keyof T,
   data: ModelData<T>,
   userId?: string,
-  ignoreDefault?: boolean) {
+  ignoreDefault?: boolean): Promise<any> {
 
   const defaultValue = ignoreDefault ? undefined : attribute.default
 
@@ -35,6 +36,8 @@ export async function getModelAttribute<T> (
       return getEnumModelAttribute(attribute, key, data[key], defaultValue)
     case 'id':
       return
+    case 'list':
+      return getListModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key], defaultValue)
     case 'ref':
@@ -92,6 +95,31 @@ function getEnumModelAttribute<T> (attribute: EnumModelAttribute, key: keyof T, 
     throw new BadRequestError(`${key} must be one of ${attribute.values.join(', ')}`)
   }
   return value
+}
+
+function getListModelAttribute<T> (attribute: ListModelAttribute, key: keyof T, value: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
+  if (!value) {
+    if (attribute.required && defaultValue === undefined) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return defaultValue
+  }
+
+  if (!Array.isArray(value)) {
+    throw new BadRequestError(`${key} must be an array`)
+  }
+
+  if (attribute.maxItems !== undefined && value.length > attribute.maxItems) {
+    throw new BadRequestError(`${key} can contain up to ${attribute.maxItems} items`)
+  }
+
+  return Promise.all(value.map(async (_, index) => {
+    try {
+      return await getModelAttribute(attribute.listType, index, value, userId, ignoreDefault)
+    } catch (e) {
+      throw new Error(`${key} index ${e.message}`)
+    }
+  }))
 }
 
 function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any, defaultValue: number) {
@@ -207,6 +235,8 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return new ObjectId(value)
     case 'enum':
       return attribute.values.includes(value) ? value : undefined
+    case 'list':
+      return value.map((valueItem: any) => parseModelAttribute(attribute.listType, valueItem))
     default:
       assertNever(attribute)
   }

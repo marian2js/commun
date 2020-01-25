@@ -130,6 +130,81 @@ describe('modelAttributes', () => {
     })
   })
 
+  describe('List', () => {
+    it('should return the given list parsed to the list type', async () => {
+      expect(await getModelAttribute({
+        type: 'list',
+        listType: { type: 'number' }
+      }, 'key', { key: ['1', '2', '3'] })).toEqual([1, 2, 3])
+
+      expect(await getModelAttribute({
+        type: 'list',
+        listType: { type: 'string', maxLength: 3 }
+      }, 'key', { key: ['a', 'b', 'c'] })).toEqual(['a', 'b', 'c'])
+    })
+
+    it('should throw an error if one of the items of the list does not respect the constraints', async () => {
+      await expect(getModelAttribute({
+        type: 'list',
+        listType: { type: 'string', maxLength: 3 }
+      }, 'key', { key: ['a', 'b', 'long-string'] })).rejects.toThrow(/key index 2 must be shorter than 3 characters/)
+
+      await expect(getModelAttribute({
+        type: 'list',
+        listType: { type: 'email' }
+      }, 'key', { key: ['not an email'] })).rejects.toThrow(/key index 0 is not a valid email address/)
+    })
+
+    it('should handle the maxItems attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'list',
+        maxItems: 3,
+        listType: { type: 'number' }
+      }, 'key', { key: [1, 2, 3] })).toEqual([1, 2, 3])
+
+      await expect(getModelAttribute({
+        type: 'list',
+        maxItems: 3,
+        listType: { type: 'number' }
+      }, 'key', { key: [1, 2, 3, 4, 5] })).rejects.toThrow(/key can contain up to 3 items/)
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'list',
+        required: true,
+        listType: { type: 'number' }
+      }, 'key', { key: [1, 2, 3] })).toEqual([1, 2, 3])
+
+      await expect(getModelAttribute({
+        type: 'list',
+        required: true,
+        listType: { type: 'number' }
+      }, 'key', {})).rejects.toThrow(/key is required/)
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'list',
+        default: [9, 8, 7],
+        listType: { type: 'number' }
+      }, 'key', { key: [1, 2, 3] })).toEqual([1, 2, 3])
+
+      expect(await getModelAttribute({
+        type: 'list',
+        default: [9, 8, 7],
+        listType: { type: 'number' }
+      }, 'key', {})).toEqual([9, 8, 7])
+    })
+
+    it('should throw an error if the value is not an array', async () => {
+      await expect(getModelAttribute({
+        type: 'list',
+        listType: { type: 'number' }
+      }, 'key', { key: 'not an array' })).rejects.toThrow(/key must be an array/)
+    })
+  })
+
   describe('Number', () => {
     it('should return the given number', async () => {
       expect(await getModelAttribute({ type: 'number' }, 'key', { key: 123 })).toBe(123)
@@ -390,5 +465,12 @@ describe('parseModelAttribute', () => {
 
     expect(parseModelAttribute({ type: 'enum', values: [1, 2, 3] }, 2)).toBe(2)
     expect(parseModelAttribute({ type: 'enum', values: [1, 2, 3] }, 4)).toBeUndefined()
+
+    expect(parseModelAttribute({ type: 'list', listType: { type: 'number' } }, [])).toEqual([])
+    expect(parseModelAttribute({ type: 'list', listType: { type: 'number' } }, ['1', '2', '3'])).toEqual([1, 2, 3])
+    expect(parseModelAttribute({
+      type: 'list',
+      listType: { type: 'boolean' }
+    }, ['true', 'false'])).toEqual([true, false])
   })
 })
