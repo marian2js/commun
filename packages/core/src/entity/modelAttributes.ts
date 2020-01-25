@@ -3,6 +3,7 @@ import {
   EmailModelAttribute,
   EnumModelAttribute,
   ListModelAttribute,
+  MapModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
   RefModelAttribute,
@@ -38,6 +39,8 @@ export async function getModelAttribute<T> (
       return
     case 'list':
       return getListModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
+    case 'map':
+      return getMapModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key], defaultValue)
     case 'ref':
@@ -97,29 +100,53 @@ function getEnumModelAttribute<T> (attribute: EnumModelAttribute, key: keyof T, 
   return value
 }
 
-function getListModelAttribute<T> (attribute: ListModelAttribute, key: keyof T, value: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
-  if (!value) {
+function getListModelAttribute<T> (attribute: ListModelAttribute, key: keyof T, values: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
+  if (!values) {
     if (attribute.required && defaultValue === undefined) {
       throw new BadRequestError(`${key} is required`)
     }
     return defaultValue
   }
 
-  if (!Array.isArray(value)) {
+  if (!Array.isArray(values)) {
     throw new BadRequestError(`${key} must be an array`)
   }
 
-  if (attribute.maxItems !== undefined && value.length > attribute.maxItems) {
+  if (attribute.maxItems !== undefined && values.length > attribute.maxItems) {
     throw new BadRequestError(`${key} can contain up to ${attribute.maxItems} items`)
   }
 
-  return Promise.all(value.map(async (_, index) => {
+  return Promise.all(values.map(async (_, index) => {
     try {
-      return await getModelAttribute(attribute.listType, index, value, userId, ignoreDefault)
+      return await getModelAttribute(attribute.listType, index, values, userId, ignoreDefault)
     } catch (e) {
       throw new Error(`${key} index ${e.message}`)
     }
   }))
+}
+
+function getMapModelAttribute<T> (attribute: MapModelAttribute, key: keyof T, map: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
+  if (!map) {
+    if (attribute.required && defaultValue === undefined) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return defaultValue
+  }
+
+  if (typeof map !== 'object') {
+    throw new BadRequestError(`${key} must be an object`)
+  }
+
+  return Object.entries(map).reduce(async (prev: { [key: string]: any } | Promise<{ [key: string]: any }>, curr) => {
+    const prevObject = await prev
+    try {
+      const key = await getModelAttribute(attribute.keyType, 'key', { key: curr[0] }, userId, ignoreDefault)
+      prevObject[key] = await getModelAttribute(attribute.valueType, curr[0], map, userId, ignoreDefault)
+      return prev
+    } catch (e) {
+      throw new Error(`${key} ${e.message}`)
+    }
+  }, {})
 }
 
 function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any, defaultValue: number) {
@@ -237,6 +264,12 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return attribute.values.includes(value) ? value : undefined
     case 'list':
       return value.map((valueItem: any) => parseModelAttribute(attribute.listType, valueItem))
+    case 'map':
+      return Object.entries(value).reduce((prev: { [key: string]: any }, curr) => {
+        const key = parseModelAttribute(attribute.keyType, curr[0])
+        prev[key] = parseModelAttribute(attribute.valueType, curr[1])
+        return prev
+      }, {})
     default:
       assertNever(attribute)
   }

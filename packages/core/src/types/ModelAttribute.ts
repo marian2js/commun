@@ -37,6 +37,12 @@ export type ListModelAttribute = BaseModelAttribute & {
   maxItems?: number
 }
 
+export type MapModelAttribute = BaseModelAttribute & {
+  type: 'map'
+  keyType: ModelAttribute
+  valueType: ModelAttribute
+}
+
 export type NumberModelAttribute = BaseModelAttribute & {
   type: 'number'
   min?: number
@@ -85,6 +91,7 @@ export type ModelAttribute =
   EnumModelAttribute |
   IdModelAttribute |
   ListModelAttribute |
+  MapModelAttribute |
   NumberModelAttribute |
   RefModelAttribute |
   SlugModelAttribute |

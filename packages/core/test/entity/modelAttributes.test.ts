@@ -205,6 +205,98 @@ describe('modelAttributes', () => {
     })
   })
 
+  describe('Map', () => {
+    it('should return the given map with key and value parsed', async () => {
+      expect(await getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', { key: { a: '1', b: '2' } })).toEqual({ a: 1, b: 2 })
+
+      expect(await getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'string', maxLength: 3 },
+      }, 'key', { key: { a: '1', b: '2' } })).toEqual({ a: '1', b: '2' })
+    })
+
+    it('should throw an error if a key of the map does not respect a constrain', async () => {
+      await expect(getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string', maxLength: 3 },
+        valueType: { type: 'number' },
+      }, 'map', { map: { abcd: '1' } })).rejects.toThrow(/map key must be shorter than 3 characters/)
+    })
+
+    it('should throw an error if a value of the map does not respect a constrain', async () => {
+      await expect(getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'number', max: 5 },
+      }, 'map', { map: { a: 1, b: 6 } })).rejects.toThrow(/map b must be smaller or equal than 5/)
+
+      expect(await getModelAttribute({
+        type: 'map',
+        keyType: { type: 'enum', values: ['a', 'b'] },
+        valueType: { type: 'number' },
+      }, 'map', { map: { a: 1, b: 2 } })).toEqual({ a: 1, b: 2 })
+
+      await expect(getModelAttribute({
+        type: 'map',
+        keyType: { type: 'enum', values: ['a', 'b'] },
+        valueType: { type: 'number' },
+      }, 'map', { map: { a: 1, c: 2 } })).rejects.toThrow(/map key must be one of a, b/)
+    })
+
+    it('should support map o maps', async () => {
+      expect(await getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'map', keyType: { type: 'string' }, valueType: { type: 'number' } },
+      }, 'key', { key: { a: { b: '1' }, c: { d: '2' } } })).toEqual({ a: { b: 1 }, c: { d: 2 } })
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'map',
+        required: true,
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', { key: { a: '1', b: '2' } })).toEqual({ a: 1, b: 2 })
+
+      await expect(getModelAttribute({
+        type: 'map',
+        required: true,
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', {})).rejects.toThrow(/key is required/)
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'map',
+        default: { z: 1, x: 2 },
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', { key: { a: '1', b: '2' } })).toEqual({ a: 1, b: 2 })
+
+      expect(await getModelAttribute({
+        type: 'map',
+        default: { z: 1, x: 2 },
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', {})).toEqual({ z: 1, x: 2 })
+    })
+
+    it('should throw an error if the value is not a map', async () => {
+      await expect(getModelAttribute({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'number' },
+      }, 'key', { key: 123 })).rejects.toThrow(/key must be an object/)
+    })
+  })
+
   describe('Number', () => {
     it('should return the given number', async () => {
       expect(await getModelAttribute({ type: 'number' }, 'key', { key: 123 })).toBe(123)
@@ -472,5 +564,21 @@ describe('parseModelAttribute', () => {
       type: 'list',
       listType: { type: 'boolean' }
     }, ['true', 'false'])).toEqual([true, false])
+
+    expect(parseModelAttribute({
+      type: 'map',
+      keyType: { type: 'string' },
+      valueType: { type: 'number' }
+    }, {})).toEqual({})
+    expect(parseModelAttribute({
+      type: 'map',
+      keyType: { type: 'string' },
+      valueType: { type: 'number' }
+    }, { a: '1', b: '2' })).toEqual({ a: 1, b: 2})
+    expect(parseModelAttribute({
+      type: 'map',
+      keyType: { type: 'string' },
+      valueType: { type: 'boolean' }
+    }, { a: 'true', b: 'false' })).toEqual({ a: true, b: false})
   })
 })
