@@ -12,8 +12,10 @@ import {
   Select,
   TextField
 } from '@material-ui/core'
-import { TextDivider } from '../TextDivider'
-import { handleNumberAttrChange } from '../../utils/attributes'
+import { TextDivider } from '../../TextDivider'
+import { handleNumberAttrChange } from '../../../utils/attributes'
+import { ModelAttributeSharedOptions } from './ModelAttributeSharedOptions'
+import { ModelAttributeAdvanceSharedOptions } from './ModelAttributeAdvanceSharedOptions'
 
 const useStyles = makeStyles(theme => ({
   hashAlgorithmSelectorFormControl: {
@@ -23,6 +25,7 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   attribute: StringModelAttribute
+  subAttribute: boolean
   onChange: (key: keyof StringModelAttribute, value: any) => void
 }
 
@@ -31,7 +34,7 @@ const DEFAULT_HASH_SALT_ROUNDS = 12
 
 export const StringModelAttributeForm = (props: Props) => {
   const classes = useStyles()
-  const { attribute, onChange } = props
+  const { attribute, subAttribute, onChange } = props
   const [maxLength, setMaxLength] = useState(attribute.maxLength)
   const [hashChecked, setHashChecked] = useState(!!attribute.hash)
   const [hashAlgorithm, setHashAlgorithm] = useState(attribute.hash?.algorithm)
@@ -70,6 +73,8 @@ export const StringModelAttributeForm = (props: Props) => {
           fullWidth
           label="Max Length"/>
       </Grid>
+
+      <ModelAttributeSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
 
       <Grid item xs={12}>
         <TextDivider><span>Advanced options</span></TextDivider>
@@ -116,6 +121,8 @@ export const StringModelAttributeForm = (props: Props) => {
             </Grid>
           </> : ''
       }
+
+      <ModelAttributeAdvanceSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange} noDivider={true}/>
     </>
   )
 }

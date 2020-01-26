@@ -13,8 +13,9 @@ import {
   Select,
   TextField
 } from '@material-ui/core'
-import { TextDivider } from '../TextDivider'
-import { handleAttrChange } from '../../utils/attributes'
+import { handleAttrChange } from '../../../utils/attributes'
+import { ModelAttributeSharedOptions } from './ModelAttributeSharedOptions'
+import { ModelAttributeAdvanceSharedOptions } from './ModelAttributeAdvanceSharedOptions'
 
 const useStyles = makeStyles(theme => ({
   setFromSelectorFormControl: {
@@ -26,6 +27,7 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   entity: EntityConfig<EntityModel>
   attribute: SlugModelAttribute
+  subAttribute: boolean
   onChange: (key: keyof SlugModelAttribute, value: any) => void
 }
 
@@ -34,7 +36,7 @@ const DEFAULT_PREFIX_SUFFIX_TYPE = 'random'
 
 export const SlugModelAttributeForm = (props: Props) => {
   const classes = useStyles()
-  const { entity, attribute, onChange } = props
+  const { entity, attribute, subAttribute, onChange } = props
   const [setFrom, setSetFrom] = useState(attribute.setFrom)
   const [prefixChecked, setPrefixChecked] = useState(!!attribute.prefix)
   const [prefixChars, setPrefixChars] = useState(attribute.prefix?.chars)
@@ -147,9 +149,8 @@ export const SlugModelAttributeForm = (props: Props) => {
           </Grid> : ''
       }
 
-      <Grid item xs={12}>
-        <TextDivider><span>Advanced options</span></TextDivider>
-      </Grid>
+      <ModelAttributeSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
+      <ModelAttributeAdvanceSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
     </>
   )
 }

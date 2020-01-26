@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { EnumModelAttribute } from '@commun/core'
 import { FormControl, Grid, InputLabel, makeStyles, MenuItem, Select, TextField } from '@material-ui/core'
-import { TextDivider } from '../TextDivider'
+import { TextDivider } from '../../TextDivider'
+import { ModelAttributeSharedOptions } from './ModelAttributeSharedOptions'
+import { ModelAttributeAdvanceSharedOptions } from './ModelAttributeAdvanceSharedOptions'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
-    margin: theme.spacing(1),
+    margin: theme.spacing(2, 1, 1, 1),
     width: '100%',
   },
 }))
@@ -14,12 +16,13 @@ type EnumType = 'boolean' | 'string' | 'number'
 
 interface Props {
   attribute: EnumModelAttribute
+  subAttribute: boolean
   onChange: (key: keyof EnumModelAttribute, value: any) => void
 }
 
 export const EnumModelAttributeForm = (props: Props) => {
   const classes = useStyles()
-  const { attribute, onChange } = props
+  const { attribute, subAttribute, onChange } = props
   const [values, setValues] = useState([...(attribute.values || []), ''])
   const [types, setTypes] = useState<EnumType[]>([...(attribute.values || []).map(value => typeof value as EnumType), 'string'])
 
@@ -120,9 +123,8 @@ export const EnumModelAttributeForm = (props: Props) => {
         }
       </Grid>
 
-      <Grid item xs={12}>
-        <TextDivider><span>Advanced options</span></TextDivider>
-      </Grid>
+      <ModelAttributeSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
+      <ModelAttributeAdvanceSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
     </>
   )
 }

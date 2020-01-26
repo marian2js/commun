@@ -7,7 +7,7 @@ import DialogTitle from '@material-ui/core/DialogTitle'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { useTheme } from '@material-ui/core/styles'
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
-import { ModelAttributeForm } from '../Forms/ModelAttributeForm'
+import { ModelAttributeForm } from '../Forms/ModelAttributeForms/ModelAttributeForm'
 import { EntityService } from '../../services/EntityService'
 
 interface Props {

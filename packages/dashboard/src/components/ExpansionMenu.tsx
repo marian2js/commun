@@ -19,11 +19,12 @@ interface Props {
     label: string
     component: JSX.Element
   }[]
+  className?: string
 }
 
 export const ExpansionMenu = (props: Props) => {
   const classes = useStyles()
-  const { items } = props
+  const { items, className } = props
   const initialExpanded = items.reduce((prev: { [key: string]: boolean }, curr) => {
     if (curr.expanded) {
       prev[curr.key] = true
@@ -41,6 +42,7 @@ export const ExpansionMenu = (props: Props) => {
       {
         items.map(item => (
           <ExpansionPanel key={item.key}
+                          className={className}
                           expanded={expanded[item.key]}
                           onChange={handleExpansion(item.key)}
                           TransitionProps={{ unmountOnExit: true }}>
