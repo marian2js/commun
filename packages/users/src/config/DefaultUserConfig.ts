@@ -25,7 +25,6 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
     },
     password: {
       type: 'string',
-      required: true,
       hash: {
         algorithm: 'bcrypt',
         salt_rounds: 12,
@@ -79,6 +78,27 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
       default: false,
       permissions: {
         get: 'own',
+        create: 'system',
+        update: 'system',
+      },
+    },
+    providers: {
+      type: 'map',
+      keyType: {
+        type: 'enum',
+        values: ['google']
+      },
+      valueType: {
+        type: 'map',
+        keyType: {
+          type: 'string'
+        },
+        valueType: {
+          type: 'string'
+        }
+      },
+      permissions: {
+        get: 'system',
         create: 'system',
         update: 'system',
       },

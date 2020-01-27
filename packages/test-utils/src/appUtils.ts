@@ -30,16 +30,20 @@ export const startTestApp = async (commun: any) => {
   connectionDb = (await Commun.connectDb()).getDb()
 }
 
-export const stopTestApp = async (collectionName: string) => {
-  try {
-    await connectionDb.collection(collectionName).drop()
-  } catch (e) {}
+export const stopTestApp = async (collectionName?: string) => {
+  if (collectionName) {
+    try {
+      await connectionDb.collection(collectionName).drop()
+    } catch (e) {}
+  }
   jest.clearAllMocks()
 }
 
 export const closeTestApp = async () => {
   await Commun.closeDb()
 }
+
+export const getTestApp = () => expressApp
 
 export const request = () => {
   authRequest = false

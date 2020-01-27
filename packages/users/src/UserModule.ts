@@ -6,12 +6,22 @@ import { DefaultUserConfig } from './config/DefaultUserConfig'
 import jwt from 'jsonwebtoken'
 import { AccessTokenSecurity } from './security/AccessTokenSecurity'
 import { AccessTokenKeys } from './types/UserTokens'
+import { AuthProvider } from './types/ExternalAuth'
+import { ExternalAuth } from './security/ExternalAuth'
 
 export type UserModuleSettings = {
   accessToken: jwt.SignOptions,
   refreshToken: {
     enabled: boolean
-  }
+  },
+  externalAuth?: {
+    callbackUrl: string
+    providers: {
+      [key in AuthProvider]: {
+        enabled: boolean
+      }
+    }
+  },
 }
 
 let userModuleSettings: UserModuleSettings
@@ -38,7 +48,10 @@ export const UserModule = {
       config,
       controller: new BaseUserController<MODEL>(config.entityName),
       router: BaseUserRouter,
-      onExpressAppCreated: app => { app.use(AccessTokenSecurity.setRequestAuthMiddleware) },
+      onExpressAppCreated: app => {
+        ExternalAuth.setupPassport(app)
+        app.use(AccessTokenSecurity.setRequestAuthMiddleware)
+      },
       ...entityOptions
     })
     await Commun.registerPlugin('users', { config: options })

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import {
   BadRequestError,
   Commun,
@@ -12,9 +12,16 @@ import { BaseUserModel, UserModule } from '..'
 import { AccessToken, UserTokens } from '../types/UserTokens'
 import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
 import { EmailClient } from '@commun/emails'
+import passport from 'passport'
+import { ExternalAuth } from '../security/ExternalAuth'
+import { AuthProvider } from '../types/ExternalAuth'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
   async create (req: Request, res: Response): Promise<{ item: MODEL }> {
+    if (!req.body.password) {
+      throw new BadRequestError('Password cannot be blank')
+    }
+
     const { item } = await super.create(req, res)
     const plainVerificationCode = await SecurityUtils.generateRandomString(48)
     const verificationCode = await SecurityUtils.hashWithBcrypt(plainVerificationCode, 12)
@@ -31,7 +38,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
     const user = await this.findUserByEmailOrUsername(req.body.username || '')
 
-    if (!user || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
+    if (!user || !user.password || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
       throw new UnauthorizedError('Invalid username or password')
     }
 
@@ -119,6 +126,45 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       return { result: true }
     }
     throw new UnauthorizedError()
+  }
+
+  startAuthWithProvider (req: Request, res: Response, next: NextFunction) {
+    passport.authenticate(req.params.provider, { scope: ['profile', 'email'] })(req, res, next)
+  }
+
+  authenticateWithProvider (req: Request, res: Response, next: NextFunction) {
+    passport.authenticate(req.params.provider, {})(req, res, next)
+  }
+
+  async completeAuthWithProvider (req: Request, res: Response) {
+    const callbackUrl = UserModule.getOptions().externalAuth?.callbackUrl
+    if (!callbackUrl) {
+      return res.send({})
+    }
+    const user = req.user as BaseUserModel
+    const provider = req.params.provider as AuthProvider
+    const code = await ExternalAuth.sign({
+      email: user.email,
+      provider,
+      providerId: user.providers?.[provider]?.id!,
+    })
+    res.redirect(`${callbackUrl}?code=${code}`)
+  }
+
+  async getAccessTokenForAuthWithProvider (req: Request, res: Response) {
+    const provider = req.params.provider as AuthProvider
+    const token = req.query.code
+    const payload = await ExternalAuth.verify(token)
+    const user = await this.dao.findOne({ email: payload.email })
+    if (!user) {
+      throw new NotFoundError('User not found')
+    }
+    const validProvider = payload.provider && payload.providerId && payload.provider === provider &&
+      user.providers?.[provider]?.id === payload.providerId
+    if (validProvider) {
+      return this.generateAccessToken(user)
+    }
+    throw new BadRequestError('Invalid authentication code')
   }
 
   private findUserByEmailOrUsername (emailOrUsername: string) {

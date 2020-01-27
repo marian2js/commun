@@ -17,3 +17,13 @@ export const BaseUserRouter = express.Router()
     sendResponse(req, res, next, getController().forgotPassword(req, res)))
   .post('/auth/password/reset', (req, res, next) =>
     sendResponse(req, res, next, getController().resetPassword(req, res)))
+
+  .get('/auth/:provider', (req, res, next) =>
+    getController().startAuthWithProvider(req, res, next))
+  .get('/auth/:provider/callback',
+    (req, res, next) =>
+      getController().authenticateWithProvider(req, res, next),
+    (req, res, next) =>
+      getController().completeAuthWithProvider(req, res))
+  .get('/auth/:provider/token', (req, res, next) =>
+    sendResponse(req, res, next, getController().getAccessTokenForAuthWithProvider(req, res)))

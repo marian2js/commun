@@ -24,8 +24,10 @@
     "@commun/emails": "^0.2.2",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
+    "express-session": "^1.17.0",
     "jsonwebtoken": "^8.5.1",
     "passport": "^0.4.1",
+    "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
@@ -35,6 +37,7 @@
     "@types/express-jwt": "^0.0.42",
     "@types/jsonwebtoken": "^8.3.5",
     "@types/passport": "^1.0.2",
+    "@types/passport-google-oauth20": "^2.0.3",
     "@types/passport-local": "^1.0.33",
     "@types/supertest": "^2.0.8",
     "supertest": "^4.0.2",

@@ -3,6 +3,10 @@ import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from
 import { EmailClient } from '@commun/emails'
 import { closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 import { AccessTokenSecurity } from '../../src/security/AccessTokenSecurity'
+import passport from 'passport'
+import { AuthProvider } from '../../src/types/ExternalAuth'
+import { NextFunction, Request, Response } from 'express'
+import { ExternalAuth } from '../../src/security/ExternalAuth'
 
 describe('BaseUserController', () => {
   const baseUrl = '/api/v1/auth'
@@ -324,6 +328,73 @@ describe('BaseUserController', () => {
         .expect(200)
       expect(res.body.item.username).toBe('test-username')
       expect(res.body.item.password).toBeUndefined()
+    })
+  })
+
+  describe('authenticateWithProvider - [GET] /auth/:provider/callback', () => {
+    it('should start the passport authentication with the given provider', async () => {
+      passport.authenticate = jest.fn((provider: AuthProvider) =>
+        (req: Request, res: Response, next: NextFunction) => {
+          res.send({ result: `Authenticated with ${provider}` })
+        }) as jest.Mock
+      const res = await request()
+        .get(`${baseUrl}/google/callback`)
+        .expect(200)
+      expect(res.body.result).toBe('Authenticated with google')
+    })
+  })
+
+  describe('completeAuthWithProvider - [GET] /auth/:provider/token', () => {
+    beforeEach(async () => {
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      const userData = {
+        username: 'test',
+        email: 'user@example.org',
+        verified: true,
+        providers: {
+          google: {
+            id: 'id'
+          }
+        }
+      }
+      await getDao().insertOne(userData)
+    })
+
+    it('should return an access token given a valid external auth code', async () => {
+      ExternalAuth.verify = jest.fn(() => Promise.resolve({
+        email: 'user@example.org',
+        provider: 'google',
+        providerId: 'id'
+      }))
+      const res = await request()
+        .get(`${baseUrl}/google/token?code=secret-code`)
+        .expect(200)
+      expect(res.body).toEqual({
+        accessToken: 'signed-token',
+        accessTokenExpiration: '3 days',
+      })
+    })
+
+    it('should return a client error if the user does not exist', async () => {
+      ExternalAuth.verify = jest.fn(() => Promise.resolve({
+        email: 'bad-user@example.org',
+        provider: 'google',
+        providerId: 'id'
+      }))
+      await request()
+        .get(`${baseUrl}/google/token?code=secret-code`)
+        .expect(404)
+    })
+
+    it('should return a client error if the provider ID does not match', async () => {
+      ExternalAuth.verify = jest.fn(() => Promise.resolve({
+        email: 'user@example.org',
+        provider: 'google',
+        providerId: 'bad-id'
+      }))
+      await request()
+        .get(`${baseUrl}/google/token?code=secret-code`)
+        .expect(400)
     })
   })
 })
