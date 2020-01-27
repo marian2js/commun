@@ -8,6 +8,7 @@ import { SlugModelAttributeForm } from './SlugModelAttributeForm'
 import { StringModelAttributeForm } from './StringModelAttributeForm'
 import { ModelAttributeSharedOptions } from './ModelAttributeSharedOptions'
 import { ModelAttributeAdvanceSharedOptions } from './ModelAttributeAdvanceSharedOptions'
+import { MapModelAttributeForm } from './MapModelAttributeForm'
 
 interface Props {
   entity: EntityConfig<EntityModel>
@@ -36,6 +37,11 @@ export const ModelAttributeFormSwitch = (props: Props) => {
                                      attribute={attribute}
                                      subAttribute={subAttribute}
                                      onChange={onChange}/>
+    case 'map':
+      return <MapModelAttributeForm entity={entity}
+                                    attribute={attribute}
+                                    subAttribute={subAttribute}
+                                    onChange={onChange}/>
     case 'number':
       return <NumberModelAttributeForm attribute={attribute}
                                        subAttribute={subAttribute}

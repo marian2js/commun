@@ -10,11 +10,10 @@ import { ModelAttributeAdvanceSharedOptions } from './ModelAttributeAdvanceShare
 
 const useStyles = makeStyles(theme => ({
   typeSelector: {
-    margin: theme.spacing(1, 0, 0, 0),
+    marginTop: theme.spacing(1),
   },
   listItemOptions: {
     width: '100%',
-    // margin: theme.spacing(4, 0),
   },
 }))
 
@@ -30,13 +29,8 @@ export const ListModelAttributeForm = (props: Props) => {
   const { entity, attribute, subAttribute, onChange } = props
   const [listType, setListType] = useState(attribute?.listType || '')
 
-  const handleSetListType = (type: ModelAttribute['type']) => {
-    const newListType = {
-      ...listType,
-      type: type as any,
-    }
-    setListType(newListType)
-    onChange('listType', newListType)
+  const handleListType = (type: ModelAttribute['type']) => {
+    handleListItemOptionsChange('type', type)
   }
 
   const handleListItemOptionsChange = <T extends ModelAttribute> (key: keyof T, value: any) => {
@@ -51,7 +45,7 @@ export const ListModelAttributeForm = (props: Props) => {
   return (
     <>
       <Grid item xs={12} className={classes.typeSelector}>
-        <AttributeTypeSelector label="List Type" value={listType.type} onChange={handleSetListType}/>
+        <AttributeTypeSelector label="List Type" value={listType.type} onChange={handleListType}/>
       </Grid>
 
       {
@@ -71,7 +65,8 @@ export const ListModelAttributeForm = (props: Props) => {
           }]}/> : ''
       }
 
-      <ModelAttributeSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange} noDefault={true}/>
+      <ModelAttributeSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}
+                                   noDefault={true}/>
       <ModelAttributeAdvanceSharedOptions attribute={attribute} subAttribute={subAttribute} onChange={onChange}/>
     </>
   )
