@@ -5,6 +5,7 @@ import { PluginService } from '../../services/PluginService'
 import { UserModuleSettings } from '@commun/users'
 import { ExpansionMenu } from '../../components/ExpansionMenu'
 import { UsersTokenSettings } from './UsersTokenSettings'
+import { UsersSocialLogin } from './UsersSocialLogin'
 
 const useStyles = makeStyles(theme => ({
   header: {
@@ -28,6 +29,11 @@ export const UsersPluginPage = () => {
   }
 
   const menuItems = [{
+    key: 'social-login',
+    label: 'Social Login',
+    component: <UsersSocialLogin plugin={plugin}/>,
+    expanded: true,
+  }, {
     key: 'security',
     label: 'Token settings',
     component: <UsersTokenSettings plugin={plugin}/>,

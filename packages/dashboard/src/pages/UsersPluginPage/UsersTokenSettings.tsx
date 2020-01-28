@@ -8,11 +8,11 @@ import {
   FormGroup,
   Grid,
   makeStyles,
-  Snackbar,
   TextField
 } from '@material-ui/core'
 import { PluginService } from '../../services/PluginService'
-import { Alert, Color } from '@material-ui/lab'
+import { Color } from '@material-ui/lab'
+import { MessageSnackbar } from '../../components/MessageSnackbar'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -85,22 +85,14 @@ export const UsersTokenSettings = (props: Props) => {
           </FormControl>
         </Grid>
 
-        {
-          message ?
-            <Snackbar open={!!message} autoHideDuration={4000} onClose={() => setMessage(undefined)}
-                      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-              <Alert onClose={() => setMessage(undefined)} severity={message.severity}>
-                Settings updated
-              </Alert>
-            </Snackbar> : ''
-        }
-
         <Grid item xs={12}>
           <Button type="submit" variant="contained" color="primary" className={classes.submitButton}>
             Update
           </Button>
         </Grid>
       </Grid>
+
+      <MessageSnackbar message={message}/>
     </form>
   )
 }

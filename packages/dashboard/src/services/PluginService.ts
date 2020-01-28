@@ -1,5 +1,6 @@
 import { request } from '../utils/apiUtils'
 import { EmailTemplate } from '@commun/emails'
+import { AuthProvider } from '@commun/users'
 
 export const PluginService = {
   async getPlugins (): Promise<{ items: Plugin[] }> {
@@ -27,5 +28,9 @@ export const PluginService = {
 
   async deleteEmailTemplate (templateName: string) {
     return request('DELETE', `/admin/plugins/emails/templates/${templateName}`)
-  }
+  },
+
+  async updateSocialLoginCredentials (provider: AuthProvider, data: { id: string, secret: string }) {
+    return request('PUT', `/admin/plugins/users/credentials/${provider}`, data)
+  },
 }
