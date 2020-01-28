@@ -47,6 +47,7 @@ export const ExternalAuth = {
         return GithubAuthStrategy
       default:
         assertNever(provider)
+        throw new Error('Unexpected provider')
     }
   },
 
@@ -103,11 +104,13 @@ export const ExternalAuth = {
       cb(undefined, {
         user: createdUser,
         userCreated: true,
+        newUser: true,
       })
     } else {
       cb(undefined, {
         user,
         userCreated: false,
+        newUser: true,
       })
     }
   },
@@ -131,6 +134,7 @@ export const ExternalAuth = {
     cb(undefined, {
       user: updatedUser,
       userCreated: true,
+      newUser: false,
     })
   },
 

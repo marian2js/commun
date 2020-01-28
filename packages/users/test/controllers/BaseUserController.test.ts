@@ -1,10 +1,9 @@
 import { Commun, ConfigManager, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
-import { BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
+import { AuthProvider, BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { EmailClient } from '@commun/emails'
 import { closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 import { AccessTokenSecurity } from '../../src/security/AccessTokenSecurity'
 import passport from 'passport'
-import { AuthProvider } from '../../src/types/ExternalAuth'
 import { NextFunction, Request, Response } from 'express'
 import { ExternalAuth } from '../../src/security/ExternalAuth'
 

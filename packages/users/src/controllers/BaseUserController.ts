@@ -144,7 +144,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       console.error('External authentication callback url is not set')
       throw new ServerError()
     }
-    const userReq = req.user as { user: MODEL, userCreated: boolean }
+    const userReq = req.user as { user: MODEL, userCreated: boolean, newUser: boolean }
     const provider = req.params.provider as AuthProvider
     const code = await ExternalAuth.sign({
       user: userReq.user,
@@ -154,7 +154,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       },
       userCreated: userReq.userCreated,
     })
-    res.redirect(`${callbackUrl}?code=${code}`)
+    res.redirect(`${callbackUrl}?provider=${provider}&newUser=${userReq.newUser}&code=${code}`)
   }
 
   async generateAccessTokenForAuthWithProvider (req: Request, res: Response) {
