@@ -130,7 +130,8 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   startAuthWithProvider (req: Request, res: Response, next: NextFunction) {
-    passport.authenticate(req.params.provider, { scope: ['profile', 'email'] })(req, res, next)
+    const provider = req.params.provider as AuthProvider
+    passport.authenticate(provider, ExternalAuth.getProviderStrategy(provider).authOptions)(req, res, next)
   }
 
   authenticateWithProvider (req: Request, res: Response, next: NextFunction) {
@@ -188,7 +189,13 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       EmailClient.sendEmail('welcomeEmail', user.email, userData)
     }
 
-    return this.generateAccessToken(user)
+    return {
+      user: await this.prepareModelResponse(req, user),
+      tokens: {
+        ...(await this.generateAccessToken(user)),
+        refreshToken: await this.generateRefreshToken(user),
+      },
+    }
   }
 
   private findUserByEmailOrUsername (emailOrUsername: string) {

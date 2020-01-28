@@ -7,6 +7,7 @@ import passport, { Profile } from 'passport'
 import { GoogleAuthStrategy } from './GoogleAuthStrategy'
 import { Express } from 'express'
 import { UserUtils } from '../utils/UserUtils'
+import { FacebookAuthStrategy } from './FacebookAuthStrategy'
 
 export const ExternalAuth = {
   setupPassport (app: Express) {
@@ -28,15 +29,20 @@ export const ExternalAuth = {
     }
     for (const [key, provider] of Object.entries(providers)) {
       const providerKey = key as AuthProvider
-      if (provider.enabled) {
-        switch (providerKey) {
-          case 'google':
-            GoogleAuthStrategy.registerStrategy()
-            break
-          default:
-            assertNever(providerKey)
-        }
+      if (provider?.enabled) {
+        this.getProviderStrategy(providerKey).registerStrategy()
       }
+    }
+  },
+
+  getProviderStrategy (provider: AuthProvider) {
+    switch (provider) {
+      case 'google':
+        return GoogleAuthStrategy
+      case 'facebook':
+        return FacebookAuthStrategy
+      default:
+        assertNever(provider)
     }
   },
 
@@ -46,7 +52,7 @@ export const ExternalAuth = {
     }
 
     const emailInfo = {
-      ...(profile.emails[0] as { value: string, verified: boolean })
+      ...(profile.emails[0] as { value: string, verified?: boolean })
     }
 
     const user = await Commun.getEntityDao<BaseUserModel>('users')
@@ -59,10 +65,16 @@ export const ExternalAuth = {
     }
   },
 
-  async createAccountFromProvider (provider: AuthProvider, profile: Profile, email: string, emailVerified: boolean, cb: VerifyCallback) {
+  async createAccountFromProvider (
+    provider: AuthProvider,
+    profile: Profile,
+    email: string,
+    emailVerified: boolean | undefined,
+    cb: VerifyCallback
+  ) {
     let user = {
       email: email,
-      verified: emailVerified,
+      verified: emailVerified !== false,
       providers: {
         [provider]: {
           id: profile.id
@@ -94,8 +106,13 @@ export const ExternalAuth = {
     }
   },
 
-  async updateAccountFromProvider (provider: AuthProvider, profile: Profile, user: BaseUserModel, emailVerified: boolean, cb: VerifyCallback) {
-    if (!emailVerified) {
+  async updateAccountFromProvider (provider: AuthProvider,
+    profile: Profile,
+    user: BaseUserModel,
+    emailVerified: boolean | undefined,
+    cb: VerifyCallback
+  ) {
+    if (emailVerified === false) {
       return cb(new Error('Cannot authenticate with an unverified email'))
     }
     const providers = {

@@ -15,6 +15,7 @@ import jwt, {
   VerifyCallback
 } from 'jsonwebtoken'
 import { AccessTokenKeys } from '../../src/types/UserTokens'
+import { FacebookAuthStrategy } from '../../src/security/FacebookAuthStrategy'
 
 describe('ExternalAuth', () => {
   let app: Express
@@ -87,6 +88,13 @@ describe('ExternalAuth', () => {
       setStrategy('google', false)
       ExternalAuth.setupPassport(app)
       expect(GoogleAuthStrategy.registerStrategy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('getProviderStrategy', () => {
+    it('should return the strategy for a given provider', async () => {
+      expect(ExternalAuth.getProviderStrategy('google')).toBe(GoogleAuthStrategy)
+      expect(ExternalAuth.getProviderStrategy('facebook')).toBe(FacebookAuthStrategy)
     })
   })
 

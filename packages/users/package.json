@@ -27,6 +27,7 @@
     "express-session": "^1.17.0",
     "jsonwebtoken": "^8.5.1",
     "passport": "^0.4.1",
+    "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0"
   },
@@ -37,6 +38,7 @@
     "@types/express-jwt": "^0.0.42",
     "@types/jsonwebtoken": "^8.3.5",
     "@types/passport": "^1.0.2",
+    "@types/passport-facebook": "^2.1.9",
     "@types/passport-google-oauth20": "^2.0.3",
     "@types/passport-local": "^1.0.33",
     "@types/supertest": "^2.0.8",

@@ -18,7 +18,7 @@ export type UserModuleSettings = {
     callbackUrl: string
     autoGenerateUsername: boolean
     providers: {
-      [key in AuthProvider]: {
+      [key in AuthProvider]?: {
         enabled: boolean
       }
     }

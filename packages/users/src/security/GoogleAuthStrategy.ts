@@ -14,4 +14,8 @@ export const GoogleAuthStrategy = {
       })
     )
   },
+
+  authOptions: {
+    scope: ['profile', 'email']
+  },
 }

@@ -376,8 +376,12 @@ describe('BaseUserController', () => {
         .send({ code: 'secret-code' })
         .expect(200)
       expect(res.body).toEqual({
-        accessToken: 'signed-token',
-        accessTokenExpiration: '3 days',
+        user: expect.any(Object),
+        tokens: {
+          accessToken: 'signed-token',
+          accessTokenExpiration: '3 days',
+          refreshToken: 'plain-code',
+        }
       })
     })
 
@@ -431,8 +435,15 @@ describe('BaseUserController', () => {
         .send({ code: 'secret-code', username: 'new-user' })
         .expect(200)
       expect(res.body).toEqual({
-        accessToken: 'signed-token',
-        accessTokenExpiration: '3 days',
+        user: {
+          _id: expect.any(String),
+          username: 'new-user',
+        },
+        tokens: {
+          accessToken: 'signed-token',
+          accessTokenExpiration: '3 days',
+          refreshToken: 'plain-code',
+        }
       })
 
       const user = await getDao().findOne({ username: 'new-user' })
