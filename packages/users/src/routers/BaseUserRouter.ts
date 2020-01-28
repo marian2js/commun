@@ -25,5 +25,5 @@ export const BaseUserRouter = express.Router()
       getController().authenticateWithProvider(req, res, next),
     (req, res, next) =>
       getController().completeAuthWithProvider(req, res))
-  .get('/auth/:provider/token', (req, res, next) =>
-    sendResponse(req, res, next, getController().getAccessTokenForAuthWithProvider(req, res)))
+  .post('/auth/:provider/token', (req, res, next) =>
+    sendResponse(req, res, next, getController().generateAccessTokenForAuthWithProvider(req, res)))

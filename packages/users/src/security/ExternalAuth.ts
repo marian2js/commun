@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import passport, { Profile } from 'passport'
 import { GoogleAuthStrategy } from './GoogleAuthStrategy'
 import { Express } from 'express'
+import { UserUtils } from '../utils/UserUtils'
 
 export const ExternalAuth = {
   setupPassport (app: Express) {
@@ -59,7 +60,38 @@ export const ExternalAuth = {
   },
 
   async createAccountFromProvider (provider: AuthProvider, profile: Profile, email: string, emailVerified: boolean, cb: VerifyCallback) {
-    throw new Error('not implemented yet') // TODO
+    let user = {
+      email: email,
+      verified: emailVerified,
+      providers: {
+        [provider]: {
+          id: profile.id
+        }
+      }
+    }
+
+    if (UserModule.getOptions().externalAuth?.autoGenerateUsername) {
+      let usernamePrefix
+      if (profile.displayName) {
+        usernamePrefix = profile.displayName.replace(/\s/g, '').toLowerCase()
+      } else {
+        usernamePrefix = email.split('@')[0].toLowerCase()
+      }
+      const username = await UserUtils.generateUniqueUsername(usernamePrefix)
+      const createdUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
+        ...user,
+        username,
+      })
+      cb(undefined, {
+        user: createdUser,
+        userCreated: true,
+      })
+    } else {
+      cb(undefined, {
+        user,
+        userCreated: false,
+      })
+    }
   },
 
   async updateAccountFromProvider (provider: AuthProvider, profile: Profile, user: BaseUserModel, emailVerified: boolean, cb: VerifyCallback) {
@@ -73,13 +105,16 @@ export const ExternalAuth = {
       }
     }
     const updatedUser = await Commun.getEntityDao<BaseUserModel>('users').updateOne(user._id!, { providers })
-    cb(undefined, updatedUser)
+    cb(undefined, {
+      user: updatedUser,
+      userCreated: true,
+    })
   },
 
   sign: (payload: ExternalAuthPayload): Promise<string> => {
     const signOptions = {
       ...(UserModule.getOptions().accessToken || {}),
-      expiresIn: '5 minutes',
+      expiresIn: '30 minutes',
     }
     return new Promise(((resolve, reject) => {
       jwt.sign(payload, UserModule.accessTokenKeys.privateKey, signOptions, (err, token) => {

@@ -16,6 +16,7 @@ export type UserModuleSettings = {
   },
   externalAuth?: {
     callbackUrl: string
+    autoGenerateUsername: boolean
     providers: {
       [key in AuthProvider]: {
         enabled: boolean

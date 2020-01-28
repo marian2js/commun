@@ -91,6 +91,40 @@ describe('ExternalAuth', () => {
   })
 
   describe('authCallback', () => {
+    it('should create an account with an auto-generated username', async () => {
+      const options = UserModule.getOptions()
+      UserModule.setOptions({
+        ...options,
+        externalAuth: {
+          ...options.externalAuth!,
+          autoGenerateUsername: true,
+        }
+      })
+      const fakeProfile = {
+        id: 'google-id',
+        displayName: 'Test User',
+        emails: [{ value: 'test@example.org', verified: true }]
+      }
+      await ExternalAuth.authCallback('google', 'access', 'refresh', fakeProfile as any, () => {})
+      const user = await getDao().findOne({ email: 'test@example.org' })
+      expect(user!.username).toBe('testuser')
+      expect(user!.verified).toBe(true)
+      expect(user!.providers!.google).toEqual({
+        id: 'google-id'
+      })
+    })
+
+    it('should not create an account if auto-generate username is not enabled', async () => {
+      const fakeProfile = {
+        id: 'google-id',
+        displayName: 'Test User',
+        emails: [{ value: 'test@example.org', verified: true }]
+      }
+      await ExternalAuth.authCallback('google', 'access', 'refresh', fakeProfile as any, () => {})
+      const user = await getDao().findOne({ email: 'test@example.org' })
+      expect(user).toBe(null)
+    })
+
     it('should update an account from a provider with verified email', async () => {
       await getDao().insertOne({
         username: 'test-user',
@@ -125,6 +159,19 @@ describe('ExternalAuth', () => {
   })
 
   describe('sign', () => {
+    let fakePayload: ExternalAuthPayload = {
+      user: {
+        email: 'test@example.org',
+        username: 'test',
+        verified: true
+      },
+      provider: {
+        key: 'google',
+        id: 'id'
+      },
+      userCreated: true
+    }
+
     it('should return a jwt signed token', async () => {
       jwt.sign = <jest.Mock>jest.fn((
         payload: ExternalAuthPayload,
@@ -132,10 +179,10 @@ describe('ExternalAuth', () => {
         options: SignOptions,
         callback: SignCallback
       ) => {
-        callback(null!, `SIGN(${payload.email}:${payload.provider}:${payload.providerId})`)
+        callback(null!, `SIGN(${payload.user.email}:${payload.provider.key}:${payload.provider.id})`)
       })
 
-      const signed = await ExternalAuth.sign({ email: 'test@example.org', provider: 'google', providerId: 'id' })
+      const signed = await ExternalAuth.sign(fakePayload)
       expect(signed).toBe(`SIGN(test@example.org:google:id)`)
     })
 
@@ -149,7 +196,7 @@ describe('ExternalAuth', () => {
         callback(new Error('Sign failed'), '')
       })
 
-      await expect(ExternalAuth.sign({ email: 'test@example.org', provider: 'google', providerId: 'id' }))
+      await expect(ExternalAuth.sign(fakePayload))
         .rejects.toThrow('Sign failed')
     })
   })

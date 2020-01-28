@@ -344,7 +344,7 @@ describe('BaseUserController', () => {
     })
   })
 
-  describe('completeAuthWithProvider - [GET] /auth/:provider/token', () => {
+  describe('generateAccessTokenForAuthWithProvider - [POST] /auth/:provider/token', () => {
     beforeEach(async () => {
       await registerUserEntity({ get: 'anyone', create: 'anyone' })
       const userData = {
@@ -362,12 +362,18 @@ describe('BaseUserController', () => {
 
     it('should return an access token given a valid external auth code', async () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
-        email: 'user@example.org',
-        provider: 'google',
-        providerId: 'id'
+        user: {
+          email: 'user@example.org'
+        } as BaseUserModel,
+        provider: {
+          key: 'google',
+          id: 'id'
+        },
+        userCreated: true
       }))
       const res = await request()
-        .get(`${baseUrl}/google/token?code=secret-code`)
+        .post(`${baseUrl}/google/token`)
+        .send({ code: 'secret-code' })
         .expect(200)
       expect(res.body).toEqual({
         accessToken: 'signed-token',
@@ -377,24 +383,61 @@ describe('BaseUserController', () => {
 
     it('should return a client error if the user does not exist', async () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
-        email: 'bad-user@example.org',
-        provider: 'google',
-        providerId: 'id'
+        user: {
+          email: 'bad-user@example.org'
+        } as BaseUserModel,
+        provider: {
+          key: 'google',
+          id: 'id'
+        },
+        userCreated: true
       }))
       await request()
-        .get(`${baseUrl}/google/token?code=secret-code`)
+        .post(`${baseUrl}/google/token`)
+        .send({ code: 'secret-code' })
         .expect(404)
     })
 
     it('should return a client error if the provider ID does not match', async () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
-        email: 'user@example.org',
-        provider: 'google',
-        providerId: 'bad-id'
+        user: {
+          email: 'user@example.org'
+        } as BaseUserModel,
+        provider: {
+          key: 'google',
+          id: 'bad-id'
+        },
+        userCreated: true
       }))
       await request()
-        .get(`${baseUrl}/google/token?code=secret-code`)
+        .post(`${baseUrl}/google/token`)
+        .send({ code: 'secret-code' })
         .expect(400)
+    })
+
+    it('should create the user if it was not created', async () => {
+      ExternalAuth.verify = jest.fn(() => Promise.resolve({
+        user: {
+          email: 'new-user@example.org'
+        } as BaseUserModel,
+        provider: {
+          key: 'google',
+          id: 'id'
+        },
+        userCreated: false
+      }))
+      const res = await request()
+        .post(`${baseUrl}/google/token`)
+        .send({ code: 'secret-code', username: 'new-user' })
+        .expect(200)
+      expect(res.body).toEqual({
+        accessToken: 'signed-token',
+        accessTokenExpiration: '3 days',
+      })
+
+      const user = await getDao().findOne({ username: 'new-user' })
+      expect(user!.username).toBe('new-user')
+      expect(user!.email).toBe('new-user@example.org')
     })
   })
 })

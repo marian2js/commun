@@ -6,6 +6,7 @@ import {
   getModelAttribute,
   NotFoundError,
   SecurityUtils,
+  ServerError,
   UnauthorizedError
 } from '@commun/core'
 import { BaseUserModel, UserModule } from '..'
@@ -139,32 +140,55 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   async completeAuthWithProvider (req: Request, res: Response) {
     const callbackUrl = UserModule.getOptions().externalAuth?.callbackUrl
     if (!callbackUrl) {
-      return res.send({})
+      console.error('External authentication callback url is not set')
+      throw new ServerError()
     }
-    const user = req.user as BaseUserModel
+    const userReq = req.user as { user: MODEL, userCreated: boolean }
     const provider = req.params.provider as AuthProvider
     const code = await ExternalAuth.sign({
-      email: user.email,
-      provider,
-      providerId: user.providers?.[provider]?.id!,
+      user: userReq.user,
+      provider: {
+        key: provider,
+        id: userReq.user.providers?.[provider]?.id!,
+      },
+      userCreated: userReq.userCreated,
     })
     res.redirect(`${callbackUrl}?code=${code}`)
   }
 
-  async getAccessTokenForAuthWithProvider (req: Request, res: Response) {
+  async generateAccessTokenForAuthWithProvider (req: Request, res: Response) {
     const provider = req.params.provider as AuthProvider
-    const token = req.query.code
+    const token = req.body.code
     const payload = await ExternalAuth.verify(token)
-    const user = await this.dao.findOne({ email: payload.email })
-    if (!user) {
-      throw new NotFoundError('User not found')
+    let user
+
+    if (payload.userCreated) {
+      user = await this.dao.findOne({ email: payload.user.email })
+      if (!user) {
+        throw new NotFoundError('User not found')
+      }
+      const validProvider = payload.provider?.key === provider && payload.provider?.id && payload.provider?.id &&
+        payload.provider?.id === user.providers?.[provider]?.id
+      if (!validProvider) {
+        throw new BadRequestError('Invalid authentication code')
+      }
+    } else {
+      let userData
+      if (!payload.user.username) {
+        userData = {
+          ...payload.user,
+          username: req.body.username,
+        }
+      } else {
+        userData = payload.user
+      }
+      user = await this.dao.insertOne(userData as MODEL)
+
+      userData = await this.prepareModelResponse(req, user, {})
+      EmailClient.sendEmail('welcomeEmail', user.email, userData)
     }
-    const validProvider = payload.provider && payload.providerId && payload.provider === provider &&
-      user.providers?.[provider]?.id === payload.providerId
-    if (validProvider) {
-      return this.generateAccessToken(user)
-    }
-    throw new BadRequestError('Invalid authentication code')
+
+    return this.generateAccessToken(user)
   }
 
   private findUserByEmailOrUsername (emailOrUsername: string) {

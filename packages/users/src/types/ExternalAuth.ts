@@ -1,8 +1,13 @@
+import { BaseUserModel } from './BaseUserModel'
+
 export type AuthProvider =
   'google'
 
 export type ExternalAuthPayload = {
-  email: string
-  provider: AuthProvider
-  providerId: string
+  user: BaseUserModel
+  provider: {
+    key: AuthProvider
+    id: string
+  }
+  userCreated: boolean
 }
