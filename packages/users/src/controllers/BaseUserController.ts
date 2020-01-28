@@ -176,6 +176,9 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     } else {
       let userData
       if (!payload.user.username) {
+        if (!req.body.username) {
+          throw new BadRequestError('Username is required')
+        }
         userData = {
           ...payload.user,
           username: req.body.username,

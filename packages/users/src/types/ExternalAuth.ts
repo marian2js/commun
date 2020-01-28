@@ -2,7 +2,8 @@ import { BaseUserModel } from './BaseUserModel'
 
 export type AuthProvider =
   'google' |
-  'facebook'
+  'facebook' |
+  'github'
 
 export type ExternalAuthPayload = {
   user: BaseUserModel

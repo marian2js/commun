@@ -1,4 +1,3 @@
-import { VerifyCallback } from 'passport-google-oauth20'
 import { BaseUserModel, UserModule } from '..'
 import { assertNever, BadRequestError, Commun } from '@commun/core'
 import { AuthProvider, ExternalAuthPayload } from '../types/ExternalAuth'
@@ -8,6 +7,9 @@ import { GoogleAuthStrategy } from './GoogleAuthStrategy'
 import { Express } from 'express'
 import { UserUtils } from '../utils/UserUtils'
 import { FacebookAuthStrategy } from './FacebookAuthStrategy'
+import { GithubAuthStrategy } from './GithubAuthStrategy'
+
+type ProviderCallback = (err?: any, user?: any, info?: any) => void
 
 export const ExternalAuth = {
   setupPassport (app: Express) {
@@ -41,12 +43,14 @@ export const ExternalAuth = {
         return GoogleAuthStrategy
       case 'facebook':
         return FacebookAuthStrategy
+      case 'github':
+        return GithubAuthStrategy
       default:
         assertNever(provider)
     }
   },
 
-  async authCallback (provider: AuthProvider, accessToken: string, refreshToken: string, profile: Profile, cb: VerifyCallback) {
+  async authCallback (provider: AuthProvider, accessToken: string, refreshToken: string, profile: Profile, cb: ProviderCallback) {
     if (!profile.emails?.length) {
       return cb(new BadRequestError('An email address must be provided in order to do the authentication'))
     }
@@ -70,7 +74,7 @@ export const ExternalAuth = {
     profile: Profile,
     email: string,
     emailVerified: boolean | undefined,
-    cb: VerifyCallback
+    cb: ProviderCallback
   ) {
     let user = {
       email: email,
@@ -86,6 +90,8 @@ export const ExternalAuth = {
       let usernamePrefix
       if (profile.displayName) {
         usernamePrefix = profile.displayName.replace(/\s/g, '').toLowerCase()
+      } else if (profile.username) {
+        usernamePrefix = profile.username
       } else {
         usernamePrefix = email.split('@')[0].toLowerCase()
       }
@@ -110,7 +116,7 @@ export const ExternalAuth = {
     profile: Profile,
     user: BaseUserModel,
     emailVerified: boolean | undefined,
-    cb: VerifyCallback
+    cb: ProviderCallback
   ) {
     if (emailVerified === false) {
       return cb(new Error('Cannot authenticate with an unverified email'))
