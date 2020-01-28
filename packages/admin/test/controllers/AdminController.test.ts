@@ -298,6 +298,48 @@ describe('AdminController', () => {
     })
   })
 
+  describe('updateSocialLoginCredentials - [GET]', () => {
+    beforeEach(() => {
+      ConfigManager.setEnvironmentVariable = jest.fn(() => Promise.resolve())
+    })
+
+    it('should update the environment variables for Google', async () => {
+      await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/plugins/users/credentials/google`)
+        .send({ id: 'id-value', secret: 'secret-value' })
+        .expect(200)
+
+      expect(ConfigManager.setEnvironmentVariable).toHaveBeenCalledWith({
+        GOOGLE_CLIENT_ID: 'id-value',
+        GOOGLE_CLIENT_SECRET: 'secret-value',
+      })
+    })
+
+    it('should update the environment variables for Facebook', async () => {
+      await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/plugins/users/credentials/facebook`)
+        .send({ id: 'id-value', secret: 'secret-value' })
+        .expect(200)
+
+      expect(ConfigManager.setEnvironmentVariable).toHaveBeenCalledWith({
+        FACEBOOK_APP_ID: 'id-value',
+        FACEBOOK_APP_SECRET: 'secret-value',
+      })
+    })
+
+    it('should update the environment variables for GitHub', async () => {
+      await authenticatedRequest(adminUser._id)
+        .put(`${baseUrl}/plugins/users/credentials/github`)
+        .send({ id: 'id-value', secret: 'secret-value' })
+        .expect(200)
+
+      expect(ConfigManager.setEnvironmentVariable).toHaveBeenCalledWith({
+        GITHUB_CLIENT_ID: 'id-value',
+        GITHUB_CLIENT_SECRET: 'secret-value',
+      })
+    })
+  })
+
   describe('getCommunSettings - [GET] /admin/settings', () => {
     it('should return settings for all environments', async () => {
       ConfigManager.getCommunOptions = jest.fn(() => Promise.resolve({ env: { test: 1 } })) as jest.Mock

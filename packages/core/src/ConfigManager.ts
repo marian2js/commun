@@ -4,6 +4,7 @@ import { promisify } from 'util'
 import { EntityConfig, EntityModel } from './types'
 import { CommunOptions } from './Commun'
 
+let projectRootPath: string
 let srcRootPath: string
 let distRootPath: string
 
@@ -152,9 +153,32 @@ export const ConfigManager = {
     }
   },
 
-  setRootPath (path: string) {
-    distRootPath = path
-    srcRootPath = path.replace(/\/dist$/, '/src')
+  /**
+   * Saves variables on the project's .env file
+   */
+  async setEnvironmentVariable (variables: { [key: string]: string }) {
+    const dotEnvPath = path.join(projectRootPath, '.env')
+    const dotEnvLines: string[] = []
+    if (await this._exists(dotEnvPath)) {
+      const dotEnvFile = (await this._readFile(dotEnvPath)).toString()
+      dotEnvLines.push(...dotEnvFile.split('\n'))
+    }
+    for (const [variableName, variableValue] of Object.entries(variables)) {
+      const newVariableLine = `${variableName}=${variableValue}`
+      const variableLineIndex = dotEnvLines.findIndex(line => line.trim().startsWith(`${variableName}=`))
+      if (variableLineIndex >= 0) {
+        dotEnvLines[variableLineIndex] = newVariableLine
+      } else {
+        dotEnvLines.push(newVariableLine)
+      }
+    }
+    await this._writeFile(dotEnvPath, dotEnvLines.join('\n'))
+  },
+
+  setRootPath (pathname: string) {
+    distRootPath = pathname
+    srcRootPath = pathname.replace(/\/dist$/, '/src')
+    projectRootPath = path.join(pathname, '../')
   },
 
   _readFile: promisify(fs.readFile),

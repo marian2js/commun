@@ -9,7 +9,14 @@ export const AdminPluginRouter = express.Router()
     sendResponse(req, res, next, new AdminController().updatePlugin(req, res)))
   .post('/:pluginName/templates', (req, res, next) =>
     sendResponse(req, res, next, new AdminController().createOrUpdateEmailTemplate(req, res)))
+
+  // Emails
   .put('/:pluginName/templates/:templateName', (req, res, next) =>
     sendResponse(req, res, next, new AdminController().createOrUpdateEmailTemplate(req, res)))
   .delete('/:pluginName/templates/:templateName', (req, res, next) =>
     sendResponse(req, res, next, new AdminController().deleteEmailTemplate(req, res)))
+
+  // Users
+  .put('/users/credentials/:provider', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().updateSocialLoginCredentials(req, res)))
+

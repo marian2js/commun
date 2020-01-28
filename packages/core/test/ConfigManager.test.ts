@@ -228,4 +228,29 @@ describe('ConfigManager', () => {
         .toHaveBeenCalledWith('/test/keys/test-key.pub')
     })
   })
+
+  describe('setEnvironmentVariable', () => {
+    it('should set environment variables in a new .env file', async () => {
+      ConfigManager._exists = jest.fn(() => Promise.resolve(false))
+
+      await ConfigManager.setEnvironmentVariable({ var1: 'test1', var2: 'test2' })
+      expect(ConfigManager._writeFile).toHaveBeenCalledWith('/test/.env', 'var1=test1\nvar2=test2')
+    })
+
+    it('should set environment variables at the bottom of the .env file', async () => {
+      ConfigManager._exists = jest.fn(() => Promise.resolve(true))
+      ConfigManager._readFile = jest.fn(() => Promise.resolve('a=b\nc=d')) as jest.Mock
+
+      await ConfigManager.setEnvironmentVariable({ var1: 'test1', var2: 'test2' })
+      expect(ConfigManager._writeFile).toHaveBeenCalledWith('/test/.env', 'a=b\nc=d\nvar1=test1\nvar2=test2')
+    })
+
+    it('should replace the value of existent env variables', async () => {
+      ConfigManager._exists = jest.fn(() => Promise.resolve(true))
+      ConfigManager._readFile = jest.fn(() => Promise.resolve('a=b\nvar1=VALUE\nc=d')) as jest.Mock
+
+      await ConfigManager.setEnvironmentVariable({ var1: 'test1', var2: 'test2' })
+      expect(ConfigManager._writeFile).toHaveBeenCalledWith('/test/.env', 'a=b\nvar1=test1\nc=d\nvar2=test2')
+    })
+  })
 })

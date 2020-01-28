@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import {
+  assertNever,
   BadRequestError,
   Commun,
   ConfigManager,
@@ -9,7 +10,7 @@ import {
   ServerError,
   UnauthorizedError
 } from '@commun/core'
-import { BaseUserModel } from '@commun/users'
+import { AuthProvider, BaseUserModel } from '@commun/users'
 import { AdminModule } from '../AdminModule'
 
 export class AdminController extends PluginController {
@@ -122,6 +123,43 @@ export class AdminController extends PluginController {
 
   async deleteEmailTemplate (req: Request, res: Response) {
     await ConfigManager.deletePluginFile(req.params.pluginName, `templates/${req.params.templateName}.json`)
+    return { ok: true }
+  }
+
+  /**
+   * Updates the project's .env file with the variables for the provider
+   */
+  async updateSocialLoginCredentials (req: Request, res: Response) {
+    if (!req.body.id || !req.body.secret) {
+      throw new BadRequestError('ID and Secret are required')
+    }
+    const provider = req.params.provider as AuthProvider
+    let idVariable: string
+    let secretVariable: string
+
+    switch (provider) {
+      case 'google':
+        idVariable = 'GOOGLE_CLIENT_ID'
+        secretVariable = 'GOOGLE_CLIENT_SECRET'
+        break
+      case 'facebook':
+        idVariable = 'FACEBOOK_APP_ID'
+        secretVariable = 'FACEBOOK_APP_SECRET'
+        break
+      case 'github':
+        idVariable = 'GITHUB_CLIENT_ID'
+        secretVariable = 'GITHUB_CLIENT_SECRET'
+        break
+      default:
+        assertNever(provider)
+        throw new Error('Unknown provider')
+    }
+
+    await ConfigManager.setEnvironmentVariable({
+      [idVariable]: req.body.id,
+      [secretVariable]: req.body.secret,
+    })
+
     return { ok: true }
   }
 
