@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface TableItem {
-  [key: string]: string | number
+  [key: string]: string | number | boolean
 }
 
 interface Props {
@@ -57,7 +57,7 @@ export const SelectTable = (props: Props) => {
   const [selected, setSelected] = useState<number>(-1)
 
   const handleSelectChange = (index: number) => {
-    if (selected === index) {
+    if (items[index].noSelectable || selected === index) {
       setSelected(-1)
       if (onSelectChange) {
         onSelectChange(null)
@@ -165,10 +165,13 @@ export const SelectTable = (props: Props) => {
                           onClick={() => handleSelectChange(i)}
                           selected={selected === i}>
                   <TableCell padding="checkbox">
-                    <Radio
-                      checked={selected === i}
-                      inputProps={{ 'aria-label': `${i}-label` }}
-                    />
+                    {
+                      item.noSelectable ? '' :
+                        <Radio
+                          checked={selected === i}
+                          inputProps={{ 'aria-label': `${i}-label` }}
+                        />
+                    }
                   </TableCell>
                   <TableCell component="th" id={`${i}-label`} scope="row" padding="none">
                     {item[headerKeys[0].key]}

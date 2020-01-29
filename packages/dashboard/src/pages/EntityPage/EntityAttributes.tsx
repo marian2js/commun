@@ -62,7 +62,8 @@ export const EntityAttributes = (props: Props) => {
     .sort(([key]) => key === '_id' ? -1 : 1)
     .map(([key, attribute]) => ({
       key: key,
-      type: getAttributeTypeLabel(attribute!)
+      type: getAttributeTypeLabel(attribute!),
+      noSelectable: key === '_id',
     }))
 
   return (
