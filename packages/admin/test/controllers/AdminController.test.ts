@@ -92,6 +92,12 @@ describe('AdminController', () => {
               update: 'system',
             }
           }
+        },
+        permissions: {
+          get: 'anyone',
+          create: 'user',
+          update: 'own',
+          delete: 'own',
         }
       })
 
@@ -109,6 +115,12 @@ describe('AdminController', () => {
               update: 'system',
             }
           }
+        },
+        permissions: {
+          get: 'anyone',
+          create: 'user',
+          update: 'own',
+          delete: 'own',
         }
       })
     })

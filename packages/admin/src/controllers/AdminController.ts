@@ -48,6 +48,7 @@ export class AdminController extends PluginController {
       collectionName: req.body.collectionName || req.body.entityName,
       attributes: {},
     }
+
     if (req.body.addUser) {
       ;(entityConfig.attributes as { user: ModelAttribute }).user = {
         type: 'user',
@@ -59,7 +60,14 @@ export class AdminController extends PluginController {
           update: 'system',
         }
       }
+      entityConfig.permissions = {
+        get: 'anyone',
+        create: 'user',
+        update: 'own',
+        delete: 'own',
+      }
     }
+
     await ConfigManager.createEntityConfig(req.body.entityName, entityConfig)
     return {
       item: entityConfig
