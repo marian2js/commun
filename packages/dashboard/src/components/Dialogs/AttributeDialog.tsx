@@ -70,6 +70,7 @@ export const AttributeDialog = (props: Props) => {
       <DialogContent>
         <ModelAttributeForm entity={entity}
                             attribute={attributeData}
+                            newAttribute={!props.attribute}
                             onChange={handleAttributeChange}
                             onKeyChange={key => setNewAttributeKey(key)}/>
       </DialogContent>

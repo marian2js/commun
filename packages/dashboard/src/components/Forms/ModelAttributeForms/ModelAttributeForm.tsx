@@ -10,6 +10,7 @@ import { PermissionSelector } from '../Selectors/PermissionSelector'
 interface Props {
   entity: EntityConfig<EntityModel>
   attribute?: ModelAttribute
+  newAttribute: boolean
   onChange: <T extends ModelAttribute>(key: keyof T, value: any) => void
   onKeyChange: (key: string) => void
 }
@@ -19,16 +20,16 @@ export const ModelAttributeForm = (props: Props) => {
   const [type, setType] = useState<ModelAttribute['type'] | ''>(attribute?.type || '')
   const [attributeData, setAttributeData] = useState<ModelAttribute | undefined>(attribute ? { ...attribute } : undefined)
   const [attributeKey, setAttributeKey] = useState('')
-  const [attributeIsNew, setAttributeIsNew] = useState(!attribute)
   const [permissions, setPermissions] = useState(Array.isArray(attribute?.permissions) ? attribute?.permissions[0] : attribute?.permissions)
+  const [newAttribute, setNewAttribute] = useState(props.newAttribute)
 
   useEffect(() => {
     setType(attribute?.type || '')
     setAttributeData(attribute ? { ...attribute } : undefined)
     setAttributeKey('')
-    setAttributeIsNew(!attribute)
     setPermissions(Array.isArray(attribute?.permissions) ? attribute?.permissions[0] : attribute?.permissions)
-  }, [attribute])
+    setNewAttribute(props.newAttribute)
+  }, [attribute, props.newAttribute])
 
   const handleNewAttributeKeyChange = (key: string) => {
     setAttributeKey(key)
@@ -68,7 +69,7 @@ export const ModelAttributeForm = (props: Props) => {
   return (
     <Grid container>
       {
-        attributeIsNew ?
+        newAttribute ?
           <Grid item xs={12}>
             <TextField
               onChange={e => handleNewAttributeKeyChange(e.target.value as string)}
