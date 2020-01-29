@@ -38,6 +38,8 @@ Options:
 
 Commun includes a fully featured user system with authentication and permission management.
 
+Supported authentication strategies include: Email & Password, Google, Facebook and GitHub.
+
 **Provided APIs:**
 
 * `[POST] /api/v1/auth/password`
