@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EntityConfig, EntityIndex, EntityModel } from '@commun/core'
 import { SelectTable } from '../../components/Table/SelectTable'
 import { IndexDialog } from '../../components/Dialogs/IndexDialog'
@@ -13,6 +13,12 @@ export const EntityIndexes = (props: Props) => {
   const [indexes, setIndexes] = useState(entity.indexes || [])
   const [selected, setSelected] = useState<number | null>(null)
   const [indexDialogOpen, setIndexDialogOpen] = useState<boolean>(false)
+
+  useEffect(() => {
+    setIndexes(entity.indexes || [])
+    setSelected(null)
+    setIndexDialogOpen(false)
+  }, [entity])
 
   const handleAddClicked = () => {
     setIndexDialogOpen(true)

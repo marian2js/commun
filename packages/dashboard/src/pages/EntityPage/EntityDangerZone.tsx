@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EntityConfig, EntityModel } from '@commun/core'
 import { Button } from '@material-ui/core'
 import DeleteIcon from '@material-ui/icons/Delete'
@@ -21,6 +21,10 @@ export const EntityDangerZone = (props: Props) => {
   const classes = useStyles()
   const { entity } = props
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  useEffect(() => {
+    setDialogOpen(false)
+  }, [entity])
 
   const handleDeleteClick = () => {
     setDialogOpen(true)

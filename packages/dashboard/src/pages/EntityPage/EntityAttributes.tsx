@@ -15,7 +15,11 @@ export const EntityAttributes = (props: Props) => {
   const [selected, setSelected] = useState<string>('')
   const [attributeDialogOpen, setAttributeDialogOpen] = useState<boolean>(false)
 
-  useEffect(() => setAttributes(entity.attributes), [entity])
+  useEffect(() => {
+    setAttributes(entity.attributes)
+    setSelected('')
+    setAttributeDialogOpen(false)
+  }, [entity])
 
   const handleAddClicked = () => {
     setAttributeDialogOpen(true)

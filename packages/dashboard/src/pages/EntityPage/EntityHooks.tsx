@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EntityConfig, EntityModel, LifecycleEntityHooks } from '@commun/core'
 import { SelectTable } from '../../components/Table/SelectTable'
 import { HookDialog } from '../../components/Dialogs/HookDialog'
@@ -13,6 +13,12 @@ export const EntityHooks = (props: Props) => {
   const [hooks, setHooks] = useState<LifecycleEntityHooks>(entity.hooks || {})
   const [selected, setSelected] = useState<{ lifecycle: keyof LifecycleEntityHooks, index: number } | null>(null)
   const [attributeDialogOpen, setAttributeDialogOpen] = useState<boolean>(false)
+
+  useEffect(() => {
+    setHooks(entity.hooks || {})
+    setSelected(null)
+    setAttributeDialogOpen(false)
+  }, [entity])
 
   const handleAddClicked = () => {
     setAttributeDialogOpen(true)

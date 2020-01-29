@@ -14,7 +14,11 @@ export const EntityJoinAttributes = (props: Props) => {
   const [selected, setSelected] = useState<string>('')
   const [attributeDialogOpen, setAttributeDialogOpen] = useState<boolean>(false)
 
-  useEffect(() => setJoinAttributes(entity.joinAttributes || {}), [entity])
+  useEffect(() => {
+    setJoinAttributes(entity.joinAttributes || {})
+    setSelected('')
+    setAttributeDialogOpen(false)
+  }, [entity])
 
   const handleAddClicked = () => {
     setAttributeDialogOpen(true)

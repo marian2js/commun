@@ -35,6 +35,7 @@ export const EntityPermissions = (props: Props) => {
 
   useEffect(() => {
     setPermissions(Array.isArray(entity.permissions) ? entity.permissions[0] : entity.permissions)
+    setMessage(undefined)
   }, [entity])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

@@ -34,7 +34,8 @@ export const EntitySettings = (props: Props) => {
   useEffect(() => {
     setEntityName(entity.entityName)
     setCollectionName(entity.collectionName)
-    setApiKey(entity.apiKey || '')
+    setApiKey(entity.apiKey)
+    setMessage(undefined)
   }, [entity])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
