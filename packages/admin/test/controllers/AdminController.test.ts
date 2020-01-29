@@ -70,6 +70,48 @@ describe('AdminController', () => {
         attributes: {}
       })
     })
+
+    it('should create an entity with user attribute', async () => {
+      ConfigManager.createEntityConfig = jest.fn(() => Promise.resolve())
+
+      const res = await authenticatedRequest(adminUser._id)
+        .post(`${baseUrl}/entities`)
+        .send({ entityName: 'test-entity', addUser: true })
+        .expect(200)
+      expect(res.body.item).toEqual({
+        entityName: 'test-entity',
+        collectionName: 'test-entity',
+        attributes: {
+          user: {
+            type: 'user',
+            required: true,
+            index: true,
+            readonly: true,
+            permissions: {
+              create: 'system',
+              update: 'system',
+            }
+          }
+        }
+      })
+
+      expect(ConfigManager.createEntityConfig).toHaveBeenCalledWith('test-entity', {
+        entityName: 'test-entity',
+        collectionName: 'test-entity',
+        attributes: {
+          user: {
+            type: 'user',
+            required: true,
+            index: true,
+            readonly: true,
+            permissions: {
+              create: 'system',
+              update: 'system',
+            }
+          }
+        }
+      })
+    })
   })
 
   describe('get - [GET] /admin/entities/:entityName', () => {

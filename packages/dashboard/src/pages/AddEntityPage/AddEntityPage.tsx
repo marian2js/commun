@@ -1,8 +1,22 @@
 import React, { FormEvent, useState } from 'react'
-import { Button, Card, CircularProgress, Container, Grid, makeStyles, TextField } from '@material-ui/core'
+import {
+  Box,
+  Button,
+  Card,
+  Checkbox,
+  CircularProgress,
+  Container,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  Grid,
+  makeStyles,
+  TextField
+} from '@material-ui/core'
 import { Layout } from '../../components/Layout/Layout'
 import { EntityService } from '../../services/EntityService'
 import { Redirect } from 'react-router'
+import capitalize from '@material-ui/core/utils/capitalize'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -13,7 +27,7 @@ const useStyles = makeStyles(theme => ({
   },
   submitButton: {
     float: 'right',
-    margin: theme.spacing(3, 0, 0, 0),
+    marginTop: theme.spacing(3),
   }
 }))
 
@@ -21,18 +35,23 @@ export const AddEntityPage = () => {
   const classes = useStyles()
   const [entityName, setEntityName] = useState('')
   const [entityCreated, setEntityCreated] = useState(false)
+  const [addUser, setAddUser] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!entityName) {
+    if (!validForm()) {
       return
     }
     setLoading(true)
-    await EntityService.createEntity(entityName)
+    await EntityService.createEntity({ entityName, addUser })
     await EntityService.waitUntilEntityExist(entityName)
     setLoading(false)
     setEntityCreated(true)
+  }
+
+  const validForm = () => {
+    return !!entityName
   }
 
   if (loading) {
@@ -59,12 +78,29 @@ export const AddEntityPage = () => {
                   required
                   autoFocus
                   fullWidth
+                  helperText="Best practice is to set a plural name in camelCase"
                   label="Entity Name"/>
               </Grid>
             </Grid>
 
+            {
+              entityName ?
+                <Box mt={2}>
+                  <Grid item xs={12}>
+                    <FormControl component="fieldset">
+                      <FormGroup>
+                        <FormControlLabel
+                          control={<Checkbox checked={addUser} onChange={() => setAddUser(!addUser)}/>}
+                          label={<>Users can create <strong>{capitalize(entityName)}</strong></>}/>
+                      </FormGroup>
+                    </FormControl>
+                  </Grid>
+                </Box> : ''
+            }
+
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" className={classes.submitButton}>
+              <Button type="submit" variant="contained" color="primary" className={classes.submitButton}
+                      disabled={!validForm()}>
                 Add entity
               </Button>
             </Grid>

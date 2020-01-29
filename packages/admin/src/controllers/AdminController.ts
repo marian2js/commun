@@ -6,6 +6,7 @@ import {
   ConfigManager,
   EntityConfig,
   EntityModel,
+  ModelAttribute,
   PluginController,
   ServerError,
   UnauthorizedError
@@ -46,6 +47,18 @@ export class AdminController extends PluginController {
       entityName: req.body.entityName,
       collectionName: req.body.collectionName || req.body.entityName,
       attributes: {},
+    }
+    if (req.body.addUser) {
+      ;(entityConfig.attributes as { user: ModelAttribute }).user = {
+        type: 'user',
+        required: true,
+        index: true,
+        readonly: true,
+        permissions: {
+          create: 'system',
+          update: 'system',
+        }
+      }
     }
     await ConfigManager.createEntityConfig(req.body.entityName, entityConfig)
     return {
@@ -176,7 +189,6 @@ export class AdminController extends PluginController {
     AdminModule.validateFirstRunCode(req.body.code)
     const usersEntity = Commun.getEntity<BaseUserModel>('users')
     const result = await usersEntity.controller.create(req, res)
-    console.log('RESULT =>', result.item)
     if (!result.item._id) {
       throw new ServerError('Error occurred when creating the account, please try again')
     }
