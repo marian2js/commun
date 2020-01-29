@@ -1,9 +1,11 @@
 import { Grid, TextField } from '@material-ui/core'
 import React, { useEffect, useState } from 'react'
-import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
+import { EntityActionPermissions, EntityConfig, EntityModel, EntityPermission, ModelAttribute } from '@commun/core'
 import { handleAttrChange } from '../../../utils/attributes'
 import { AttributeTypeSelector } from '../Selectors/AttributeTypeSelector'
 import { ModelAttributeFormSwitch } from './ModelAttributeFormSwitch'
+import { TextDivider } from '../../TextDivider'
+import { PermissionSelector } from '../Selectors/PermissionSelector'
 
 interface Props {
   entity: EntityConfig<EntityModel>
@@ -18,12 +20,14 @@ export const ModelAttributeForm = (props: Props) => {
   const [attributeData, setAttributeData] = useState<ModelAttribute | undefined>(attribute ? { ...attribute } : undefined)
   const [attributeKey, setAttributeKey] = useState('')
   const [attributeIsNew, setAttributeIsNew] = useState(!attribute)
+  const [permissions, setPermissions] = useState(Array.isArray(attribute?.permissions) ? attribute?.permissions[0] : attribute?.permissions)
 
   useEffect(() => {
     setType(attribute?.type || '')
     setAttributeData(attribute ? { ...attribute } : undefined)
     setAttributeKey('')
     setAttributeIsNew(!attribute)
+    setPermissions(Array.isArray(attribute?.permissions) ? attribute?.permissions[0] : attribute?.permissions)
   }, [attribute])
 
   const handleNewAttributeKeyChange = (key: string) => {
@@ -37,6 +41,28 @@ export const ModelAttributeForm = (props: Props) => {
       type: type as any,
     })
     handleAttrChange(onChange, 'type', type, setType)
+  }
+
+  const getPermissionsSelector = (permissionKey: keyof EntityActionPermissions, helperText: JSX.Element) => {
+    const onPermissionChange = (permission: EntityPermission | 'default') => {
+      const newPermissions = {
+        ...permissions,
+        [permissionKey]: permission === 'default' ? undefined : permission,
+      }
+      setPermissions(newPermissions)
+      onChange('permissions', newPermissions)
+    }
+
+    return (
+      <Grid item xs={12}>
+        <PermissionSelector permission={(permissions || {})[permissionKey] || 'default'}
+                            permissionKey={permissionKey}
+                            helperText={helperText}
+                            entityName={entity.entityName}
+                            showDefault={true}
+                            onChange={onPermissionChange}/>
+      </Grid>
+    )
   }
 
   return (
@@ -61,6 +87,24 @@ export const ModelAttributeForm = (props: Props) => {
       </Grid>
 
       <ModelAttributeFormSwitch entity={entity} attribute={attributeData} onChange={onChange} subAttribute={false}/>
+
+      <Grid item xs={12}>
+        <TextDivider><span>Attribute permissions</span></TextDivider>
+      </Grid>
+
+      {
+        getPermissionsSelector('get', <span>Who can get this attribute?</span>)
+      }
+      {
+        getPermissionsSelector('create',
+          <span>Who can set this attribute while creating a <strong>{entity.entityName}</strong>?</span>
+        )
+      }
+      {
+        getPermissionsSelector('update',
+          <span>Who can set this attribute while updating a <strong>{entity.entityName}</strong>?</span>
+        )
+      }
     </Grid>
   )
 }

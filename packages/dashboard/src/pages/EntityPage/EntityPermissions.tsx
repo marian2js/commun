@@ -1,9 +1,10 @@
-import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react'
-import { Button, FormControl, FormHelperText, Grid, InputLabel, makeStyles, MenuItem, Select } from '@material-ui/core'
+import React, { FormEvent, useEffect, useState } from 'react'
+import { Button, Grid, makeStyles } from '@material-ui/core'
 import { EntityActionPermissions, EntityConfig, EntityModel } from '@commun/core'
-import { Alert, Color } from '@material-ui/lab'
-import capitalize from '@material-ui/core/utils/capitalize'
+import { Color } from '@material-ui/lab'
 import { EntityService } from '../../services/EntityService'
+import { PermissionSelector } from '../../components/Forms/Selectors/PermissionSelector'
+import { MessageSnackbar } from '../../components/MessageSnackbar'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -29,11 +30,11 @@ interface Props {
 export const EntityPermissions = (props: Props) => {
   const classes = useStyles()
   const { entity } = props
-  const [permissions, setPermissions] = useState(entity.permissions)
+  const [permissions, setPermissions] = useState(Array.isArray(entity.permissions) ? entity.permissions[0] : entity.permissions)
   const [message, setMessage] = useState<{ text: string, severity: Color }>()
 
   useEffect(() => {
-    setPermissions(entity.permissions)
+    setPermissions(Array.isArray(entity.permissions) ? entity.permissions[0] : entity.permissions)
   }, [entity])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -48,43 +49,19 @@ export const EntityPermissions = (props: Props) => {
     }
   }
 
-  const handleChange = (e: ChangeEvent<{ value: unknown }>, permissionKey: string) => {
-    e.preventDefault()
-    setPermissions({
-      ...permissions,
-      [permissionKey]: e.target.value,
-    })
-  }
-
   const getPermissionsSelector = (permissionKey: keyof EntityActionPermissions, helperText: JSX.Element) => {
     return (
       <Grid item xs={12}>
-        <FormControl className={classes.formControl}>
-          <InputLabel id={`permissions-${permissionKey}-label`}>
-            {capitalize(permissionKey)} Permission
-          </InputLabel>
-          <Select
-            labelId={`permissions-${permissionKey}-label`}
-            id={`permissions-${permissionKey}`}
-            value={(permissions || {})[permissionKey] || 'system'}
-            fullWidth
-            onChange={e => handleChange(e, permissionKey)}>
-            <MenuItem value="anyone">Anyone</MenuItem>
-            {
-              entity.entityName === 'users' && permissionKey === 'create' ? '' :
-                <MenuItem value="user">Any authenticated user</MenuItem>
-            }
-            {
-              permissionKey === 'create' ? '' :
-                <MenuItem
-                  value="own">{entity.entityName === 'users' ? 'The same user' : 'The user who owns the resource'}
-                </MenuItem>
-            }
-            <MenuItem value="admin">Administrators</MenuItem>
-            <MenuItem value="system">Only the system</MenuItem>
-          </Select>
-          <FormHelperText>{helperText}</FormHelperText>
-        </FormControl>
+        <PermissionSelector permission={(permissions || {})[permissionKey]}
+                            permissionKey={permissionKey}
+                            helperText={helperText}
+                            entityName={entity.entityName}
+                            onChange={permission => {
+                              setPermissions({
+                                ...permissions,
+                                [permissionKey]: permission,
+                              })
+                            }}/>
       </Grid>
     )
   }
@@ -105,9 +82,7 @@ export const EntityPermissions = (props: Props) => {
           getPermissionsSelector('delete', <span>Who can delete <strong>{entity.entityName}</strong>?</span>)
         }
 
-        {
-          message ? <Alert severity={message.severity}>{message.text}</Alert> : ''
-        }
+        <MessageSnackbar message={message}/>
 
         <Grid item xs={12}>
           <Button type="submit" variant="contained" color="primary" className={classes.submitButton}>
