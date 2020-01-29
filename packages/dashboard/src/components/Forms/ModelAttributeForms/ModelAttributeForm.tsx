@@ -1,5 +1,5 @@
 import { Grid, TextField } from '@material-ui/core'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import { handleAttrChange } from '../../../utils/attributes'
 import { AttributeTypeSelector } from '../Selectors/AttributeTypeSelector'
@@ -15,11 +15,16 @@ interface Props {
 export const ModelAttributeForm = (props: Props) => {
   const { entity, attribute, onChange, onKeyChange } = props
   const [type, setType] = useState<ModelAttribute['type'] | ''>(attribute?.type || '')
-
-  const [attributeData, setAttributeData] = useState<ModelAttribute | undefined>(attribute)
+  const [attributeData, setAttributeData] = useState<ModelAttribute | undefined>(attribute ? { ...attribute } : undefined)
   const [attributeKey, setAttributeKey] = useState('')
+  const [attributeIsNew, setAttributeIsNew] = useState(!attribute)
 
-  const attributeIsNew = !attribute
+  useEffect(() => {
+    setType(attribute?.type || '')
+    setAttributeData(attribute ? { ...attribute } : undefined)
+    setAttributeKey('')
+    setAttributeIsNew(!attribute)
+  }, [attribute])
 
   const handleNewAttributeKeyChange = (key: string) => {
     setAttributeKey(key)

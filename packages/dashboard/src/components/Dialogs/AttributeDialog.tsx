@@ -21,13 +21,15 @@ interface Props {
 
 export const AttributeDialog = (props: Props) => {
   const theme = useTheme()
-  const { entity, attributeKey, attribute, open, onCancel, onChange } = props
-  const [attributeData, setAttributeData] = useState(attribute)
+  const { entity, attributeKey, open, onCancel, onChange } = props
+  const [attributeData, setAttributeData] = useState(props.attribute ? { ...props.attribute } : undefined)
   const [newAttributeKey, setNewAttributeKey] = useState('')
 
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
 
-  useEffect(() => setAttributeData(attribute), [attribute])
+  useEffect(() => {
+    setAttributeData(props.attribute ? { ...props.attribute } : undefined)
+  }, [props.attribute, open])
 
   const handleAddClick = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -67,7 +69,7 @@ export const AttributeDialog = (props: Props) => {
 
       <DialogContent>
         <ModelAttributeForm entity={entity}
-                            attribute={attribute}
+                            attribute={attributeData}
                             onChange={handleAttributeChange}
                             onKeyChange={key => setNewAttributeKey(key)}/>
       </DialogContent>
