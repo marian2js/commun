@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import AppBar from '@material-ui/core/AppBar'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import IconButton from '@material-ui/core/IconButton'
@@ -7,6 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
 import { createStyles, makeStyles, Theme } from '@material-ui/core'
 import { SideMenu } from '../SideMenu/SideMenu'
+import { ServerService } from '../../services/ServerService'
 
 const drawerWidth = 240
 
@@ -28,6 +29,9 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     toolbar: theme.mixins.toolbar as any,
+    title: {
+      flexGrow: 1,
+    },
     content: {
       flexGrow: 1,
     },
@@ -46,6 +50,13 @@ export function Layout (props: Props) {
   const classes = useStyles()
   const { noPadding } = props
   const [mobileOpen, setMobileOpen] = React.useState(false)
+  const [serverSettings, setServerSettings] = React.useState()
+
+  useEffect(() => {
+    (async () => {
+      setServerSettings(await ServerService.getServerSettings())
+    })()
+  }, [])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -64,12 +75,21 @@ export function Layout (props: Props) {
             className={classes.menuButton}>
             <MenuIcon/>
           </IconButton>
-          <Typography variant="h6" noWrap>
-            Commun Dashboard
+          <Typography variant="h6" noWrap className={classes.title}>
+            Dashboard
           </Typography>
+
+          {
+            serverSettings && (
+              <Typography variant="subtitle2" noWrap>
+                Running in {serverSettings.environment}
+              </Typography>
+            )
+          }
+
         </Toolbar>
       </AppBar>
-      <SideMenu onDrawerToggle={handleDrawerToggle} open={mobileOpen}/>
+      <SideMenu onDrawerToggle={handleDrawerToggle} open={mobileOpen} serverSettings={serverSettings}/>
       <main className={`${classes.content} ${noPadding ? '' : classes.contentPadding}`}>
         <div className={classes.toolbar}/>
         {props.children}

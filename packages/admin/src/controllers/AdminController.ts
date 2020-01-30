@@ -193,6 +193,13 @@ export class AdminController extends PluginController {
     return { ok: true }
   }
 
+  async getServerSettings (req: Request, res: Response) {
+    return {
+      environment: process.env.NODE_ENV,
+      communVersion: (process.env.npm_package_dependencies__commun_core || '').replace(/^\^/, ''),
+    }
+  }
+
   async createAdmin (req: Request, res: Response) {
     AdminModule.validateFirstRunCode(req.body.code)
     const usersEntity = Commun.getEntity<BaseUserModel>('users')

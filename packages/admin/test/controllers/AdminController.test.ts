@@ -418,4 +418,20 @@ describe('AdminController', () => {
       expect(ConfigManager.setCommunOptions).toHaveBeenCalledWith('test-env', { test: 1 })
     })
   })
+
+  describe('getServerSettings - [GET] /admin/server', () => {
+    it('should return server settings', async () => {
+      process.env.NODE_ENV = 'development'
+      process.env.npm_package_dependencies__commun_core = '^1.2.3'
+
+      const res = await authenticatedRequest(adminUser._id)
+        .get(`${baseUrl}/server`)
+        .expect(200)
+
+      expect(res.body).toEqual({
+        environment: 'development',
+        communVersion: '1.2.3',
+      })
+    })
+  })
 })

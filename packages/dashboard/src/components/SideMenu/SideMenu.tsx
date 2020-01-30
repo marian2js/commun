@@ -12,6 +12,8 @@ import SettingsIcon from '@material-ui/icons/Settings'
 import ListItemText from '@material-ui/core/ListItemText'
 import ListItem from '@material-ui/core/ListItem'
 import { useLocation } from 'react-router'
+import { ServerSettings } from '../../services/ServerService'
+import Typography from '@material-ui/core/Typography'
 
 const drawerWidth = 240
 
@@ -27,18 +29,24 @@ const useStyles = makeStyles((theme: Theme) =>
     drawerPaper: {
       width: drawerWidth,
     },
+    versionText: {
+      marginTop: theme.spacing(3),
+      textAlign: 'center',
+    },
   }),
 )
 
 interface Props {
   open: boolean
   onDrawerToggle: () => void
+  serverSettings?: ServerSettings
 }
 
 export function SideMenu (props: Props) {
   const classes = useStyles()
   const theme = useTheme()
   const location = useLocation()
+  const { serverSettings } = props
 
   const drawer = (
     <div>
@@ -53,6 +61,16 @@ export function SideMenu (props: Props) {
           <ListItemIcon><SettingsIcon/></ListItemIcon>
           <ListItemText primary="Settings"/>
         </ListItem>
+        {
+          serverSettings && (
+            <>
+              <Divider/>
+              <Typography variant="subtitle2" noWrap className={classes.versionText}>
+                Commun version: {serverSettings.communVersion}
+              </Typography>
+            </>
+          )
+        }
       </List>
     </div>
   )
