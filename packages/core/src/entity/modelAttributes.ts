@@ -191,7 +191,9 @@ async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: key
   const targetData = (data[attribute.setFrom as keyof T] || '') as string
   let slug: string = ''
   if (targetData) {
-    slug = targetData.toLowerCase().trim().replace(/\s/, '-')
+    slug = targetData.toLowerCase().trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '')
   }
   if (!slug) {
     slug = defaultValue
