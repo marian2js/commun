@@ -86,7 +86,7 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
       type: 'map',
       keyType: {
         type: 'enum',
-        values: ['google']
+        values: ['google', 'facebook', 'github']
       },
       valueType: {
         type: 'map',
