@@ -1,14 +1,16 @@
 import { Commun, EntityController, EntityModel, EntityPermission } from '../../src'
-import { EntityActionPermissions, ModelAttribute } from '../../src/types'
+import { EntityActionPermissions, JoinAttribute, ModelAttribute } from '../../src/types'
 import { ObjectId } from 'mongodb'
 import { entityHooks } from '../../src/entity/entityHooks'
-import { JoinAttribute } from '../../src/types/JoinAttributes'
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
+
+type AdminUser = EntityModel & { admin: boolean }
 
 describe('EntityController', () => {
   const entityName = 'items'
   const collectionName = 'items'
   const baseUrl = `/api/v1/${entityName}`
+  let admin: AdminUser
 
   interface TestEntity extends EntityModel {
     name: string
@@ -81,7 +83,22 @@ describe('EntityController', () => {
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
   const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
-  beforeAll(async () => await startTestApp(Commun))
+  beforeAll(async () => {
+    Commun.registerEntity<AdminUser>({
+      config: {
+        entityName: 'users',
+        collectionName: 'users',
+        attributes: {
+          admin: {
+            type: 'boolean'
+          }
+        }
+      }
+    })
+    await startTestApp(Commun)
+    admin = await Commun.getEntityDao<AdminUser>('users')
+      .insertOne({ admin: true })
+  })
   afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
@@ -254,6 +271,32 @@ describe('EntityController', () => {
         })
       })
 
+      describe('Admin', () => {
+        it('should only return items if the user is an admin', async () => {
+          await registerTestEntity({ get: 'admin' })
+          await request().get(baseUrl).expect(401)
+
+          const res = await authenticatedRequest(admin._id)
+            .get(baseUrl)
+            .expect(200)
+          expect(res.body.items.length).toBe(3)
+        })
+
+        it('should only return values with "admin" get permissions if the user is an admin', async () => {
+          await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'admin')
+
+          const resNonAdmin = await request().get(baseUrl).expect(200)
+          expect(resNonAdmin.body.items.length).toBe(3)
+          expect(resNonAdmin.body.items[0].name).toBeUndefined()
+          expect(resNonAdmin.body.items[0].num).toBe(1)
+
+          const resAdmin = await authenticatedRequest(admin._id).get(baseUrl).expect(200)
+          expect(resAdmin.body.items.length).toBe(3)
+          expect(resAdmin.body.items[0].name).toBe('item1')
+          expect(resAdmin.body.items[0].num).toBe(1)
+        })
+      })
+
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
@@ -410,6 +453,35 @@ describe('EntityController', () => {
         })
       })
 
+      describe('Admin', () => {
+        it('should only return the resources if the user is an admin', async () => {
+          await registerTestEntity({ get: 'admin' })
+          await request().get(`${baseUrl}/${item._id}`).expect(401)
+
+          await registerTestEntity({ get: 'admin' })
+          await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(401)
+
+          await registerTestEntity({ get: 'admin' })
+          await authenticatedRequest(admin._id).get(`${baseUrl}/${item._id}`).expect(200)
+        })
+
+        it('should only return values with "admin" get permissions if the user is an admin', async () => {
+          await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'admin')
+
+          const resUnauth = await request().get(`${baseUrl}/${item._id}`).expect(200)
+          expect(resUnauth.body.item.name).toBeUndefined()
+          expect(resUnauth.body.item.num).toBe(1)
+
+          const resNonAdmin = await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+          expect(resNonAdmin.body.item.name).toBeUndefined()
+          expect(resNonAdmin.body.item.num).toBe(1)
+
+          const resAdmin = await authenticatedRequest(admin._id).get(`${baseUrl}/${item._id}`).expect(200)
+          expect(resAdmin.body.item.name).toBe('item1')
+          expect(resAdmin.body.item.num).toBe(1)
+        })
+      })
+
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
@@ -503,6 +575,44 @@ describe('EntityController', () => {
             .expect(200)
           const item2 = await getDao().findOne({ num: 2 })
           expect(item2!.name).toBe('item2')
+        })
+      })
+
+      describe('Admin', () => {
+        it('should only create items with "admin" create permissions if the user is an admin', async () => {
+          await registerTestEntity({ create: 'admin' })
+          await request().post(baseUrl)
+            .send({ name: 'item' })
+            .expect(401)
+
+          await authenticatedRequest().post(baseUrl)
+            .send({ name: 'item' })
+            .expect(401)
+
+          await authenticatedRequest(admin._id).post(baseUrl)
+            .send({ name: 'item' })
+            .expect(200)
+        })
+
+        it('should only create values with "admin" create permissions if the user is an admin', async () => {
+          await registerTestEntityWithCustomAttrPermissions('create', 'anyone', 'admin')
+          await request().post(baseUrl)
+            .send({ name: 'item1', num: 1 })
+            .expect(200)
+          const item1 = await getDao().findOne({ num: 1 })
+          expect(item1!.name).toBeUndefined()
+
+          await authenticatedRequest().post(baseUrl)
+            .send({ name: 'item2', num: 2 })
+            .expect(200)
+          const item2 = await getDao().findOne({ num: 2 })
+          expect(item2!.name).toBeUndefined()
+
+          await authenticatedRequest(admin._id).post(baseUrl)
+            .send({ name: 'item3', num: 3 })
+            .expect(200)
+          const item3 = await getDao().findOne({ num: 3 })
+          expect(item3!.name).toBe('item3')
         })
       })
 
@@ -686,6 +796,49 @@ describe('EntityController', () => {
         })
       })
 
+      describe('Admin', () => {
+        it('should only update the resources if the user is an admin', async () => {
+          await registerTestEntity({ update: 'admin' })
+          await request().put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated' })
+            .expect(401)
+
+          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated' })
+            .expect(401)
+
+          await authenticatedRequest(admin._id).put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated' })
+            .expect(200)
+          const updatedItem = await getDao().findOneById(item._id!)
+          expect(updatedItem!.name).toBe('updated')
+        })
+
+        it('should only update values with "admin" update permissions if the user is an admin', async () => {
+          await registerTestEntityWithCustomAttrPermissions('update', 'anyone', 'admin')
+          await request().put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated', num: 10, user })
+            .expect(200)
+          const updatedItem1 = await getDao().findOneById(item._id!)
+          expect(updatedItem1!.name).toBe('item')
+          expect(updatedItem1!.num).toBe(10)
+
+          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated', num: 20, user })
+            .expect(200)
+          const updatedItem2 = await getDao().findOneById(item._id!)
+          expect(updatedItem2!.name).toBe('item')
+          expect(updatedItem2!.num).toBe(20)
+
+          await authenticatedRequest(admin._id).put(`${baseUrl}/${item._id}`)
+            .send({ name: 'updated', num: 30, user })
+            .expect(200)
+          const updatedItem3 = await getDao().findOneById(item._id!)
+          expect(updatedItem3!.name).toBe('updated')
+          expect(updatedItem3!.num).toBe(30)
+        })
+      })
+
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
@@ -760,6 +913,18 @@ describe('EntityController', () => {
           await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
             .expect(401)
           await authenticatedRequest(user).delete(`${baseUrl}/${item._id}`)
+            .expect(200)
+        })
+      })
+
+      describe('Admin', () => {
+        it('should only delete an item with "own" delete permission if the user is an admin', async () => {
+          await registerTestEntity({ delete: 'admin' })
+          await request().delete(`${baseUrl}/${item._id}`)
+            .expect(401)
+          await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+            .expect(401)
+          await authenticatedRequest(admin._id).delete(`${baseUrl}/${item._id}`)
             .expect(200)
         })
       })

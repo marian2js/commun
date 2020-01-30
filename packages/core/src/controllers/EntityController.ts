@@ -28,7 +28,7 @@ export class EntityController<T extends EntityModel> {
 
   async list (req: Request, res: Response): Promise<{ items: T[] }> {
     if (this.config.permissions?.get !== 'own') {
-      this.validateActionPermissions(req, null, 'get')
+      await this.validateActionPermissions(req, null, 'get')
     }
 
     const sort: { [P in keyof T]?: 1 | -1 } = {}
@@ -57,10 +57,12 @@ export class EntityController<T extends EntityModel> {
 
     const populate = this.getPopulateFromRequest(req)
 
-    const models = (await this.dao.find(filter, sort))
-      .filter(model => this.hasValidPermissions(req, model, 'get', this.config.permissions))
+    const models = await this.dao.find(filter, sort)
+    const modelPermissions = await Promise.all(models.map(async model => await this.hasValidPermissions(req, model, 'get', this.config.permissions)))
+    const modelsWithValidPermissions = models.filter((_, i) => modelPermissions[i])
+
     return {
-      items: await Promise.all(models.map(async model => await this.prepareModelResponse(req, model, populate)))
+      items: await Promise.all(modelsWithValidPermissions.map(async model => await this.prepareModelResponse(req, model, populate)))
     }
   }
 
@@ -69,7 +71,7 @@ export class EntityController<T extends EntityModel> {
     if (!model) {
       throw new NotFoundError()
     }
-    this.validateActionPermissions(req, model, 'get')
+    await this.validateActionPermissions(req, model, 'get')
     await entityHooks.run(this.entityName, 'beforeGet', model, req.auth?._id)
     const item = await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
     await entityHooks.run(this.entityName, 'afterGet', model, req.auth?._id)
@@ -79,7 +81,7 @@ export class EntityController<T extends EntityModel> {
   }
 
   async create (req: Request, res: Response): Promise<{ item: T }> {
-    this.validateActionPermissions(req, null, 'create')
+    await this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
     await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?._id)
     try {
@@ -101,7 +103,7 @@ export class EntityController<T extends EntityModel> {
     if (!model) {
       throw new NotFoundError()
     }
-    this.validateActionPermissions(req, model, 'update')
+    await this.validateActionPermissions(req, model, 'update')
     await entityHooks.run(this.entityName, 'beforeUpdate', model, req.auth?._id)
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
@@ -123,7 +125,7 @@ export class EntityController<T extends EntityModel> {
     if (!model) {
       return { result: true }
     }
-    this.validateActionPermissions(req, model, 'delete')
+    await this.validateActionPermissions(req, model, 'delete')
     await entityHooks.run(this.entityName, 'beforeDelete', model, req.auth?._id)
     const result = await this.dao.deleteOne(model._id!)
     await entityHooks.run(this.entityName, 'afterDelete', model, req.auth?._id)
@@ -155,7 +157,7 @@ export class EntityController<T extends EntityModel> {
         ...attribute!.permissions
       }
 
-      const validPermissions = this.hasValidPermissions(req, persistedModel || null, action, permissions)
+      const validPermissions = await this.hasValidPermissions(req, persistedModel || null, action, permissions)
       const shouldSetValue = action === 'create' || (!attribute!.readonly && req.body[key] !== undefined)
       const settingUser = attribute!.type === 'user' && action === 'create'
 
@@ -174,14 +176,14 @@ export class EntityController<T extends EntityModel> {
 
     // Prepare attributes
     for (const [key, attribute] of attributes) {
-      if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
+      if (await this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
         item[key as keyof T] = await this.prepareModelAttributeResponse(req, model, key as keyof T, attribute!, populate)
       }
     }
 
     // Prepare joinAttributes
     for (const [key, joinAttribute] of Object.entries(this.config.joinAttributes || {})) {
-      if (this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...joinAttribute.permissions })) {
+      if (await this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...joinAttribute.permissions })) {
         const joinedAttribute = await getJoinAttribute(joinAttribute, model, req.auth?._id)
         if (joinedAttribute) {
           const joinAttrController = Commun.getEntityController(joinAttribute.entity)
@@ -229,13 +231,13 @@ export class EntityController<T extends EntityModel> {
     return populate
   }
 
-  protected validateActionPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions) {
-    if (!this.hasValidPermissions(req, model, action, this.config.permissions)) {
+  protected async validateActionPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions) {
+    if (!(await this.hasValidPermissions(req, model, action, this.config.permissions))) {
       throw new UnauthorizedError()
     }
   }
 
-  protected hasValidPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions, permissions?: EntityActionPermissions) {
+  protected async hasValidPermissions (req: Request, model: T | null, action: keyof EntityActionPermissions, permissions?: EntityActionPermissions) {
     if (!permissions) {
       return false
     }
@@ -263,6 +265,13 @@ export class EntityController<T extends EntityModel> {
         const userId = '' + (model as { [key in keyof T]?: any })[userAttrEntries[0] as keyof T]
         return userId && userId === req.auth._id
       }
+    }
+
+    const hasAdminAccess = Array.isArray(permissions[action]) ?
+      permissions[action]!.includes('admin') : permissions[action] === 'admin'
+    if (hasAdminAccess) {
+      const user = await Commun.getEntityDao<EntityModel & { admin: boolean }>('users').findOneById(req.auth._id)
+      return user && user.admin
     }
 
     return false
