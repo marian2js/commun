@@ -158,3 +158,15 @@ Entities can specify a list of indexes that will be created on MongoDB.
 Commun comes with a complete dashboard that you can use to manage your application without having to write any code.
 
 The dashboard also works perfectly on mobile devices, so you can manage your app on the go.
+
+### Production readiness
+
+All the configuration used by Commun is stored in json files, which are updated by the dashboard.
+
+The best practice is to run Commun in development, make all the required changes and then commit these changes to your repository.
+In order to deploy, just pull the changes in your production server and restart the node process.
+
+The benefits of this practice are: 
+* It's easier to test changes in development before moving them to production.
+* It's easier to collaborate between team members. You can submit pull requests with your changes and follow the approval process that better fits your organization.
+* It's easier to setup a continuous integration system.
