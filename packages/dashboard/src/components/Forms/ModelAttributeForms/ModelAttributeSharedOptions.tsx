@@ -1,7 +1,25 @@
 import React, { useState } from 'react'
-import { Checkbox, FormControl, FormControlLabel, FormGroup, Grid, TextField } from '@material-ui/core'
-import { handleAttrChange } from '../../../utils/attributes'
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  Grid,
+  InputLabel,
+  makeStyles,
+  MenuItem,
+  Select,
+  TextField
+} from '@material-ui/core'
+import { handleAttrChange, handleNumberAttrChange } from '../../../utils/attributes'
 import { ModelAttribute } from '@commun/core'
+
+const useStyles = makeStyles(theme => ({
+  defaultSelectorFormControl: {
+    width: '100%',
+    marginBottom: theme.spacing(2),
+  },
+}))
 
 interface Props {
   attribute?: ModelAttribute
@@ -11,25 +29,64 @@ interface Props {
 }
 
 export const ModelAttributeSharedOptions = (props: Props) => {
+  const classes = useStyles()
   const { attribute, subAttribute, onChange, noDefault } = props
   const [required, setRequired] = useState(attribute?.required)
   const [unique, setUnique] = useState(attribute?.unique)
   const [attributeDefault, setAttributeDefault] = useState(attribute?.default || '')
 
+  const handleAttributeDefaultChange = (value: string) => {
+    switch (attribute?.type) {
+      case 'number':
+        handleNumberAttrChange(onChange, 'default', value, setAttributeDefault)
+        break
+      case 'boolean':
+        const defaultValue = ['', undefined].includes(value) ? undefined : value === 'true'
+        handleAttrChange(onChange, 'default', defaultValue, setAttributeDefault)
+        break
+      default:
+        handleAttrChange(onChange, 'default', value, setAttributeDefault)
+    }
+  }
+
+  const renderAttributeDefaultTextField = () => {
+    return (
+      <TextField
+        onChange={e => handleAttributeDefaultChange(e.target.value)}
+        value={attributeDefault || ''}
+        name="default"
+        type={attribute?.type === 'number' ? 'number' : 'text'}
+        variant="outlined"
+        margin="normal"
+        fullWidth
+        label="Default"/>
+    )
+  }
+
+  const renderBooleanDefaultTextField = () => {
+    return (
+      <FormControl className={classes.defaultSelectorFormControl}>
+        <InputLabel id="attribute-default-selector">
+          Default
+        </InputLabel>
+        <Select
+          onChange={e => handleAttributeDefaultChange(e.target.value as string)}
+          value={(attributeDefault || '').toString()}
+          labelId="attribute-default-selector"
+          id="attribute-default-selector"
+          fullWidth>
+          <MenuItem value=""/>
+          <MenuItem value="true">True</MenuItem>
+          <MenuItem value="false">False</MenuItem>
+        </Select>
+      </FormControl>
+    )
+  }
+
   return (
     <>
       {
-        noDefault ? '' :
-          <Grid item xs={12}>
-            <TextField
-              onChange={e => handleAttrChange(onChange, 'default', e.target.value, setAttributeDefault)}
-              value={attributeDefault}
-              name="default"
-              variant="outlined"
-              margin="normal"
-              fullWidth
-              label="Default"/>
-          </Grid>
+        !noDefault && (attribute?.type === 'boolean' ? renderBooleanDefaultTextField() : renderAttributeDefaultTextField())
       }
 
       {

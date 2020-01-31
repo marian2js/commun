@@ -22,7 +22,7 @@ export const NumberModelAttributeForm = (props: Props) => {
         <TextField
           onChange={e => handleNumberAttrChange(onChange, 'min', e.target.value as string, setMin)}
           value={min}
-          name="default"
+          name="min"
           type="number"
           variant="outlined"
           margin="normal"
@@ -33,7 +33,7 @@ export const NumberModelAttributeForm = (props: Props) => {
         <TextField
           onChange={e => handleNumberAttrChange(onChange, 'max', e.target.value as string, setMax)}
           value={max}
-          name="default"
+          name="max"
           type="number"
           variant="outlined"
           margin="normal"
