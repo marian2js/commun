@@ -7,6 +7,7 @@ import { EntityIndex } from './EntityIndex'
 
 export interface EntityConfig<MODEL extends EntityModel> {
   entityName: string
+  entitySingularName?: string
   collectionName: string
   apiKey?: string
   permissions?: EntityActionPermissions

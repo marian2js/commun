@@ -15,6 +15,7 @@ import {
 import errorHandler from 'errorhandler'
 import { MongoClient, MongoClientCommonOption } from 'mongodb'
 import chalk from 'chalk'
+import { singular } from 'pluralize'
 import { MongoDbConnection } from './dao/MongoDbConnection'
 import { EntityController, PluginController } from './controllers'
 import { EntityDao } from './dao/EntityDao'
@@ -160,12 +161,31 @@ export const Commun = {
     if (!entity.config.collectionName) {
       throw new Error('Config must include "collectionName"')
     }
+
+    // set default _id attribute
     if (!entity.config.attributes._id) {
       entity.config.attributes._id = {
         type: 'id',
-        permissions: { get: entity.config.permissions?.get }
+        permissions: {}
+      }
+      if (entity.config.permissions?.get) {
+        entity.config.attributes._id.permissions = {
+          ...(entity.config.attributes._id.permissions || {}),
+          get: entity.config.permissions.get,
+        }
       }
     }
+
+    // set default entitySingularName
+    if (!entity.config.entitySingularName) {
+      const entitySingularName = singular(entity.config.entityName)
+      if (entity.config.entityName === entitySingularName) {
+        entity.config.entitySingularName = entity.config.entityName + 'Item'
+      } else {
+        entity.config.entitySingularName = entitySingularName
+      }
+    }
+
     const registeredEntity: Entity<MODEL> = {
       ...entity,
       dao: entity.dao || new EntityDao<MODEL>(entity.config.collectionName),

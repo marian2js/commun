@@ -19,6 +19,7 @@ describe('Commun', () => {
         config: {
           entityName: 'test',
           collectionName: 'test',
+          entitySingularName: 'testItem',
           attributes: {
             _id: {
               type: 'id',
@@ -33,6 +34,29 @@ describe('Commun', () => {
 
     it('should throw an error if an entity does not exist', async () => {
       expect(() => Commun.getEntity('test')).toThrow('Entity test not registered')
+    })
+
+    it('should set a singular entity name if one was not given', async () => {
+      Commun.registerEntity({
+        config: {
+          entityName: 'posts',
+          collectionName: 'posts',
+          attributes: {}
+        }
+      })
+
+      expect(Commun.getEntity('posts').config.entitySingularName).toBe('post')
+
+      Commun.registerEntity({
+        config: {
+          entityName: 'test',
+          collectionName: 'test',
+          entitySingularName: 'singleTest',
+          attributes: {}
+        }
+      })
+
+      expect(Commun.getEntity('test').config.entitySingularName).toBe('singleTest')
     })
   })
 

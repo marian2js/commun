@@ -29,7 +29,8 @@
     "lusca": "^1.6.1",
     "mathjs": "^6.5.0",
     "mongodb": "^3.4.1",
-    "morgan": "^1.9.1"
+    "morgan": "^1.9.1",
+    "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@commun/test-utils": "^0.2.4",
@@ -44,6 +45,7 @@
     "@types/mathjs": "^6.0.3",
     "@types/mongodb": "^3.3.14",
     "@types/morgan": "^1.7.37",
+    "@types/pluralize": "^0.0.29",
     "@types/supertest": "^2.0.8",
     "supertest": "^4.0.2",
     "typescript": "^3.7.4"
