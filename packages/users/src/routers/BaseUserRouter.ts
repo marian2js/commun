@@ -6,17 +6,17 @@ const getController = () => Commun.getEntityController<BaseUserModel>(UserModule
 
 export const BaseUserRouter = express.Router()
   .post('/auth/password', (req, res, next) =>
-    sendResponse(req, res, next, getController().create(req, res)))
+    sendResponse(req, res, next, getController().create(req)))
   .post('/auth/password/login', (req, res, next) =>
-    sendResponse(req, res, next, getController().loginWithPassword(req, res)))
+    sendResponse(req, res, next, getController().loginWithPassword(req)))
   .post('/auth/token', (req, res, next) =>
-    sendResponse(req, res, next, getController().getAccessToken(req, res)))
+    sendResponse(req, res, next, getController().getAccessToken(req)))
   .post('/auth/verify', (req, res, next) =>
-    sendResponse(req, res, next, getController().verify(req, res)))
+    sendResponse(req, res, next, getController().verify(req)))
   .post('/auth/password/forgot', (req, res, next) =>
-    sendResponse(req, res, next, getController().forgotPassword(req, res)))
+    sendResponse(req, res, next, getController().forgotPassword(req)))
   .post('/auth/password/reset', (req, res, next) =>
-    sendResponse(req, res, next, getController().resetPassword(req, res)))
+    sendResponse(req, res, next, getController().resetPassword(req)))
 
   .get('/auth/:provider', (req, res, next) =>
     getController().startAuthWithProvider(req, res, next))
@@ -26,4 +26,4 @@ export const BaseUserRouter = express.Router()
     (req, res, next) =>
       getController().completeAuthWithProvider(req, res))
   .post('/auth/:provider/token', (req, res, next) =>
-    sendResponse(req, res, next, getController().generateAccessTokenForAuthWithProvider(req, res)))
+    sendResponse(req, res, next, getController().generateAccessTokenForAuthWithProvider(req)))

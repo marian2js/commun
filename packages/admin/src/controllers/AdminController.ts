@@ -203,7 +203,7 @@ export class AdminController extends PluginController {
   async createAdmin (req: Request, res: Response) {
     AdminModule.validateFirstRunCode(req.body.code)
     const usersEntity = Commun.getEntity<BaseUserModel>('users')
-    const result = await usersEntity.controller.create(req, res)
+    const result = await usersEntity.controller.create(req)
     if (!result.item._id) {
       throw new ServerError('Error occurred when creating the account, please try again')
     }

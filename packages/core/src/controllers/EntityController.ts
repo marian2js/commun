@@ -26,7 +26,7 @@ export class EntityController<T extends EntityModel> {
     return Commun.getEntityDao<T>(this.entityName)
   }
 
-  async list (req: Request, res: Response): Promise<{ items: T[] }> {
+  async list (req: Request): Promise<{ items: T[] }> {
     if (this.config.permissions?.get !== 'own') {
       await this.validateActionPermissions(req, null, 'get')
     }
@@ -66,7 +66,7 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async get (req: Request, res: Response): Promise<{ item: T }> {
+  async get (req: Request): Promise<{ item: T }> {
     const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
@@ -80,7 +80,7 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async create (req: Request, res: Response): Promise<{ item: T }> {
+  async create (req: Request): Promise<{ item: T }> {
     await this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
     await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?._id)
@@ -98,7 +98,7 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async update (req: Request, res: Response): Promise<{ item: T }> {
+  async update (req: Request): Promise<{ item: T }> {
     const model = await this.findModelByApiKey(req)
     if (!model) {
       throw new NotFoundError()
@@ -120,7 +120,7 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async delete (req: Request, res: Response): Promise<{ result: boolean }> {
+  async delete (req: Request): Promise<{ result: boolean }> {
     const model = await this.findModelByApiKey(req)
     if (!model) {
       return { result: true }

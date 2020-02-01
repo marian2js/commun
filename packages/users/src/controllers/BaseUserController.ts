@@ -9,21 +9,20 @@ import {
   ServerError,
   UnauthorizedError
 } from '@commun/core'
-import { BaseUserModel, UserModule } from '..'
+import { AuthProvider, BaseUserModel, UserModule } from '..'
 import { AccessToken, UserTokens } from '../types/UserTokens'
 import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
 import { EmailClient } from '@commun/emails'
 import passport from 'passport'
 import { ExternalAuth } from '../security/ExternalAuth'
-import { AuthProvider } from '../types/ExternalAuth'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
-  async create (req: Request, res: Response): Promise<{ item: MODEL }> {
+  async create (req: Request): Promise<{ item: MODEL }> {
     if (!req.body.password) {
       throw new BadRequestError('Password cannot be blank')
     }
 
-    const { item } = await super.create(req, res)
+    const { item } = await super.create(req)
     const plainVerificationCode = await SecurityUtils.generateRandomString(48)
     const verificationCode = await SecurityUtils.hashWithBcrypt(plainVerificationCode, 12)
     const user = await this.dao.updateOne(item._id!, { verificationCode, verified: false })
@@ -36,7 +35,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     return { item }
   }
 
-  async loginWithPassword (req: Request, res: Response): Promise<{ user: MODEL, tokens: UserTokens }> {
+  async loginWithPassword (req: Request): Promise<{ user: MODEL, tokens: UserTokens }> {
     const user = await this.findUserByEmailOrUsername(req.body.username || '')
 
     if (!user || !user.password || !await SecurityUtils.bcryptHashIsValid(req.body.password, user.password)) {
@@ -52,7 +51,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
   }
 
-  async getAccessToken (req: Request, res: Response): Promise<AccessToken> {
+  async getAccessToken (req: Request): Promise<AccessToken> {
     const user = await this.dao.findOne({ username: req.body.username })
     if (!user) {
       throw new NotFoundError()
@@ -63,13 +62,13 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     return this.generateAccessToken(user)
   }
 
-  async verify (req: Request, res: Response) {
+  async verify (req: Request) {
     const user = await this.dao.findOne({ username: req.body.username })
     if (!user) {
       throw new NotFoundError()
     }
     if (user.verified) {
-      return res.send({ result: true })
+      return { result: true }
     }
     if (!user.verificationCode) {
       throw new BadRequestError('Missing verification code')
@@ -80,13 +79,13 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       const userData = await this.prepareModelResponse(req, user, {})
       EmailClient.sendEmail('welcomeEmail', user.email, userData)
 
-      res.send({ result: true })
+      return { result: true }
     } else {
       throw new BadRequestError('Invalid verification code')
     }
   }
 
-  async forgotPassword (req: Request, res: Response) {
+  async forgotPassword (req: Request) {
     if (!req.body.username) {
       throw new BadRequestError('Missing email or username')
     }
@@ -111,7 +110,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     return { result: true }
   }
 
-  async resetPassword (req: Request, res: Response) {
+  async resetPassword (req: Request) {
     if (!req.body.username) {
       throw new BadRequestError('Missing email or username')
     }
@@ -157,7 +156,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     res.redirect(`${callbackUrl}?provider=${provider}&newUser=${userReq.newUser}&code=${code}`)
   }
 
-  async generateAccessTokenForAuthWithProvider (req: Request, res: Response) {
+  async generateAccessTokenForAuthWithProvider (req: Request) {
     const provider = req.params.provider as AuthProvider
     const token = req.body.code
     const payload = await ExternalAuth.verify(token)
