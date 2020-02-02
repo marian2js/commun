@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { Request } from 'express'
 import {
   Commun,
   DaoFilter,
@@ -13,6 +13,10 @@ import {
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
+
+type RequestOptions = {
+  findModelById?: boolean
+}
 
 export class EntityController<T extends EntityModel> {
 
@@ -66,8 +70,8 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async get (req: Request): Promise<{ item: T }> {
-    const model = await this.findModelByApiKey(req)
+  async get (req: Request, options: RequestOptions = {}): Promise<{ item: T }> {
+    const model = await this.findModelByApiKey(req, options)
     if (!model) {
       throw new NotFoundError()
     }
@@ -98,8 +102,8 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async update (req: Request): Promise<{ item: T }> {
-    const model = await this.findModelByApiKey(req)
+  async update (req: Request, options: RequestOptions = {}): Promise<{ item: T }> {
+    const model = await this.findModelByApiKey(req, options)
     if (!model) {
       throw new NotFoundError()
     }
@@ -120,8 +124,8 @@ export class EntityController<T extends EntityModel> {
     }
   }
 
-  async delete (req: Request): Promise<{ result: boolean }> {
-    const model = await this.findModelByApiKey(req)
+  async delete (req: Request, options: RequestOptions = {}): Promise<{ result: boolean }> {
+    const model = await this.findModelByApiKey(req, options)
     if (!model) {
       return { result: true }
     }
@@ -132,8 +136,8 @@ export class EntityController<T extends EntityModel> {
     return { result }
   }
 
-  protected findModelByApiKey (req: Request) {
-    if (!this.config.apiKey || this.config.apiKey === '_id') {
+  protected findModelByApiKey (req: Request, options: RequestOptions) {
+    if (options.findModelById || !this.config.apiKey || this.config.apiKey === '_id') {
       return this.dao.findOneById(req.params.id)
     }
     const attrKey: keyof T = <keyof T>this.config.apiKey as keyof T
