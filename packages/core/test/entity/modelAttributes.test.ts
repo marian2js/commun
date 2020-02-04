@@ -52,6 +52,38 @@ describe('modelAttributes', () => {
     })
   })
 
+  describe('Date', () => {
+    it('should return the given date', async () => {
+      const date = new Date()
+      expect(await getModelAttribute({ type: 'date' }, 'key', { key: date })).toEqual(date)
+      expect(await getModelAttribute({ type: 'date' }, 'key', { key: 'Tue Feb 04 2020 UTC' }))
+        .toEqual(new Date('Tue Feb 04 2020 UTC'))
+      expect(await getModelAttribute({ type: 'date' }, 'key', { key: 1580774400000 }))
+        .toEqual(new Date('Tue Feb 04 2020 UTC'))
+      expect(await getModelAttribute({ type: 'date' }, 'key', { key: '1580774400000' }))
+        .toEqual(new Date('Tue Feb 04 2020 UTC'))
+    })
+
+    it('should handle the required attribute', async () => {
+      const date = new Date()
+      expect(await getModelAttribute({ type: 'date', required: true }, 'key', { key: date })).toEqual(date)
+      await expect(getModelAttribute({ type: 'date', required: true }, 'key', {}))
+        .rejects.toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      const date1 = new Date()
+      const date2 = new Date()
+      expect(await getModelAttribute({ type: 'date', default: date2 }, 'key', { key: date1 })).toEqual(date1)
+      expect(await getModelAttribute({ type: 'date', default: date2 }, 'key', {})).toEqual(date2)
+    })
+
+    it('should throw an error if the value is not a date', async () => {
+      await expect(getModelAttribute({ type: 'date' }, 'key', { key: 'bad date' }))
+        .rejects.toThrow('key must be a date')
+    })
+  })
+
   describe('Email', () => {
     it('should return the given email', async () => {
       expect(await getModelAttribute({ type: 'email' }, 'key', { key: 'email@example.org' }))
@@ -547,6 +579,13 @@ describe('parseModelAttribute', () => {
   it('should parse the value according the attribute type', async () => {
     expect(parseModelAttribute({ type: 'boolean' }, 'true')).toBe(true)
     expect(parseModelAttribute({ type: 'boolean' }, 'false')).toBe(false)
+
+    const date = new Date()
+    expect(parseModelAttribute({ type: 'date' }, date)).toEqual(date)
+    expect(parseModelAttribute({ type: 'date' }, 'Tue Feb 04 2020 UTC')).toEqual(new Date('Tue Feb 04 2020 UTC'))
+    expect(parseModelAttribute({ type: 'date' }, 1580774400000)).toEqual(new Date('Tue Feb 04 2020 UTC'))
+    expect(parseModelAttribute({ type: 'date' }, '1580774400000')).toEqual(new Date('Tue Feb 04 2020 UTC'))
+
     expect(parseModelAttribute({ type: 'string' }, 'test')).toBe('test')
     expect(parseModelAttribute({ type: 'email' }, 'test@example.org')).toBe('test@example.org')
     expect(parseModelAttribute({ type: 'slug', setFrom: 'key' }, 'test')).toBe('test')

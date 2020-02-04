@@ -15,6 +15,11 @@ export type BooleanModelAttribute = BaseModelAttribute & {
   default?: boolean
 }
 
+export type DateModelAttribute = BaseModelAttribute & {
+  type: 'date'
+  default?: Date
+}
+
 export type EmailModelAttribute = BaseModelAttribute & {
   type: 'email'
   default?: string
@@ -87,6 +92,7 @@ export type UserModelAttribute = BaseModelAttribute & {
 
 export type ModelAttribute =
   BooleanModelAttribute |
+  DateModelAttribute |
   EmailModelAttribute |
   EnumModelAttribute |
   IdModelAttribute |

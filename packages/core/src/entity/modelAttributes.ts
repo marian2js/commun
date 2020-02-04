@@ -1,5 +1,6 @@
 import {
   BooleanModelAttribute,
+  DateModelAttribute,
   EmailModelAttribute,
   EnumModelAttribute,
   ListModelAttribute,
@@ -31,6 +32,8 @@ export async function getModelAttribute<T> (
   switch (attribute.type) {
     case 'boolean':
       return getBooleanModelAttribute(attribute, key, data[key], defaultValue)
+    case 'date':
+      return getDateModelAttribute(attribute, key, data[key], defaultValue)
     case 'email':
       return getEmailModelAttribute(attribute, key, data[key], defaultValue)
     case 'enum':
@@ -70,6 +73,22 @@ function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: key
   }
 
   return parseModelAttribute(attribute, value)
+}
+
+function getDateModelAttribute<T> (attribute: DateModelAttribute, key: keyof T, value: any, defaultValue: boolean) {
+  if (!value) {
+    if (attribute.required && defaultValue === undefined) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return defaultValue
+  }
+
+  const date = parseModelAttribute(attribute, value)
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new BadRequestError(`${key} must be a date`)
+  }
+
+  return date
 }
 
 function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any, defaultValue: string) {
@@ -258,6 +277,8 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return '' + value
     case 'number':
       return Number(value)
+    case 'date':
+      return Number.isNaN(Number(value)) ? new Date(value) : new Date(Number(value))
     case 'id':
     case 'ref':
     case 'user':
