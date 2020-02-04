@@ -12,6 +12,7 @@ import {
 import {
   GraphQLFieldConfigMap,
   GraphQLInputFieldConfigMap,
+  GraphQLInterfaceType,
   GraphQLNonNull,
   GraphQLOutputType,
   GraphQLResolveInfo,
@@ -22,6 +23,15 @@ import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
 
 const entityObjectTypesCache: { [key: string]: GraphQLObjectType } = {}
+
+const nodeInterface = new GraphQLInterfaceType({
+  name: 'Node',
+  fields: {
+    _id: {
+      type: GraphQLNonNull(GraphQLID)
+    }
+  },
+})
 
 export function createGraphQLSchema (): GraphQLSchema {
   const queryConfig: any = {
@@ -78,6 +88,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
   return entityObjectTypesCache[entityConfig.entityName] = new GraphQLObjectType({
     name: capitalize(entityConfig.entitySingularName!),
     fields: () => fields,
+    interfaces: [nodeInterface],
   })
 }
 
