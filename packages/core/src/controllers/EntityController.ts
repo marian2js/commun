@@ -53,7 +53,7 @@ export class EntityController<T extends EntityModel> {
       if (typeof req.query.filter === 'string') {
         entityFilter = strToApiFilter(req.query.filter, this.config.attributes)
       }
-      filter = parseFilter(entityFilter || req.query.filter) as DaoFilter<T>
+      filter = parseFilter(entityFilter || req.query.filter, this.config.attributes) as DaoFilter<T>
     }
 
     const populate = this.getPopulateFromRequest(req)

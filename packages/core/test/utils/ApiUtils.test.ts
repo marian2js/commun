@@ -3,10 +3,17 @@ import { parseFilter, strToApiFilter } from '../../src/utils/ApiUtils'
 describe('ApiUtils', () => {
   describe('parseFilter', () => {
     it('should parse an entity filter into a MongoDB filter', async () => {
-      expect(parseFilter({ a: { value: 'b' } })).toEqual({ a: 'b' })
-      expect(parseFilter({ a: { value: 'b', comparator: '>' } })).toEqual({ a: { $gt: 'b' } })
-      expect(parseFilter({ or: [{ a: { value: 'b' } }, { c: { value: 'd' } }] }))
+      expect(parseFilter({ a: { value: 'b' } }, {})).toEqual({ a: 'b' })
+      expect(parseFilter({ a: { value: 'b', comparator: '>' } }, {})).toEqual({ a: { $gt: 'b' } })
+      expect(parseFilter({ or: [{ a: { value: 'b' } }, { c: { value: 'd' } }] }, {}))
         .toEqual({ $or: [{ a: 'b' }, { c: 'd' }] })
+    })
+
+    it('should use the correct type according the attribute', async () => {
+      expect(parseFilter({ str: { value: '1' }, num: { value: '2' } }, { str: { type: 'string' }, num: { type: 'number' } }))
+        .toEqual({ str: '1', num: 2 })
+      expect(parseFilter({ str: { value: 'true' }, bool: { value: 'true' } }, { str: { type: 'string' }, bool: { type: 'boolean' } }))
+        .toEqual({ str: 'true', bool: true })
     })
   })
 

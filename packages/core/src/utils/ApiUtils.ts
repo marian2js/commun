@@ -12,33 +12,34 @@ type ApiEntityFilterQuery = {
 
 type ApiEntityFilterComparator = '=' | '!=' | '<' | '<=' | '>' | '>='
 
-export function parseFilter (filterData: ApiEntityFilter) {
+export function parseFilter<T> (filterData: ApiEntityFilter, attributes: { [key in keyof T]: ModelAttribute }) {
   const filter: { [key: string]: any } = {}
   for (const [key, filterValue] of Object.entries(filterData)) {
     if (['and', 'or'].includes(key)) {
       const filters = filterValue as ApiEntityFilter[]
-      filter['$' + key] = filters.map(filter => parseFilter(filter))
+      filter['$' + key] = filters.map(filter => parseFilter(filter, attributes))
     } else {
       const query = filterValue as ApiEntityFilterQuery
+      const value = attributes[key as keyof T] ? parseModelAttribute(attributes[key as keyof T], query.value) : query.value
       switch (query.comparator) {
         case '!=':
-          filter[key] = { $ne: query.value }
+          filter[key] = { $ne: value }
           break
         case '<':
-          filter[key] = { $lt: query.value }
+          filter[key] = { $lt: value }
           break
         case '<=':
-          filter[key] = { $lte: query.value }
+          filter[key] = { $lte: value }
           break
         case '>':
-          filter[key] = { $gt: query.value }
+          filter[key] = { $gt: value }
           break
         case '>=':
-          filter[key] = { $gte: query.value }
+          filter[key] = { $gte: value }
           break
         case '=':
         default:
-          filter[key] = query.value
+          filter[key] = value
           break
       }
     }
