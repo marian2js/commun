@@ -122,6 +122,7 @@ describe('BaseUserController', () => {
         _id: res.body.item._id,
         username: 'user',
         verificationCode: 'plain-code',
+        createdAt: expect.any(Date),
       })
     })
   })
@@ -249,6 +250,7 @@ describe('BaseUserController', () => {
       expect(EmailClient.sendEmail).toHaveBeenCalledWith('welcomeEmail', 'user@example.org', {
         _id: fakeUser._id,
         username: 'user',
+        createdAt: expect.any(Date),
       })
     })
   })
@@ -309,6 +311,7 @@ describe('BaseUserController', () => {
         _id: user._id,
         username: 'user',
         resetPasswordCode: 'plain-code',
+        createdAt: expect.any(Date),
       })
     })
   })
@@ -437,6 +440,7 @@ describe('BaseUserController', () => {
         user: {
           _id: expect.any(String),
           username: 'new-user',
+          createdAt: expect.anything(),
         },
         tokens: {
           accessToken: 'signed-token',

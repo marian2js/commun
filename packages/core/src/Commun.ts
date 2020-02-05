@@ -176,6 +176,28 @@ export const Commun = {
       }
     }
 
+    if (!entity.config.attributes.createdAt) {
+      entity.config.attributes.createdAt = {
+        type: 'date',
+        permissions: {
+          get: entity.config.permissions?.get || 'system',
+          create: 'system',
+          update: 'system',
+        }
+      }
+    }
+
+    if (!entity.config.attributes.updatedAt) {
+      entity.config.attributes.updatedAt = {
+        type: 'date',
+        permissions: {
+          get: entity.config.permissions?.get || 'system',
+          create: 'system',
+          update: 'system',
+        }
+      }
+    }
+
     // set default entitySingularName
     if (!entity.config.entitySingularName) {
       const entitySingularName = singular(entity.config.entityName)
@@ -184,6 +206,11 @@ export const Commun = {
       } else {
         entity.config.entitySingularName = entitySingularName
       }
+    }
+
+    // set default apiKey
+    if (!entity.config.apiKey) {
+      entity.config.apiKey = '_id'
     }
 
     const registeredEntity: Entity<MODEL> = {

@@ -202,8 +202,13 @@ describe('EntityController', () => {
       it('should populate a ref attribute', async () => {
         const res = await request().get(`${baseUrl}?populate=entityRef`).expect(200)
         expect(res.body.items[0].entityRef).toBeUndefined()
-        expect(res.body.items[1].entityRef).toEqual({ _id: item1._id, name: 'item1' })
-        expect(res.body.items[2].entityRef).toEqual({ _id: item2._id, name: 'item2', entityRef: { _id: item1._id } })
+        expect(res.body.items[1].entityRef).toEqual({ _id: item1._id, name: 'item1', createdAt: expect.any(String) })
+        expect(res.body.items[2].entityRef).toEqual({
+          _id: item2._id,
+          name: 'item2',
+          entityRef: { _id: item1._id },
+          createdAt: expect.any(String)
+        })
       })
     })
 
