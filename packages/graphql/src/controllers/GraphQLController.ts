@@ -5,11 +5,22 @@ import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
 
 export const GraphQLController = {
-  listEntities (entity: Entity<EntityModel>, entityType: GraphQLObjectType, orderByEntityInput?: GraphQLInputObjectType) {
+  listEntities (
+    entity: Entity<EntityModel>,
+    entityType: GraphQLObjectType,
+    getEntityInput?: GraphQLInputObjectType,
+    filterByEntityInput?: GraphQLInputObjectType,
+    orderByEntityInput?: GraphQLInputObjectType
+  ) {
     const args: any = {}
+    if (getEntityInput) {
+      args.filter = {
+        type: filterByEntityInput,
+      }
+    }
     if (orderByEntityInput) {
       args.orderBy = {
-        type: new GraphQLList(orderByEntityInput)
+        type: new GraphQLList(orderByEntityInput),
       }
     }
 
@@ -24,6 +35,9 @@ export const GraphQLController = {
       }),
       args,
       resolve: async (parentValue: any, args: any, req: Request) => {
+        if (args.filter) {
+          req.query.filter = args.filter
+        }
         if (args.orderBy) {
           req.query.orderBy = args.orderBy
             .map((orderBy: { [key: string]: 'asc' | 'desc' }) => Object.entries(orderBy).map(entry => entry.join(':')).join(';'))

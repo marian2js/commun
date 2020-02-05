@@ -6,6 +6,7 @@ import {
   GraphQLInputObjectType,
   GraphQLInputType,
   GraphQLInt,
+  GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString
@@ -24,6 +25,7 @@ import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
 
 const entityObjectTypesCache: { [key: string]: GraphQLObjectType } = {}
+const entityFilterTypesCache: { [key: string]: GraphQLInputObjectType } = {}
 
 const nodeInterface = new GraphQLInterfaceType({
   name: 'Node',
@@ -32,6 +34,30 @@ const nodeInterface = new GraphQLInterfaceType({
       type: GraphQLNonNull(GraphQLID)
     }
   },
+})
+
+const filterComparatorSymbol = new GraphQLEnumType({
+  name: 'FilterComparatorSymbol',
+  values: {
+    EQUAL: { value: '=' },
+    NOT_EQUAL: { value: '!=' },
+    GREATER_THAN: { value: '>' },
+    GREATER_THAN_OR_EQUAL: { value: '>=' },
+    LESS_THAN: { value: '<' },
+    LESS_THAN_OR_EQUAL: { value: '<=' },
+  }
+})
+
+const filterComparatorType = new GraphQLInputObjectType({
+  name: 'FilterComparator',
+  fields: {
+    comparator: {
+      type: filterComparatorSymbol,
+    },
+    value: {
+      type: GraphQLString,
+    }
+  }
 })
 
 const orderByDirectionType = new GraphQLEnumType({
@@ -54,13 +80,17 @@ export function createGraphQLSchema (): GraphQLSchema {
 
   for (const entity of Object.values(Commun.getEntities())) {
     const entityType = buildEntityObjectType(entity.config)
+    const getEntityInput = buildEntityInputType(entity.config, 'get')
     const createEntityInput = buildEntityInputType(entity.config, 'create')
     const updateEntityInput = buildEntityInputType(entity.config, 'update')
     const deleteEntityInput = buildEntityInputType(entity.config, 'delete')
+    const filterByEntityInput = buildFilterEntityInputType(entity.config)
     const orderByEntityInput = buildOrderByEntityInputType(entity.config)
 
-    queryConfig.fields[entity.config.entityName] = GraphQLController.listEntities(entity, entityType, orderByEntityInput)
-    queryConfig.fields[entity.config.entitySingularName!] = GraphQLController.getEntity(entity, entityType)
+    queryConfig.fields[entity.config.entityName] =
+      GraphQLController.listEntities(entity, entityType, getEntityInput, filterByEntityInput, orderByEntityInput)
+    queryConfig.fields[entity.config.entitySingularName!] =
+      GraphQLController.getEntity(entity, entityType)
     mutationConfig.fields[`create${capitalize(entity.config.entitySingularName!)}`] =
       GraphQLController.createEntity(entity, entityType, createEntityInput)
     mutationConfig.fields[`update${capitalize(entity.config.entitySingularName!)}`] =
@@ -122,6 +152,48 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
   })
 }
 
+function buildFilterEntityInputType (entityConfig: EntityConfig<EntityModel>) {
+  if (entityFilterTypesCache[entityConfig.entityName]) {
+    return entityFilterTypesCache[entityConfig.entityName]
+  }
+
+  const fields: Thunk<GraphQLInputFieldConfigMap> = {}
+
+  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
+    fields[key] = {
+      type: new GraphQLInputObjectType({
+        name: capitalize(entityConfig.entitySingularName!) + capitalize(key) + 'FilterInput',
+        fields: {
+          value: {
+            type: new GraphQLNonNull(getAttributeGraphQLType(entityConfig, attribute!, 'input') as GraphQLInputType)
+          },
+          comparator: {
+            type: filterComparatorSymbol
+          }
+        }
+      })
+    }
+  }
+
+  // Input Objects require at least one field
+  if (!Object.keys(fields).length) {
+    return
+  }
+
+  return entityFilterTypesCache[entityConfig.entityName] = new GraphQLInputObjectType({
+    name: capitalize(entityConfig.entitySingularName!) + 'FilterInput',
+    fields: () => ({
+      ...fields,
+      or: {
+        type: new GraphQLList(entityFilterTypesCache[entityConfig.entityName])
+      },
+      and: {
+        type: new GraphQLList(entityFilterTypesCache[entityConfig.entityName])
+      }
+    }),
+  })
+}
+
 function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
 
@@ -137,7 +209,7 @@ function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
   }
 
   return new GraphQLInputObjectType({
-    name: 'OrderBy' + capitalize(entityConfig.entitySingularName!) + 'Input',
+    name: capitalize(entityConfig.entitySingularName!) + 'OrderByInput',
     fields: () => fields,
   })
 }

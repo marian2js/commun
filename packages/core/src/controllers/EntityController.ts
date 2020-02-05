@@ -6,13 +6,13 @@ import {
   getJoinAttribute,
   getModelAttribute,
   ModelAttribute,
-  parseModelAttribute,
   RefModelAttribute,
   UnauthorizedError
 } from '..'
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
+import { parseFilter, strToApiFilter } from '../utils/ApiUtils'
 
 type RequestOptions = {
   findModelById?: boolean
@@ -47,17 +47,13 @@ export class EntityController<T extends EntityModel> {
       }
     }
 
-    const filter: { [P in keyof T]?: any } = {}
+    let filter: DaoFilter<T> = {}
     if (req.query.filter) {
-      const filterStrings = req.query.filter.split(';')
-      for (const filterString of filterStrings) {
-        const filterParts = filterString.split(':')
-        const filterKey = filterParts[0] as keyof T
-        const filterValue = filterParts[1]
-        if (this.config.attributes[filterKey]) {
-          filter[filterKey] = parseModelAttribute(this.config.attributes[filterKey], filterValue)
-        }
+      let entityFilter
+      if (typeof req.query.filter === 'string') {
+        entityFilter = strToApiFilter(req.query.filter, this.config.attributes)
       }
+      filter = parseFilter(entityFilter || req.query.filter) as DaoFilter<T>
     }
 
     const populate = this.getPopulateFromRequest(req)

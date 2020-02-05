@@ -145,6 +145,69 @@ describe('GraphQLController', () => {
         })
       })
     })
+
+    describe('Filter', () => {
+      beforeEach(async () => {
+        await getDao().insertOne({ name: 'b' })
+        await getDao().insertOne({ name: 'a' })
+        await getDao().insertOne({ name: 'd' })
+        await getDao().insertOne({ name: 'c' })
+      })
+
+      it('should return a list of items filtered by name', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (filter: { name: { value: "a" } }) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            items: {
+              nodes: [{
+                name: 'a'
+              }]
+            }
+          }
+        })
+      })
+
+      it('should return a list of items filtered by multiple names', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (filter: { or: [{ name: { value: "a" } }, { name: { value: "b" } }] }) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            items: {
+              nodes: [{
+                name: 'b'
+              }, {
+                name: 'a'
+              }]
+            }
+          }
+        })
+      })
+    })
   })
 
   describe('getEntity', () => {
