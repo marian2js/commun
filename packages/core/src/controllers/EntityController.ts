@@ -36,8 +36,9 @@ export class EntityController<T extends EntityModel> {
     }
 
     const sort: { [P in keyof T]?: 1 | -1 } = {}
-    if (req.query.sort) {
-      const [sortKey, sortDir] = req.query.sort.split(':')
+    const orderBy = req.query.orderby || req.query.orderBy
+    if (orderBy) {
+      const [sortKey, sortDir] = orderBy.split(':')
       const dir = sortDir === 'asc' ? 1 : -1
       if (sortKey === 'createdAt') {
         sort._id = dir

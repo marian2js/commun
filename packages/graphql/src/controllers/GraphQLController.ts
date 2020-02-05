@@ -1,11 +1,18 @@
-import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql/type/definition'
+import { GraphQLArgument, GraphQLInputObjectType, GraphQLNonNull } from 'graphql/type/definition'
 import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql'
 import { Request } from 'express'
 import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
 
 export const GraphQLController = {
-  listEntities (entity: Entity<EntityModel>, entityType: GraphQLObjectType) {
+  listEntities (entity: Entity<EntityModel>, entityType: GraphQLObjectType, orderByEntityInput?: GraphQLInputObjectType) {
+    const args: any = {}
+    if (orderByEntityInput) {
+      args.orderBy = {
+        type: new GraphQLList(orderByEntityInput)
+      }
+    }
+
     return {
       type: new GraphQLObjectType({
         name: `List${capitalize(entity.config.entitySingularName!)}Payload`,
@@ -15,7 +22,13 @@ export const GraphQLController = {
           }
         }
       }),
+      args,
       resolve: async (parentValue: any, args: any, req: Request) => {
+        if (args.orderBy) {
+          req.query.orderBy = args.orderBy
+            .map((orderBy: { [key: string]: 'asc' | 'desc' }) => Object.entries(orderBy).map(entry => entry.join(':')).join(';'))
+            .join(';')
+        }
         const res = await entity.controller.list(req)
         return {
           nodes: res.items

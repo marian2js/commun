@@ -1,6 +1,7 @@
 import { assertNever, Commun, EntityActionPermissions, EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import {
   GraphQLBoolean,
+  GraphQLEnumType,
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInputType,
@@ -33,6 +34,14 @@ const nodeInterface = new GraphQLInterfaceType({
   },
 })
 
+const orderByDirectionType = new GraphQLEnumType({
+  name: 'OrderByDirection',
+  values: {
+    DESC: { value: 'desc' },
+    ASC: { value: 'asc' },
+  }
+})
+
 export function createGraphQLSchema (): GraphQLSchema {
   const queryConfig: any = {
     name: 'query',
@@ -48,8 +57,9 @@ export function createGraphQLSchema (): GraphQLSchema {
     const createEntityInput = buildEntityInputType(entity.config, 'create')
     const updateEntityInput = buildEntityInputType(entity.config, 'update')
     const deleteEntityInput = buildEntityInputType(entity.config, 'delete')
+    const orderByEntityInput = buildOrderByEntityInputType(entity.config)
 
-    queryConfig.fields[entity.config.entityName] = GraphQLController.listEntities(entity, entityType)
+    queryConfig.fields[entity.config.entityName] = GraphQLController.listEntities(entity, entityType, orderByEntityInput)
     queryConfig.fields[entity.config.entitySingularName!] = GraphQLController.getEntity(entity, entityType)
     mutationConfig.fields[`create${capitalize(entity.config.entitySingularName!)}`] =
       GraphQLController.createEntity(entity, entityType, createEntityInput)
@@ -72,16 +82,11 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
 
   const fields: Thunk<GraphQLFieldConfigMap<any, any, any>> = {}
 
-  for (const [key, attribute] of Object.entries(entityConfig.attributes)) {
-    const hasSystemOnlyPermission = attribute!.permissions?.get === 'system' ||
-      (!attribute!.permissions?.get && entityConfig.permissions?.get === 'system')
-
-    if (!hasSystemOnlyPermission) {
-      const type = getAttributeGraphQLType(entityConfig, attribute!, 'type') as GraphQLOutputType
-      fields[key] = {
-        type: attribute!.required || key === '_id' ? new GraphQLNonNull(type) : type,
-        resolve: getAttributeGraphQLResolver(entityConfig, attribute!)
-      }
+  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
+    const type = getAttributeGraphQLType(entityConfig, attribute!, 'type') as GraphQLOutputType
+    fields[key] = {
+      type: attribute!.required || key === '_id' ? new GraphQLNonNull(type) : type,
+      resolve: getAttributeGraphQLResolver(entityConfig, attribute!)
     }
   }
 
@@ -96,32 +101,13 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
   const apiKey = entityConfig.apiKey || '_id'
 
-  // apiKey should always be the first attribute
-  const attributes = Object.entries(entityConfig.attributes)
-    .sort(([key]) => key === apiKey ? -1 : 1)
-
-  for (const [key, attribute] of attributes) {
-    if (action === 'create' && key === '_id') {
-      continue
-    }
-    if (action === 'update' && apiKey !== '_id' && key === '_id') {
-      continue
-    }
-    if (action === 'delete' && key !== apiKey) {
-      continue
-    }
-
+  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, action)) {
     const isIdentificationKey = ['update', 'delete'].includes(action) && key === apiKey
 
-    const hasSystemOnlyPermission = attribute!.permissions?.[action] === 'system' ||
-      (!attribute!.permissions?.[action] && entityConfig.permissions?.[action] === 'system')
-
-    if (!hasSystemOnlyPermission || isIdentificationKey) {
-      const type = getAttributeGraphQLType(entityConfig, attribute!, 'input') as GraphQLInputType
-      const attributeRequired = attribute!.required || key === '_id' || isIdentificationKey
-      fields[key] = {
-        type: attributeRequired ? new GraphQLNonNull(type) : type,
-      }
+    const type = getAttributeGraphQLType(entityConfig, attribute!, 'input') as GraphQLInputType
+    const attributeRequired = (attribute!.required || key === '_id' || isIdentificationKey) && action !== 'get'
+    fields[key] = {
+      type: attributeRequired ? new GraphQLNonNull(type) : type,
     }
   }
 
@@ -136,6 +122,26 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
   })
 }
 
+function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
+  const fields: Thunk<GraphQLInputFieldConfigMap> = {}
+
+  for (const [key] of getEntityAttributesByAction(entityConfig, 'get')) {
+    fields[key] = {
+      type: orderByDirectionType
+    }
+  }
+
+  // Input Objects require at least one field
+  if (!Object.keys(fields).length) {
+    return
+  }
+
+  return new GraphQLInputObjectType({
+    name: 'OrderBy' + capitalize(entityConfig.entitySingularName!) + 'Input',
+    fields: () => fields,
+  })
+}
+
 function getAttributeGraphQLType (
   entityConfig: EntityConfig<EntityModel>,
   attribute: ModelAttribute,
@@ -144,6 +150,7 @@ function getAttributeGraphQLType (
   switch (attribute.type) {
     case 'boolean':
       return GraphQLBoolean
+    case 'date':
     case 'email':
     case 'slug':
     case 'string':
@@ -191,4 +198,29 @@ function getAttributeGraphQLResolver (entityConfig: EntityConfig<EntityModel>, a
       return source[info.fieldName]
     }
   }
+}
+
+function getEntityAttributesByAction (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
+  const apiKey = entityConfig.apiKey || '_id'
+
+  // apiKey should always be the first attribute
+  return Object.entries(entityConfig.attributes)
+    .sort(([key]) => key === apiKey ? -1 : 1)
+    .filter(([key, attribute]) => {
+      if (action === 'create' && key === '_id') {
+        return false
+      }
+      if (action === 'update' && apiKey !== '_id' && key === '_id') {
+        return false
+      }
+      if (action === 'delete' && key !== apiKey) {
+        return false
+      }
+
+      const hasSystemOnlyPermission = attribute!.permissions?.[action] === 'system' ||
+        (!attribute!.permissions?.[action] && entityConfig.permissions?.[action] === 'system')
+      const isIdentificationKey = ['update', 'delete'].includes(action) && key === apiKey
+
+      return !hasSystemOnlyPermission || isIdentificationKey
+    })
 }

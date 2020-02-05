@@ -4,8 +4,8 @@ import { closeTestApp, getTestApp, request, startTestApp, stopTestApp } from '@c
 import { ObjectId } from 'mongodb'
 
 describe('GraphQLController', () => {
-  const entityName = 'nodes'
-  const collectionName = 'nodes'
+  const entityName = 'items'
+  const collectionName = 'items'
 
   interface TestEntity extends EntityModel {
     name: string
@@ -38,8 +38,117 @@ describe('GraphQLController', () => {
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
 
+  describe('listEntities', () => {
+    it('should return a list of items', async () => {
+      await getDao().insertOne({ name: 'item1' })
+      await getDao().insertOne({ name: 'item2' })
+      await getDao().insertOne({ name: 'item3' })
+
+      const res = await request()
+        .post('/graphql')
+        .send({
+          query:
+            `{
+               items {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+        })
+        .expect(200)
+
+      expect(res.body).toEqual({
+        data: {
+          items: {
+            nodes: [{
+              name: 'item1'
+            }, {
+              name: 'item2'
+            }, {
+              name: 'item3'
+            }]
+          }
+        }
+      })
+    })
+
+    describe('OrderBy', () => {
+      beforeEach(async () => {
+        await getDao().insertOne({ name: 'b' })
+        await getDao().insertOne({ name: 'a' })
+        await getDao().insertOne({ name: 'd' })
+        await getDao().insertOne({ name: 'c' })
+      })
+
+      it('should return a list of items sorted by name asc', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (orderBy: [{ name: ASC }]) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            items: {
+              nodes: [{
+                name: 'a'
+              }, {
+                name: 'b'
+              }, {
+                name: 'c'
+              }, {
+                name: 'd'
+              }]
+            }
+          }
+        })
+      })
+
+      it('should return a list of items sorted by name desc', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (orderBy: [{ name: DESC }]) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            items: {
+              nodes: [{
+                name: 'd'
+              }, {
+                name: 'c'
+              }, {
+                name: 'b'
+              }, {
+                name: 'a'
+              }]
+            }
+          }
+        })
+      })
+    })
+  })
+
   describe('getEntity', () => {
-    it('should return a single node by id', async () => {
+    it('should return a single item by id', async () => {
       const node = await getDao().insertOne({ name: 'test' })
 
       const res = await request()
@@ -47,7 +156,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `{
-               node (_id: "${node._id}") {
+               item (_id: "${node._id}") {
                  name
                }
              }`
@@ -56,20 +165,20 @@ describe('GraphQLController', () => {
 
       expect(res.body).toEqual({
         data: {
-          node: {
+          item: {
             name: 'test'
           }
         }
       })
     })
 
-    it('should throw an error if the node does not exist', async () => {
+    it('should throw an error if the item does not exist', async () => {
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `{
-               node (_id: "${new ObjectId()}") {
+               item (_id: "${new ObjectId()}") {
                  name
                }
              }`
@@ -79,7 +188,7 @@ describe('GraphQLController', () => {
       expect(res.body).toEqual({
         errors: [{
           message: 'Resource Not Found',
-          path: ['node'],
+          path: ['item'],
           locations: expect.any(Array),
         }],
         data: null,
@@ -88,14 +197,14 @@ describe('GraphQLController', () => {
   })
 
   describe('createEntity', () => {
-    it('should create a node', async () => {
+    it('should create an item', async () => {
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `mutation {
-               createNode (input: { name: "new-entity" }) {
-                 node {
+               createItem (input: { name: "new-item" }) {
+                 item {
                    name
                  }
                }
@@ -105,29 +214,29 @@ describe('GraphQLController', () => {
 
       expect(res.body).toEqual({
         data: {
-          createNode: {
-            node: {
-              name: 'new-entity'
+          createItem: {
+            item: {
+              name: 'new-item'
             }
           }
         }
       })
 
-      expect(await getDao().findOne({ name: 'new-entity' })).toBeDefined()
+      expect(await getDao().findOne({ name: 'new-item' })).toBeDefined()
     })
   })
 
   describe('updateEntity', () => {
-    it('should update a node', async () => {
-      const node = await getDao().insertOne({ name: 'test' })
+    it('should update an item', async () => {
+      const item = await getDao().insertOne({ name: 'test' })
 
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `mutation {
-               updateNode (input: { _id: "${node._id}", name: "updated" }) {
-                 node {
+               updateItem (input: { _id: "${item._id}", name: "updated" }) {
+                 item {
                    name
                  }
                }
@@ -137,25 +246,25 @@ describe('GraphQLController', () => {
 
       expect(res.body).toEqual({
         data: {
-          updateNode: {
-            node: {
+          updateItem: {
+            item: {
               name: 'updated'
             }
           }
         }
       })
 
-      expect((await getDao().findOneById(node._id!))!.name).toEqual('updated')
+      expect((await getDao().findOneById(item._id!))!.name).toEqual('updated')
     })
 
-    it('should throw an error if the node does not exist', async () => {
+    it('should throw an error if the item does not exist', async () => {
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `mutation {
-               updateNode (input: { _id: "${new ObjectId()}", name: "updated" }) {
-                 node {
+               updateItem (input: { _id: "${new ObjectId()}", name: "updated" }) {
+                 item {
                    name
                  }
                }
@@ -166,26 +275,26 @@ describe('GraphQLController', () => {
       expect(res.body).toEqual({
         errors: [{
           message: 'Resource Not Found',
-          path: ['updateNode'],
+          path: ['updateItem'],
           locations: expect.any(Array),
         }],
         data: {
-          updateNode: null
+          updateItem: null
         },
       })
     })
   })
 
   describe('deleteEntity', () => {
-    it('should delete a node', async () => {
-      const node = await getDao().insertOne({ name: 'test' })
+    it('should delete an item', async () => {
+      const item = await getDao().insertOne({ name: 'test' })
 
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `mutation {
-               deleteNode (input: { _id: "${node._id}" }) {
+               deleteItem (input: { _id: "${item._id}" }) {
                  result
                }
              }`
@@ -194,22 +303,22 @@ describe('GraphQLController', () => {
 
       expect(res.body).toEqual({
         data: {
-          deleteNode: {
+          deleteItem: {
             result: true
           }
         }
       })
 
-      expect(await getDao().findOneById(node._id!)).toBe(null)
+      expect(await getDao().findOneById(item._id!)).toBe(null)
     })
 
-    it('should succeed even if the node does not exist', async () => {
+    it('should succeed even if the item does not exist', async () => {
       const res = await request()
         .post('/graphql')
         .send({
           query:
             `mutation {
-               deleteNode (input: { _id: "${new ObjectId()}" }) {
+               deleteItem (input: { _id: "${new ObjectId()}" }) {
                  result
                }
              }`
@@ -218,7 +327,7 @@ describe('GraphQLController', () => {
 
       expect(res.body).toEqual({
         data: {
-          deleteNode: {
+          deleteItem: {
             result: true
           }
         },

@@ -124,24 +124,24 @@ describe('EntityController', () => {
       })
 
       it('should return items sorted by creation time', async () => {
-        const res = await request().get(`${baseUrl}?sort=createdAt:asc`).expect(200)
+        const res = await request().get(`${baseUrl}?orderBy=createdAt:asc`).expect(200)
         expect(res.body.items[0].name).toBe('first item')
         expect(res.body.items[1].name).toBe('second item')
         expect(res.body.items[2].name).toBe('last item')
 
-        const res2 = await request().get(`${baseUrl}?sort=createdAt:desc`).expect(200)
+        const res2 = await request().get(`${baseUrl}?orderBy=createdAt:desc`).expect(200)
         expect(res2.body.items[0].name).toBe('last item')
         expect(res2.body.items[1].name).toBe('second item')
         expect(res2.body.items[2].name).toBe('first item')
       })
 
       it('should return items sorted by name', async () => {
-        const res = await request().get(`${baseUrl}?sort=name:asc`).expect(200)
+        const res = await request().get(`${baseUrl}?orderBy=name:asc`).expect(200)
         expect(res.body.items[0].name).toBe('first item')
         expect(res.body.items[1].name).toBe('last item')
         expect(res.body.items[2].name).toBe('second item')
 
-        const res2 = await request().get(`${baseUrl}?sort=name:desc`).expect(200)
+        const res2 = await request().get(`${baseUrl}?orderBy=name:desc`).expect(200)
         expect(res2.body.items[0].name).toBe('second item')
         expect(res2.body.items[1].name).toBe('last item')
         expect(res2.body.items[2].name).toBe('first item')
