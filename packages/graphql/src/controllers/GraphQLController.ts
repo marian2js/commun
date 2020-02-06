@@ -27,8 +27,11 @@ export const GraphQLController = {
         type: new GraphQLList(orderByEntityInput),
       }
     }
-    args.search = {
-      type: GraphQLString
+    const supportsTextSearch = entity.config.indexes?.find(index => Object.values(index.keys).includes('text'))
+    if (supportsTextSearch) {
+      args.search = {
+        type: GraphQLString
+      }
     }
 
     return {
