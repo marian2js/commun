@@ -181,6 +181,10 @@ export const ConfigManager = {
     projectRootPath = path.join(pathname, '../')
   },
 
+  get projectRootPath () {
+    return projectRootPath
+  },
+
   _readFile: promisify(fs.readFile),
   _writeFile: promisify(fs.writeFile),
   _unlink: promisify(fs.unlink),

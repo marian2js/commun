@@ -71,11 +71,11 @@ const orderByDirectionType = new GraphQLEnumType({
 
 export function createGraphQLSchema (): GraphQLSchema {
   const queryConfig: any = {
-    name: 'query',
+    name: 'Query',
     fields: {}
   }
   const mutationConfig: any = {
-    name: 'mutation',
+    name: 'Mutation',
     fields: {}
   }
 
