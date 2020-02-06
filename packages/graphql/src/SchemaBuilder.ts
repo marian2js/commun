@@ -2,10 +2,10 @@ import { assertNever, Commun, EntityActionPermissions, EntityConfig, EntityModel
 import {
   GraphQLBoolean,
   GraphQLEnumType,
+  GraphQLFloat,
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInputType,
-  GraphQLInt,
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
@@ -113,6 +113,13 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
 
   const fields: Thunk<GraphQLFieldConfigMap<any, any, any>> = {}
 
+  // create the GraphQL object and cache it before setting the fields, to support circular references
+  entityObjectTypesCache[entityConfig.entityName] = new GraphQLObjectType({
+    name: capitalize(entityConfig.entitySingularName!),
+    fields: () => fields,
+    interfaces: [nodeInterface],
+  })
+
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
     const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'type') as GraphQLOutputType
     fields[key] = {
@@ -121,11 +128,25 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
     }
   }
 
-  return entityObjectTypesCache[entityConfig.entityName] = new GraphQLObjectType({
-    name: capitalize(entityConfig.entitySingularName!),
-    fields: () => fields,
-    interfaces: [nodeInterface],
-  })
+  for (const [key, joinAttribute] of Object.entries(entityConfig.joinAttributes || {})) {
+    const entityType = buildEntityObjectType(Commun.getEntity(joinAttribute.entity).config)
+    switch (joinAttribute.type) {
+      case 'findOne':
+        fields[key] = {
+          type: entityType
+        }
+        break
+      case 'findMany':
+        fields[key] = {
+          type: new GraphQLList(entityType)
+        }
+        break
+      default:
+        assertNever(joinAttribute)
+    }
+  }
+
+  return entityObjectTypesCache[entityConfig.entityName]
 }
 
 function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
@@ -242,7 +263,7 @@ function getAttributeGraphQLType (
     case 'id':
       return GraphQLID
     case 'number':
-      return GraphQLInt
+      return GraphQLFloat
 
     case 'ref':
     case 'user':
