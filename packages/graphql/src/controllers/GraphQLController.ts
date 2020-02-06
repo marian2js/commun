@@ -1,5 +1,5 @@
-import { GraphQLArgument, GraphQLInputObjectType, GraphQLNonNull } from 'graphql/type/definition'
-import { GraphQLBoolean, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql'
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql/type/definition'
+import { GraphQLBoolean, GraphQLInt, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql'
 import { Request } from 'express'
 import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
@@ -12,7 +12,11 @@ export const GraphQLController = {
     filterByEntityInput?: GraphQLInputObjectType,
     orderByEntityInput?: GraphQLInputObjectType
   ) {
-    const args: any = {}
+    const args: any = {
+      first: {
+        type: GraphQLInt
+      }
+    }
     if (getEntityInput) {
       args.filter = {
         type: filterByEntityInput,
@@ -35,9 +39,7 @@ export const GraphQLController = {
       }),
       args,
       resolve: async (parentValue: any, args: any, req: Request) => {
-        if (args.filter) {
-          req.query.filter = args.filter
-        }
+        req.query = args
         if (args.orderBy) {
           req.query.orderBy = args.orderBy
             .map((orderBy: { [key: string]: 'asc' | 'desc' }) => Object.entries(orderBy).map(entry => entry.join(':')).join(';'))

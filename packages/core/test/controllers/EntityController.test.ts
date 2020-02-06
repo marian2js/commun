@@ -187,6 +187,23 @@ describe('EntityController', () => {
       })
     })
 
+    describe('Limits', () => {
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}` })
+        }
+      })
+
+      it('should return limit the number of items returned', async () => {
+        const res = await request().get(`${baseUrl}?first=4`).expect(200)
+        expect(res.body.items.length).toBe(4)
+
+        const res2 = await request().get(`${baseUrl}?first=30`).expect(200)
+        expect(res2.body.items.length).toBe(10)
+      })
+    })
+
     describe('Populate', () => {
       let item1: TestEntity
       let item2: TestEntity

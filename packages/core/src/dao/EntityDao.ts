@@ -6,6 +6,11 @@ export type DaoFilter<T> = {
   [P in keyof T]?: any
 }
 
+type FindOptions<T> = {
+  sort?: SortOption<T>
+  limit?: number
+}
+
 type SortOption<T> = {
   [P in keyof T]?: 1 | -1
 }
@@ -15,8 +20,8 @@ export class EntityDao<T extends EntityModel> {
 
   constructor (protected readonly collectionName: string) {}
 
-  async find (filter: DaoFilter<T>, sort: SortOption<T> = {}): Promise<T[]> {
-    return (await this.collection.find(filter, { sort }).toArray())
+  async find (filter: DaoFilter<T>, options: FindOptions<T> = {}): Promise<T[]> {
+    return (await this.collection.find(filter, options).toArray())
       .map(item => {
         item.createdAt = item._id.getTimestamp()
         item._id = item._id.toString()

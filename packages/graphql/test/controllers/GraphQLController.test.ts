@@ -1,4 +1,4 @@
-import { Commun, EntityModel } from '@commun/core'
+import { Commun, ConfigManager, EntityModel } from '@commun/core'
 import { GraphQLModule } from '../../src'
 import { closeTestApp, getTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 import { ObjectId } from 'mongodb'
@@ -12,6 +12,8 @@ describe('GraphQLController', () => {
   }
 
   beforeAll(async () => {
+    GraphQLModule._writeFile = jest.fn(() => Promise.resolve())
+    ConfigManager.setRootPath('/test-project/lib')
     Commun.registerEntity<TestEntity>({
       config: {
         entityName,
@@ -206,6 +208,46 @@ describe('GraphQLController', () => {
             }
           }
         })
+      })
+    })
+
+    describe('First', () => {
+      beforeEach(async () => {
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}` })
+        }
+      })
+
+      it('should limit the number of items returned', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 4) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(res.body.data.items.nodes.length).toBe(4)
+
+        const res2 = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 40) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(res2.body.data.items.nodes.length).toBe(10)
       })
     })
   })

@@ -18,6 +18,9 @@ type RequestOptions = {
   findModelById?: boolean
 }
 
+const DEFAULT_PAGE_SIZE = 50
+const MAX_PAGE_SIZE = 100
+
 export class EntityController<T extends EntityModel> {
 
   constructor (protected readonly entityName: string) {}
@@ -56,9 +59,14 @@ export class EntityController<T extends EntityModel> {
       filter = parseFilter(entityFilter || req.query.filter, this.config.attributes) as DaoFilter<T>
     }
 
+    let limit = Number(req.query.first) || DEFAULT_PAGE_SIZE
+    if (limit > MAX_PAGE_SIZE) {
+      limit = MAX_PAGE_SIZE
+    }
+
     const populate = this.getPopulateFromRequest(req)
 
-    const models = await this.dao.find(filter, sort)
+    const models = await this.dao.find(filter, { sort, limit })
     const modelPermissions = await Promise.all(models.map(async model => await this.hasValidPermissions(req, model, 'get', this.config.permissions)))
     const modelsWithValidPermissions = models.filter((_, i) => modelPermissions[i])
 
