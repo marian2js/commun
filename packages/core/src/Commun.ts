@@ -149,7 +149,12 @@ export const Commun = {
   },
 
   async _runOnModules (cb: (module: Module) => any) {
-    for (const module of [...Object.values(plugins), ...Object.values(entities)]) {
+    const modules = [...Object.entries(plugins), ...Object.entries(entities)]
+      // Always run users plugin first (in order to ensure auth is available for all other plugins)
+      .sort(([key]) => key === 'users' ? -1 : 1)
+      .map(([_, value]) => value)
+
+    for (const module of modules) {
       await cb(module)
     }
   },

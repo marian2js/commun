@@ -49,18 +49,6 @@ const filterComparatorSymbol = new GraphQLEnumType({
   }
 })
 
-const filterComparatorType = new GraphQLInputObjectType({
-  name: 'FilterComparator',
-  fields: {
-    comparator: {
-      type: filterComparatorSymbol,
-    },
-    value: {
-      type: GraphQLString,
-    }
-  }
-})
-
 const orderByDirectionType = new GraphQLEnumType({
   name: 'OrderByDirection',
   values: {

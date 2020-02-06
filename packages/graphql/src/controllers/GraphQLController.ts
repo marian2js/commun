@@ -27,6 +27,9 @@ export const GraphQLController = {
         type: new GraphQLList(orderByEntityInput),
       }
     }
+    args.search = {
+      type: GraphQLString
+    }
 
     return {
       type: new GraphQLObjectType({

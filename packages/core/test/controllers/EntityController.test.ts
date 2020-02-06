@@ -1,4 +1,4 @@
-import { Commun, EntityController, EntityModel, EntityPermission } from '../../src'
+import { Commun, EntityController, EntityIndex, EntityModel, EntityPermission } from '../../src'
 import { EntityActionPermissions, JoinAttribute, ModelAttribute } from '../../src/types'
 import { ObjectId } from 'mongodb'
 import { entityHooks } from '../../src/entity/entityHooks'
@@ -23,6 +23,7 @@ describe('EntityController', () => {
     permissions: EntityActionPermissions,
     attributes?: { [key in keyof TestEntity]: ModelAttribute } | null,
     joinAttributes: { [key: string]: JoinAttribute } = {},
+    indexes: EntityIndex<TestEntity>[] = []
   ) => {
     Commun.registerEntity<TestEntity>({
       config: {
@@ -50,6 +51,7 @@ describe('EntityController', () => {
           ...(attributes || {})
         },
         joinAttributes,
+        indexes,
       }
     })
     await Commun.createDbIndexes()
@@ -203,6 +205,35 @@ describe('EntityController', () => {
         expect(res2.body.items.length).toBe(10)
       })
     })
+
+    describe('Search', () => {
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' }, null, {}, [{
+          keys: {
+            name: 'text'
+          }
+        }])
+        await getDao().insertOne({ name: `apple banana orange` })
+        await getDao().insertOne({ name: `mango orange avocado` })
+        await getDao().insertOne({ name: `blueberries lemon apple` })
+      })
+
+      it('should return limit the number of items returned', async () => {
+        const res = await request().get(`${baseUrl}?search=apple`).expect(200)
+        expect(res.body.items.length).toBe(2)
+        expect(res.body.items[0].name).toContain('apple')
+        expect(res.body.items[1].name).toContain('apple')
+
+        const res2 = await request().get(`${baseUrl}?search=orange`).expect(200)
+        expect(res2.body.items.length).toBe(2)
+        expect(res2.body.items[0].name).toContain('orange')
+        expect(res2.body.items[1].name).toContain('orange')
+
+        const res3 = await request().get(`${baseUrl}?search=truck`).expect(200)
+        expect(res3.body.items.length).toBe(0)
+      })
+    })
+
 
     describe('Populate', () => {
       let item1: TestEntity

@@ -2,8 +2,18 @@ import { EntityConfig, EntityModel } from '..'
 import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
-export type DaoFilter<T> = {
+export type DaoFilter<T> = EntityFilter<T> & SearchFilter<T>
+
+type EntityFilter<T> = {
   [P in keyof T]?: any
+}
+
+type SearchFilter<T> = {
+  $text?: {
+    $search: {
+      [P in keyof T]?: string
+    }
+  }
 }
 
 type FindOptions<T> = {

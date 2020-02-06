@@ -59,6 +59,12 @@ export class EntityController<T extends EntityModel> {
       filter = parseFilter(entityFilter || req.query.filter, this.config.attributes) as DaoFilter<T>
     }
 
+    if (req.query.search) {
+      filter.$text = {
+        $search: req.query.search
+      }
+    }
+
     let limit = Number(req.query.first) || DEFAULT_PAGE_SIZE
     if (limit > MAX_PAGE_SIZE) {
       limit = MAX_PAGE_SIZE
