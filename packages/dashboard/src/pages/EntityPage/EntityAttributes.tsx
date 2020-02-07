@@ -63,11 +63,11 @@ export const EntityAttributes = (props: Props) => {
   }]
 
   const tableAttributes = Object.entries(attributes)
-    .sort(([key]) => key === '_id' ? -1 : 1)
+    .sort(([key]) => key === 'id' ? -1 : 1)
     .map(([key, attribute]) => ({
       key: key,
       type: getAttributeTypeLabel(attribute!),
-      noSelectable: key === '_id',
+      noSelectable: key === 'id',
     }))
 
   return (

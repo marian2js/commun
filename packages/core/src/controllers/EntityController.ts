@@ -44,7 +44,7 @@ export class EntityController<T extends EntityModel> {
       const [sortKey, sortDir] = orderBy.split(':')
       const dir = sortDir === 'asc' ? 1 : -1
       if (sortKey === 'createdAt') {
-        sort._id = dir
+        sort.id = dir
       } else {
         sort[sortKey as keyof T] = dir
       }
@@ -87,9 +87,9 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     await this.validateActionPermissions(req, model, 'get')
-    await entityHooks.run(this.entityName, 'beforeGet', model, req.auth?._id)
+    await entityHooks.run(this.entityName, 'beforeGet', model, req.auth?.id)
     const item = await this.prepareModelResponse(req, model, this.getPopulateFromRequest(req))
-    await entityHooks.run(this.entityName, 'afterGet', model, req.auth?._id)
+    await entityHooks.run(this.entityName, 'afterGet', model, req.auth?.id)
     return {
       item
     }
@@ -98,10 +98,10 @@ export class EntityController<T extends EntityModel> {
   async create (req: Request): Promise<{ item: T }> {
     await this.validateActionPermissions(req, null, 'create')
     const model = await this.getModelFromBodyRequest(req, 'create')
-    await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?._id)
+    await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?.id)
     try {
       const insertedModel = await this.dao.insertOne(model)
-      await entityHooks.run(this.entityName, 'afterCreate', insertedModel, req.auth?._id)
+      await entityHooks.run(this.entityName, 'afterCreate', insertedModel, req.auth?.id)
       return {
         item: await this.prepareModelResponse(req, insertedModel, this.getPopulateFromRequest(req))
       }
@@ -119,11 +119,11 @@ export class EntityController<T extends EntityModel> {
       throw new NotFoundError()
     }
     await this.validateActionPermissions(req, model, 'update')
-    await entityHooks.run(this.entityName, 'beforeUpdate', model, req.auth?._id)
+    await entityHooks.run(this.entityName, 'beforeUpdate', model, req.auth?.id)
     const modelData = await this.getModelFromBodyRequest(req, 'update', model)
     try {
-      const updatedItem = await this.dao.updateOne(model._id!, modelData)
-      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem, req.auth?._id)
+      const updatedItem = await this.dao.updateOne(model.id!, modelData)
+      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem, req.auth?.id)
       return {
         item: await this.prepareModelResponse(req, updatedItem, this.getPopulateFromRequest(req))
       }
@@ -141,14 +141,14 @@ export class EntityController<T extends EntityModel> {
       return { result: true }
     }
     await this.validateActionPermissions(req, model, 'delete')
-    await entityHooks.run(this.entityName, 'beforeDelete', model, req.auth?._id)
-    const result = await this.dao.deleteOne(model._id!)
-    await entityHooks.run(this.entityName, 'afterDelete', model, req.auth?._id)
+    await entityHooks.run(this.entityName, 'beforeDelete', model, req.auth?.id)
+    const result = await this.dao.deleteOne(model.id!)
+    await entityHooks.run(this.entityName, 'afterDelete', model, req.auth?.id)
     return { result }
   }
 
   protected findModelByApiKey (req: Request, options: RequestOptions) {
-    if (options.findModelById || !this.config.apiKey || this.config.apiKey === '_id') {
+    if (options.findModelById || !this.config.apiKey || this.config.apiKey === 'id') {
       return this.dao.findOneById(req.params.id)
     }
     const attrKey: keyof T = <keyof T>this.config.apiKey as keyof T
@@ -177,9 +177,9 @@ export class EntityController<T extends EntityModel> {
       const settingUser = attribute!.type === 'user' && action === 'create'
 
       if ((validPermissions && shouldSetValue) || settingUser) {
-        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?._id, action === 'update')
+        model[key as keyof T] = await getModelAttribute(attribute!, key, req.body, req.auth?.id, action === 'update')
       } else if (attribute!.default !== undefined && action === 'create') {
-        model[key as keyof T] = await getModelAttribute(attribute!, key, {}, req.auth?._id)
+        model[key as keyof T] = await getModelAttribute(attribute!, key, {}, req.auth?.id)
       }
     }
     return model
@@ -199,7 +199,7 @@ export class EntityController<T extends EntityModel> {
     // Prepare joinAttributes
     for (const [key, joinAttribute] of Object.entries(this.config.joinAttributes || {})) {
       if (await this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...joinAttribute.permissions })) {
-        const joinedAttribute = await getJoinAttribute(joinAttribute, model, req.auth?._id)
+        const joinedAttribute = await getJoinAttribute(joinAttribute, model, req.auth?.id)
         if (joinedAttribute) {
           const joinAttrController = Commun.getEntityController(joinAttribute.entity)
           if (Array.isArray(joinedAttribute)) {
@@ -221,18 +221,18 @@ export class EntityController<T extends EntityModel> {
     attribute: ModelAttribute,
     populate: { [P in keyof T]?: any }
   ): Promise<any> {
-    if (key === '_id' || !['ref', 'user'].includes(attribute!.type)) {
+    if (key === 'id' || !['ref', 'user'].includes(attribute!.type)) {
       return model[key] === undefined || model[key] === null ? attribute.default : model[key]
     }
     if (!populate[key] || !model[key]) {
-      return model[key] ? { _id: model[key] } : undefined
+      return model[key] ? { id: model[key] } : undefined
     }
     const populateEntityName = attribute!.type === 'ref' ? (attribute as RefModelAttribute).entity : 'users'
     const populatedItem = await Commun.getEntityDao(populateEntityName).findOneById('' + model[key as keyof T])
     if (populatedItem) {
       return await Commun.getEntityController(populateEntityName).prepareModelResponse(req, populatedItem, {})
     }
-    return { _id: model[key] }
+    return { id: model[key] }
   }
 
   protected getPopulateFromRequest (req: Request) {
@@ -262,7 +262,7 @@ export class EntityController<T extends EntityModel> {
     if (hasAnyoneAccess) {
       return true
     }
-    if (!req.auth?._id) {
+    if (!req.auth?.id) {
       return false
     }
 
@@ -278,14 +278,14 @@ export class EntityController<T extends EntityModel> {
       const userAttrEntries = Object.entries(this.config.attributes).find(([_, value]) => value?.type === 'user')
       if (userAttrEntries && userAttrEntries[0]) {
         const userId = '' + (model as { [key in keyof T]?: any })[userAttrEntries[0] as keyof T]
-        return userId && userId === req.auth._id
+        return userId && userId === req.auth.id
       }
     }
 
     const hasAdminAccess = Array.isArray(permissions[action]) ?
       permissions[action]!.includes('admin') : permissions[action] === 'admin'
     if (hasAdminAccess) {
-      const user = await Commun.getEntityDao<EntityModel & { admin: boolean }>('users').findOneById(req.auth._id)
+      const user = await Commun.getEntityDao<EntityModel & { admin: boolean }>('users').findOneById(req.auth.id)
       return user && user.admin
     }
 

@@ -61,7 +61,7 @@ describe('configVariables', () => {
     it('should return the value of the specified reference attribute', async () => {
       registerTestEntity()
       const item1 = await getDao().insertOne({ name: 'item1' })
-      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1._id) })
+      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
       expect(await parseConfigString<TestEntity>('{this.ref.name}', entityName, item2)).toBe('item1')
       expect(await parseConfigString<TestEntity>(' { this.ref.name } ', entityName, item2)).toBe('item1')
     })
@@ -69,24 +69,24 @@ describe('configVariables', () => {
     it('should return the ID of the authenticated user', async () => {
       registerTestEntity('users')
       const userId = new ObjectId()
-      expect(await parseConfigString<TestEntity>('{user._id}', entityName, {}, userId.toString())).toEqual(userId)
-      expect(await parseConfigString<TestEntity>(' { user._id } ', entityName, {}, userId.toString())).toEqual(userId)
+      expect(await parseConfigString<TestEntity>('{user.id}', entityName, {}, userId.toString())).toEqual(userId)
+      expect(await parseConfigString<TestEntity>(' { user.id } ', entityName, {}, userId.toString())).toEqual(userId)
     })
 
     it('should return an attribute from the user', async () => {
       registerTestEntity('users')
       const user = await getDao('users').insertOne({ name: 'test-user' })
-      const item = await getDao().insertOne({ user: new ObjectId(user._id) })
+      const item = await getDao().insertOne({ user: new ObjectId(user.id) })
       expect(await parseConfigString<TestEntity>('{this.user.name}', entityName, item)).toEqual('test-user')
     })
 
     it('should return undefined if the value does not exist', async () => {
       registerTestEntity()
       const item1 = await getDao().insertOne({ name: 'item1' })
-      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1._id) })
+      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
       expect(await parseConfigString<TestEntity>('{this.user}', entityName, item2)).toBeUndefined()
       expect(await parseConfigString<TestEntity>('{this.ref.user}', entityName, item2)).toBeUndefined()
-      expect(await parseConfigString<TestEntity>('{user._id}', entityName, {})).toBeUndefined()
+      expect(await parseConfigString<TestEntity>('{user.id}', entityName, {})).toBeUndefined()
     })
 
     it('should return the given value if there are no variables', async () => {
@@ -97,7 +97,7 @@ describe('configVariables', () => {
     it('should return a string with multiple variables parsed', async () => {
       registerTestEntity()
       const item1 = await getDao().insertOne({ name: 'item1' })
-      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1._id) })
+      const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
       expect(await parseConfigString<TestEntity>('{this.name} --> {this.ref.name}', entityName, item2))
         .toBe('item2 --> item1')
       expect(await parseConfigString<TestEntity>('{ this.name } --> { this.ref.name }', entityName, item2))

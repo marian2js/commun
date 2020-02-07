@@ -130,7 +130,7 @@ export const ExternalAuth = {
         id: profile.id
       }
     }
-    const updatedUser = await Commun.getEntityDao<BaseUserModel>('users').updateOne(user._id!, { providers })
+    const updatedUser = await Commun.getEntityDao<BaseUserModel>('users').updateOne(user.id!, { providers })
     cb(undefined, {
       user: updatedUser,
       userCreated: true,

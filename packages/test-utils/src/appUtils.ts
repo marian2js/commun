@@ -21,7 +21,7 @@ export const startTestApp = async (commun: any) => {
   expressApp = Commun.createExpressApp()
 
   expressApp.use((req, res, next) => {
-    req.auth = authRequest ? { _id: authUserId } : undefined
+    req.auth = authRequest ? { id: authUserId } : undefined
     next()
   })
 

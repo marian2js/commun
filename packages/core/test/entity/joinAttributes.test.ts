@@ -59,7 +59,7 @@ describe('joinAttributes', () => {
           }
         }
         const item1 = await getDao().insertOne({ name: 'item1' })
-        const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1._id) })
+        const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
         expect(await getJoinAttribute(attribute, item2)).toEqual(item1)
       })
 
@@ -83,7 +83,7 @@ describe('joinAttributes', () => {
           type: 'findOne',
           entity: entityName,
           query: {
-            user: '{user._id}'
+            user: '{user.id}'
           }
         }
         const userId = new ObjectId()
@@ -104,7 +104,7 @@ describe('joinAttributes', () => {
           }
         }
         const item1 = await getDao().insertOne({ name: 'target-item' })
-        const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1._id) })
+        const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
         const item3 = await getDao().insertOne({ name: 'target-item' })
         expect(await getJoinAttribute(attribute, item2)).toEqual([item1, item3])
       })
@@ -129,7 +129,7 @@ describe('joinAttributes', () => {
           type: 'findMany',
           entity: entityName,
           query: {
-            user: '{user._id}'
+            user: '{user.id}'
           }
         }
         const userId = new ObjectId()

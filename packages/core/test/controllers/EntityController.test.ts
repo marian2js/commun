@@ -243,18 +243,18 @@ describe('EntityController', () => {
       beforeEach(async () => {
         await registerTestEntity({ get: 'anyone' })
         item1 = await getDao().insertOne({ name: 'item1' })
-        item2 = await getDao().insertOne({ name: 'item2', entityRef: item1._id })
-        item3 = await getDao().insertOne({ name: 'item3', entityRef: item2._id })
+        item2 = await getDao().insertOne({ name: 'item2', entityRef: item1.id })
+        item3 = await getDao().insertOne({ name: 'item3', entityRef: item2.id })
       })
 
       it('should populate a ref attribute', async () => {
         const res = await request().get(`${baseUrl}?populate=entityRef`).expect(200)
         expect(res.body.items[0].entityRef).toBeUndefined()
-        expect(res.body.items[1].entityRef).toEqual({ _id: item1._id, name: 'item1', createdAt: expect.any(String) })
+        expect(res.body.items[1].entityRef).toEqual({ id: item1.id, name: 'item1', createdAt: expect.any(String) })
         expect(res.body.items[2].entityRef).toEqual({
-          _id: item2._id,
+          id: item2.id,
           name: 'item2',
-          entityRef: { _id: item1._id },
+          entityRef: { id: item1.id },
           createdAt: expect.any(String)
         })
       })
@@ -329,7 +329,7 @@ describe('EntityController', () => {
           await registerTestEntity({ get: 'admin' })
           await request().get(baseUrl).expect(401)
 
-          const res = await authenticatedRequest(admin._id)
+          const res = await authenticatedRequest(admin.id)
             .get(baseUrl)
             .expect(200)
           expect(res.body.items.length).toBe(3)
@@ -343,7 +343,7 @@ describe('EntityController', () => {
           expect(resNonAdmin.body.items[0].name).toBeUndefined()
           expect(resNonAdmin.body.items[0].num).toBe(1)
 
-          const resAdmin = await authenticatedRequest(admin._id).get(baseUrl).expect(200)
+          const resAdmin = await authenticatedRequest(admin.id).get(baseUrl).expect(200)
           expect(resAdmin.body.items.length).toBe(3)
           expect(resAdmin.body.items[0].name).toBe('item1')
           expect(resAdmin.body.items[0].num).toBe(1)
@@ -375,18 +375,18 @@ describe('EntityController', () => {
     it('should return a single item', async () => {
       await registerTestEntity({ get: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
-      const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+      const res = await request().get(`${baseUrl}/${item.id}`).expect(200)
       expect(res.body.item.name).toBe('item')
     })
 
     it('should return the default value if no value is given', async () => {
       await registerTestEntity({ get: 'anyone' }, { name: { type: 'string', default: 'default-name' } })
       const item = await getDao().insertOne({ name: 'item' })
-      const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+      const res = await request().get(`${baseUrl}/${item.id}`).expect(200)
       expect(res.body.item.name).toBe('item')
 
       const item2 = await getDao().insertOne({ name: null! })
-      const res2 = await request().get(`${baseUrl}/${item2._id}`).expect(200)
+      const res2 = await request().get(`${baseUrl}/${item2.id}`).expect(200)
       expect(res2.body.item.name).toBe('default-name')
     })
 
@@ -395,7 +395,7 @@ describe('EntityController', () => {
         spyOn(entityHooks, 'run')
         await registerTestEntity({ get: 'anyone' })
         const item = await getDao().insertOne({ name: 'item' })
-        await request().get(`${baseUrl}/${item._id}`).expect(200)
+        await request().get(`${baseUrl}/${item.id}`).expect(200)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item, undefined)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item, undefined)
       })
@@ -433,15 +433,15 @@ describe('EntityController', () => {
         })
         const target1 = await getDao().insertOne({ name: 'target-item', num: 1 })
         const target2 = await getDao().insertOne({ name: 'target-item', num: 2 })
-        const item = await getDao().insertOne({ name: 'item', entityRef: new ObjectId(target1._id) })
-        const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
-        expect(res.body.item.single._id).toBe(target1._id)
+        const item = await getDao().insertOne({ name: 'item', entityRef: new ObjectId(target1.id) })
+        const res = await request().get(`${baseUrl}/${item.id}`).expect(200)
+        expect(res.body.item.single.id).toBe(target1.id)
         expect(res.body.item.single.name).toBe('target-item')
         expect(res.body.item.single.num).toBeUndefined()
-        expect(res.body.item.multiple[0]._id).toBe(target1._id)
+        expect(res.body.item.multiple[0].id).toBe(target1.id)
         expect(res.body.item.multiple[0].name).toBe('target-item')
         expect(res.body.item.multiple[0].num).toBeUndefined()
-        expect(res.body.item.multiple[1]._id).toBe(target2._id)
+        expect(res.body.item.multiple[1].id).toBe(target2.id)
         expect(res.body.item.multiple[1].name).toBe('target-item')
         expect(res.body.item.multiple[1].num).toBeUndefined()
       })
@@ -458,20 +458,20 @@ describe('EntityController', () => {
       describe('User', () => {
         it('should only return items if the request is authenticated', async () => {
           await registerTestEntity({ get: 'user' })
-          await request().get(`${baseUrl}/${item._id}`).expect(401)
+          await request().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'user' })
-          await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+          await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
         })
 
         it('should only return values with "user" get permissions if the request is authenticated', async () => {
           await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'user')
 
-          const resUnauth = await request().get(`${baseUrl}/${item._id}`).expect(200)
+          const resUnauth = await request().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resUnauth.body.item.name).toBeUndefined()
           expect(resUnauth.body.item.num).toBe(1)
 
-          const resAuth = await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+          const resAuth = await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resAuth.body.item.name).toBe('item1')
           expect(resAuth.body.item.num).toBe(1)
         })
@@ -480,27 +480,27 @@ describe('EntityController', () => {
       describe('Own', () => {
         it('should only return the resources owned by the user', async () => {
           await registerTestEntity({ get: 'own' })
-          await request().get(`${baseUrl}/${item._id}`).expect(401)
+          await request().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'own' })
-          await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(401)
+          await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'own' })
-          await authenticatedRequest(user).get(`${baseUrl}/${item._id}`).expect(200)
+          await authenticatedRequest(user).get(`${baseUrl}/${item.id}`).expect(200)
         })
 
         it('should only return values with "own" get permissions if the resource is owned by the user', async () => {
           await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'own')
 
-          const resUnauth = await request().get(`${baseUrl}/${item._id}`).expect(200)
+          const resUnauth = await request().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resUnauth.body.item.name).toBeUndefined()
           expect(resUnauth.body.item.num).toBe(1)
 
-          const resDifferentUser = await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+          const resDifferentUser = await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resDifferentUser.body.item.name).toBeUndefined()
           expect(resDifferentUser.body.item.num).toBe(1)
 
-          const resSameUser = await authenticatedRequest(user).get(`${baseUrl}/${item._id}`).expect(200)
+          const resSameUser = await authenticatedRequest(user).get(`${baseUrl}/${item.id}`).expect(200)
           expect(resSameUser.body.item.name).toBe('item1')
           expect(resSameUser.body.item.num).toBe(1)
         })
@@ -509,27 +509,27 @@ describe('EntityController', () => {
       describe('Admin', () => {
         it('should only return the resources if the user is an admin', async () => {
           await registerTestEntity({ get: 'admin' })
-          await request().get(`${baseUrl}/${item._id}`).expect(401)
+          await request().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'admin' })
-          await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(401)
+          await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'admin' })
-          await authenticatedRequest(admin._id).get(`${baseUrl}/${item._id}`).expect(200)
+          await authenticatedRequest(admin.id).get(`${baseUrl}/${item.id}`).expect(200)
         })
 
         it('should only return values with "admin" get permissions if the user is an admin', async () => {
           await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'admin')
 
-          const resUnauth = await request().get(`${baseUrl}/${item._id}`).expect(200)
+          const resUnauth = await request().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resUnauth.body.item.name).toBeUndefined()
           expect(resUnauth.body.item.num).toBe(1)
 
-          const resNonAdmin = await authenticatedRequest().get(`${baseUrl}/${item._id}`).expect(200)
+          const resNonAdmin = await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
           expect(resNonAdmin.body.item.name).toBeUndefined()
           expect(resNonAdmin.body.item.num).toBe(1)
 
-          const resAdmin = await authenticatedRequest(admin._id).get(`${baseUrl}/${item._id}`).expect(200)
+          const resAdmin = await authenticatedRequest(admin.id).get(`${baseUrl}/${item.id}`).expect(200)
           expect(resAdmin.body.item.name).toBe('item1')
           expect(resAdmin.body.item.num).toBe(1)
         })
@@ -538,13 +538,13 @@ describe('EntityController', () => {
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
-          await request().get(`${baseUrl}/${item._id}`).expect(401)
+          await request().get(`${baseUrl}/${item.id}`).expect(401)
         })
 
         it('should not return values with "system" get permissions', async () => {
           await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'system')
 
-          const res = await request().get(`${baseUrl}/${item._id}`).expect(200)
+          const res = await request().get(`${baseUrl}/${item.id}`).expect(200)
           expect(res.body.item.name).toBeUndefined()
           expect(res.body.item.num).toBe(1)
         })
@@ -582,7 +582,7 @@ describe('EntityController', () => {
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await authenticatedRequest(user.toString()).post(baseUrl)
         .expect(200)
-      expect(res.body.item.user).toEqual({ _id: user.toString() })
+      expect(res.body.item.user).toEqual({ id: user.toString() })
       const items = await getDao().find({ user })
       expect(items.length).toBe(1)
     })
@@ -599,7 +599,7 @@ describe('EntityController', () => {
           name: 'item'
         }), undefined)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterCreate', expect.objectContaining({
-          _id: item!._id!.toString(),
+          id: item!.id!.toString(),
           name: 'item'
         }), undefined)
       })
@@ -642,7 +642,7 @@ describe('EntityController', () => {
             .send({ name: 'item' })
             .expect(401)
 
-          await authenticatedRequest(admin._id).post(baseUrl)
+          await authenticatedRequest(admin.id).post(baseUrl)
             .send({ name: 'item' })
             .expect(200)
         })
@@ -661,7 +661,7 @@ describe('EntityController', () => {
           const item2 = await getDao().findOne({ num: 2 })
           expect(item2!.name).toBeUndefined()
 
-          await authenticatedRequest(admin._id).post(baseUrl)
+          await authenticatedRequest(admin.id).post(baseUrl)
             .send({ name: 'item3', num: 3 })
             .expect(200)
           const item3 = await getDao().findOne({ num: 3 })
@@ -693,10 +693,10 @@ describe('EntityController', () => {
     it('should update an item and return it', async () => {
       await registerTestEntity({ get: 'anyone', update: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
-      const res = await request().put(`${baseUrl}/${item._id}`)
+      const res = await request().put(`${baseUrl}/${item.id}`)
         .send({ name: 'updated' })
         .expect(200)
-      const updatedItem = await getDao().findOneById(item._id!)
+      const updatedItem = await getDao().findOneById(item.id!)
       expect(updatedItem!.name).toBe('updated')
       expect(res.body.item.name).toBe('updated')
     })
@@ -711,7 +711,7 @@ describe('EntityController', () => {
       await registerTestEntity({ update: 'anyone' }, attributes)
       await getDao().insertOne({ name: 'item1' })
       const item = await getDao().insertOne({ name: 'item2' })
-      await request().put(`${baseUrl}/${item._id}`)
+      await request().put(`${baseUrl}/${item.id}`)
         .send({ name: 'item1' })
         .expect(400)
     })
@@ -725,10 +725,10 @@ describe('EntityController', () => {
       }
       await registerTestEntity({ update: 'anyone' }, attributes)
       const item = await getDao().insertOne({ name: 'item' })
-      await request().put(`${baseUrl}/${item._id}`)
+      await request().put(`${baseUrl}/${item.id}`)
         .send({ name: 'This value should not be set' })
         .expect(200)
-      const updatedItem = await getDao().findOneById(item._id!)
+      const updatedItem = await getDao().findOneById(item.id!)
       expect(updatedItem!.name).toBe('item')
     })
 
@@ -744,10 +744,10 @@ describe('EntityController', () => {
       }
       await registerTestEntity({ update: 'anyone' }, attributes)
       const item = await getDao().insertOne({ name: 'item' })
-      await request().put(`${baseUrl}/${item._id}`)
+      await request().put(`${baseUrl}/${item.id}`)
         .send({ num: 3 })
         .expect(200)
-      const updatedItem = await getDao().findOneById(item._id!)
+      const updatedItem = await getDao().findOneById(item.id!)
       expect(updatedItem!.name).toBe('item')
       expect(updatedItem!.num).toBe(3)
     })
@@ -757,10 +757,10 @@ describe('EntityController', () => {
         spyOn(entityHooks, 'run')
         await registerTestEntity({ get: 'anyone', update: 'anyone' })
         const item = await getDao().insertOne({ name: 'item' })
-        await request().put(`${baseUrl}/${item._id}`)
+        await request().put(`${baseUrl}/${item.id}`)
           .send({ name: 'updated' })
           .expect(200)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item, undefined)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem, undefined)
       })
@@ -777,30 +777,30 @@ describe('EntityController', () => {
       describe('User', () => {
         it('should only update items with "user" update permissions if the request is authenticated', async () => {
           await registerTestEntity({ update: 'user' })
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(200)
-          const updatedItem = await getDao().findOneById(item._id!)
+          const updatedItem = await getDao().findOneById(item.id!)
           expect(updatedItem!.name).toBe('updated')
         })
 
         it('should only update values with "user" update permissions if the request is authenticated', async () => {
           await registerTestEntityWithCustomAttrPermissions('update', 'anyone', 'user')
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 10 })
             .expect(200)
-          const updatedItem1 = await getDao().findOneById(item._id!)
+          const updatedItem1 = await getDao().findOneById(item.id!)
           expect(updatedItem1!.name).toBe('item')
           expect(updatedItem1!.num).toBe(10)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 20 })
             .expect(200)
-          const updatedItem2 = await getDao().findOneById(item._id!)
+          const updatedItem2 = await getDao().findOneById(item.id!)
           expect(updatedItem2!.name).toBe('updated')
           expect(updatedItem2!.num).toBe(20)
         })
@@ -809,41 +809,41 @@ describe('EntityController', () => {
       describe('Own', () => {
         it('should only update the resources owned by the user', async () => {
           await registerTestEntity({ update: 'own' })
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest(user).put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(user).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(200)
-          const updatedItem = await getDao().findOneById(item._id!)
+          const updatedItem = await getDao().findOneById(item.id!)
           expect(updatedItem!.name).toBe('updated')
         })
 
         it('should only update values with "own" update permissions if the resource is owned by the user', async () => {
           await registerTestEntityWithCustomAttrPermissions('update', 'anyone', 'own')
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 10, user })
             .expect(200)
-          const updatedItem1 = await getDao().findOneById(item._id!)
+          const updatedItem1 = await getDao().findOneById(item.id!)
           expect(updatedItem1!.name).toBe('item')
           expect(updatedItem1!.num).toBe(10)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 20, user })
             .expect(200)
-          const updatedItem2 = await getDao().findOneById(item._id!)
+          const updatedItem2 = await getDao().findOneById(item.id!)
           expect(updatedItem2!.name).toBe('item')
           expect(updatedItem2!.num).toBe(20)
 
-          await authenticatedRequest(user).put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(user).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 30, user })
             .expect(200)
-          const updatedItem3 = await getDao().findOneById(item._id!)
+          const updatedItem3 = await getDao().findOneById(item.id!)
           expect(updatedItem3!.name).toBe('updated')
           expect(updatedItem3!.num).toBe(30)
         })
@@ -852,41 +852,41 @@ describe('EntityController', () => {
       describe('Admin', () => {
         it('should only update the resources if the user is an admin', async () => {
           await registerTestEntity({ update: 'admin' })
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest(admin._id).put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(admin.id).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(200)
-          const updatedItem = await getDao().findOneById(item._id!)
+          const updatedItem = await getDao().findOneById(item.id!)
           expect(updatedItem!.name).toBe('updated')
         })
 
         it('should only update values with "admin" update permissions if the user is an admin', async () => {
           await registerTestEntityWithCustomAttrPermissions('update', 'anyone', 'admin')
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 10, user })
             .expect(200)
-          const updatedItem1 = await getDao().findOneById(item._id!)
+          const updatedItem1 = await getDao().findOneById(item.id!)
           expect(updatedItem1!.name).toBe('item')
           expect(updatedItem1!.num).toBe(10)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 20, user })
             .expect(200)
-          const updatedItem2 = await getDao().findOneById(item._id!)
+          const updatedItem2 = await getDao().findOneById(item.id!)
           expect(updatedItem2!.name).toBe('item')
           expect(updatedItem2!.num).toBe(20)
 
-          await authenticatedRequest(admin._id).put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(admin.id).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 30, user })
             .expect(200)
-          const updatedItem3 = await getDao().findOneById(item._id!)
+          const updatedItem3 = await getDao().findOneById(item.id!)
           expect(updatedItem3!.name).toBe('updated')
           expect(updatedItem3!.num).toBe(30)
         })
@@ -895,21 +895,21 @@ describe('EntityController', () => {
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest().put(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(401)
         })
 
         it('should not update values with "system" update permissions', async () => {
           await registerTestEntityWithCustomAttrPermissions('update', 'anyone', 'system')
-          await request().put(`${baseUrl}/${item._id}`)
+          await request().put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 10 })
             .expect(200)
-          const updatedItem = await getDao().findOneById(item._id!)
+          const updatedItem = await getDao().findOneById(item.id!)
           expect(updatedItem!.name).toBe('item')
           expect(updatedItem!.num).toBe(10)
         })
@@ -921,9 +921,9 @@ describe('EntityController', () => {
     it('should delete an item', async () => {
       await registerTestEntity({ delete: 'anyone' })
       const item = await getDao().insertOne({ name: 'item' })
-      await request().delete(`${baseUrl}/${item._id}`)
+      await request().delete(`${baseUrl}/${item.id}`)
         .expect(200)
-      const deletedItem = await getDao().findOneById(item._id!)
+      const deletedItem = await getDao().findOneById(item.id!)
       expect(deletedItem).toBe(null)
     })
 
@@ -932,9 +932,9 @@ describe('EntityController', () => {
         spyOn(entityHooks, 'run')
         await registerTestEntity({ delete: 'anyone' })
         const item = await getDao().insertOne({ name: 'item' })
-        await request().delete(`${baseUrl}/${item._id}`)
+        await request().delete(`${baseUrl}/${item.id}`)
           .expect(200)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item, undefined)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item, undefined)
       })
@@ -951,9 +951,9 @@ describe('EntityController', () => {
       describe('User', () => {
         it('should only delete an item with "user" delete permission if the request is authenticated', async () => {
           await registerTestEntity({ delete: 'user' })
-          await request().delete(`${baseUrl}/${item._id}`)
+          await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
             .expect(200)
         })
       })
@@ -961,11 +961,11 @@ describe('EntityController', () => {
       describe('Own', () => {
         it('should only delete an item with "own" delete permission if the resource is owned by the user', async () => {
           await registerTestEntity({ delete: 'own' })
-          await request().delete(`${baseUrl}/${item._id}`)
+          await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest(user).delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(user).delete(`${baseUrl}/${item.id}`)
             .expect(200)
         })
       })
@@ -973,11 +973,11 @@ describe('EntityController', () => {
       describe('Admin', () => {
         it('should only delete an item with "own" delete permission if the user is an admin', async () => {
           await registerTestEntity({ delete: 'admin' })
-          await request().delete(`${baseUrl}/${item._id}`)
+          await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest(admin._id).delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest(admin.id).delete(`${baseUrl}/${item.id}`)
             .expect(200)
         })
       })
@@ -985,9 +985,9 @@ describe('EntityController', () => {
       describe('System', () => {
         it('should return an unauthorized error', async () => {
           await registerTestEntity({})
-          await request().delete(`${baseUrl}/${item._id}`)
+          await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item._id}`)
+          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
             .expect(401)
         })
       })

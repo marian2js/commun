@@ -25,7 +25,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     const { item } = await super.create(req)
     const plainVerificationCode = await SecurityUtils.generateRandomString(48)
     const verificationCode = await SecurityUtils.hashWithBcrypt(plainVerificationCode, 12)
-    const user = await this.dao.updateOne(item._id!, { verificationCode, verified: false })
+    const user = await this.dao.updateOne(item.id!, { verificationCode, verified: false })
 
     EmailClient.sendEmail('emailVerification', user.email, {
       verificationCode: plainVerificationCode,
@@ -74,7 +74,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       throw new BadRequestError('Missing verification code')
     }
     if (await SecurityUtils.bcryptHashIsValid(req.body.code, user.verificationCode)) {
-      await this.dao.updateOne(user._id!, { verified: true, verificationCode: undefined })
+      await this.dao.updateOne(user.id!, { verified: true, verificationCode: undefined })
 
       const userData = await this.prepareModelResponse(req, user, {})
       EmailClient.sendEmail('welcomeEmail', user.email, userData)
@@ -99,7 +99,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', {
       resetPasswordCodeHash: plainResetPasswordCode
     })
-    await this.dao.updateOne(user._id!, { resetPasswordCodeHash })
+    await this.dao.updateOne(user.id!, { resetPasswordCodeHash })
 
     const userData = await this.prepareModelResponse(req, user, {})
     EmailClient.sendEmail('resetPassword', user.email, {
@@ -122,7 +122,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     if (user.resetPasswordCodeHash && await SecurityUtils.bcryptHashIsValid(req.body.code, user.resetPasswordCodeHash)) {
       const passwordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.password
       const password = await getModelAttribute<MODEL>(passwordAttr!, 'password', { password: req.body.password })
-      await this.dao.updateOne(user._id!, { password, resetPasswordCodeHash: undefined })
+      await this.dao.updateOne(user.id!, { password, resetPasswordCodeHash: undefined })
       return { result: true }
     }
     throw new UnauthorizedError()
@@ -207,7 +207,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   }
 
   protected async generateAccessToken (user: MODEL) {
-    const accessToken = await AccessTokenSecurity.sign({ _id: user._id! })
+    const accessToken = await AccessTokenSecurity.sign({ id: user.id! })
     return {
       accessToken,
       accessTokenExpiration: UserModule.getOptions().accessToken?.expiresIn
@@ -221,7 +221,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       const refreshTokenHash = await getModelAttribute(refreshTokenAttr!, 'refreshTokenHash', {
         refreshTokenHash: plainRefreshToken
       })
-      await this.dao.updateOne(user._id!, { refreshTokenHash })
+      await this.dao.updateOne(user.id!, { refreshTokenHash })
       return plainRefreshToken
     }
   }

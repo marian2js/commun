@@ -167,15 +167,15 @@ export const Commun = {
       throw new Error('Config must include "collectionName"')
     }
 
-    // set default _id attribute
-    if (!entity.config.attributes._id) {
-      entity.config.attributes._id = {
+    // set default id attribute
+    if (!entity.config.attributes.id) {
+      entity.config.attributes.id = {
         type: 'id',
         permissions: {}
       }
       if (entity.config.permissions?.get) {
-        entity.config.attributes._id.permissions = {
-          ...(entity.config.attributes._id.permissions || {}),
+        entity.config.attributes.id.permissions = {
+          ...(entity.config.attributes.id.permissions || {}),
           get: entity.config.permissions.get,
         }
       }
@@ -215,7 +215,7 @@ export const Commun = {
 
     // set default apiKey
     if (!entity.config.apiKey) {
-      entity.config.apiKey = '_id'
+      entity.config.apiKey = 'id'
     }
 
     const registeredEntity: Entity<MODEL> = {

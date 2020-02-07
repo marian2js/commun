@@ -34,7 +34,7 @@ describe('AdminController', () => {
 
   describe('list - [GET] /admin/entities', () => {
     it('should return a list of entities', async () => {
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/entities`)
         .expect(200)
       expect(res.body.items[0]).toEqual(DefaultUserConfig)
@@ -44,7 +44,7 @@ describe('AdminController', () => {
       await request()
         .get(`${baseUrl}/entities`)
         .expect(401)
-      await authenticatedRequest(nonAdminUser._id)
+      await authenticatedRequest(nonAdminUser.id)
         .get(`${baseUrl}/entities`)
         .expect(401)
     })
@@ -54,7 +54,7 @@ describe('AdminController', () => {
     it('should create a single entity', async () => {
       ConfigManager.createEntityConfig = jest.fn(() => Promise.resolve())
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .post(`${baseUrl}/entities`)
         .send({ entityName: 'test-entity' })
         .expect(200)
@@ -74,7 +74,7 @@ describe('AdminController', () => {
     it('should create an entity with user attribute', async () => {
       ConfigManager.createEntityConfig = jest.fn(() => Promise.resolve())
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .post(`${baseUrl}/entities`)
         .send({ entityName: 'test-entity', addUser: true })
         .expect(200)
@@ -128,14 +128,14 @@ describe('AdminController', () => {
 
   describe('get - [GET] /admin/entities/:entityName', () => {
     it('should return a single entity', async () => {
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/entities/users`)
         .expect(200)
       expect(res.body.item).toEqual(DefaultUserConfig)
     })
 
     it('should throw a not found error if the entity does not exist', async () => {
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/entities/404-entity`)
         .expect(404)
     })
@@ -144,7 +144,7 @@ describe('AdminController', () => {
       await request()
         .get(`${baseUrl}/entities`)
         .expect(401)
-      await authenticatedRequest(nonAdminUser._id)
+      await authenticatedRequest(nonAdminUser.id)
         .get(`${baseUrl}/entities`)
         .expect(401)
     })
@@ -155,7 +155,7 @@ describe('AdminController', () => {
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
         Promise.resolve({ ...DefaultUserConfig, ...config }))
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/entities/users`)
         .send({ test: 123 })
         .expect(200)
@@ -167,7 +167,7 @@ describe('AdminController', () => {
     it('should delete a single entity', async () => {
       spyOn(ConfigManager, 'deleteEntity')
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .delete(`${baseUrl}/entities/test-entity`)
         .expect(200)
 
@@ -181,7 +181,7 @@ describe('AdminController', () => {
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
         Promise.resolve({ ...DefaultUserConfig, ...config }))
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/entities/users/attributes/username`)
         .send({ ...DefaultUserConfig.attributes.username, default: 'default-username' })
         .expect(200)
@@ -204,7 +204,7 @@ describe('AdminController', () => {
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
         Promise.resolve({ ...DefaultUserConfig, ...config }))
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .delete(`${baseUrl}/entities/users/attributes/username`)
         .expect(200)
 
@@ -224,7 +224,7 @@ describe('AdminController', () => {
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
         Promise.resolve({ ...config })) as jest.Mock
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/entities/users/joinAttributes/test`)
         .send({ type: 'findOne', entity: 'user', query: {} })
         .expect(200)
@@ -259,7 +259,7 @@ describe('AdminController', () => {
       ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
         Promise.resolve({ ...config })) as jest.Mock
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .delete(`${baseUrl}/entities/users/joinAttributes/test`)
         .expect(200)
 
@@ -277,14 +277,14 @@ describe('AdminController', () => {
 
   describe('getPlugin - [GET] /admin/plugins/:pluginName', () => {
     it('should return a single plugin', async () => {
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/plugins/test-plugin`)
         .expect(200)
       expect(res.body.item).toEqual({ key: 123 })
     })
 
     it('should throw a not found error if the plugin does not exist', async () => {
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/plugins/404-entity`)
         .expect(404)
     })
@@ -293,7 +293,7 @@ describe('AdminController', () => {
       await request()
         .get(`${baseUrl}/plugins`)
         .expect(401)
-      await authenticatedRequest(nonAdminUser._id)
+      await authenticatedRequest(nonAdminUser.id)
         .get(`${baseUrl}/plugins`)
         .expect(401)
     })
@@ -304,7 +304,7 @@ describe('AdminController', () => {
       ConfigManager.mergePluginConfig = jest.fn((name: string, config: any) =>
         Promise.resolve({ ...{ key: 123 }, ...config }))
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/plugins/test-plugin`)
         .send({ test: 123 })
         .expect(200)
@@ -316,7 +316,7 @@ describe('AdminController', () => {
     it('should create a single template', async () => {
       ConfigManager.setPluginFile = jest.fn(() => Promise.resolve())
 
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .post(`${baseUrl}/plugins/test-plugin/templates`)
         .send({ templateName: 'test-template', subject: 'email' })
         .expect(200)
@@ -329,7 +329,7 @@ describe('AdminController', () => {
     it('should update a single template', async () => {
       ConfigManager.setPluginFile = jest.fn(() => Promise.resolve())
 
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/plugins/test-plugin/templates/test-template`)
         .send({ subject: 'email' })
         .expect(200)
@@ -344,7 +344,7 @@ describe('AdminController', () => {
     it('should delete a single template', async () => {
       ConfigManager.deletePluginFile = jest.fn(() => Promise.resolve())
 
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .delete(`${baseUrl}/plugins/test-plugin/templates/test-template`)
         .expect(200)
 
@@ -358,7 +358,7 @@ describe('AdminController', () => {
     })
 
     it('should update the environment variables for Google', async () => {
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/plugins/users/credentials/google`)
         .send({ id: 'id-value', secret: 'secret-value' })
         .expect(200)
@@ -370,7 +370,7 @@ describe('AdminController', () => {
     })
 
     it('should update the environment variables for Facebook', async () => {
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/plugins/users/credentials/facebook`)
         .send({ id: 'id-value', secret: 'secret-value' })
         .expect(200)
@@ -382,7 +382,7 @@ describe('AdminController', () => {
     })
 
     it('should update the environment variables for GitHub', async () => {
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/plugins/users/credentials/github`)
         .send({ id: 'id-value', secret: 'secret-value' })
         .expect(200)
@@ -398,7 +398,7 @@ describe('AdminController', () => {
     it('should return settings for all environments', async () => {
       ConfigManager.getCommunOptions = jest.fn(() => Promise.resolve({ env: { test: 1 } })) as jest.Mock
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/settings`)
         .expect(200)
 
@@ -410,7 +410,7 @@ describe('AdminController', () => {
     it('should set settings for a given environment', async () => {
       ConfigManager.setCommunOptions = jest.fn(() => Promise.resolve())
 
-      await authenticatedRequest(adminUser._id)
+      await authenticatedRequest(adminUser.id)
         .post(`${baseUrl}/settings/test-env`)
         .send({ test: 1 })
         .expect(200)
@@ -424,7 +424,7 @@ describe('AdminController', () => {
       process.env.NODE_ENV = 'development'
       process.env.npm_package_dependencies__commun_core = '^1.2.3'
 
-      const res = await authenticatedRequest(adminUser._id)
+      const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/server`)
         .expect(200)
 

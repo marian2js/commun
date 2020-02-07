@@ -80,7 +80,7 @@ export const EntitySettings = (props: Props) => {
         </Grid>
 
         <Grid item xs={12}>
-          <AttributeSelector value={apiKey || '_id'}
+          <AttributeSelector value={apiKey || 'id'}
                              label="Attribute used by API endpoints"
                              entity={entity}
                              onChange={setApiKey}

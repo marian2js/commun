@@ -391,7 +391,7 @@ describe('modelAttributes', () => {
         }
       })
       const item = await Commun.getEntityDao(entityName).insertOne({})
-      itemId = item._id!
+      itemId = item.id!
     })
 
     it('should return an ObjectId with the referenced value', async () => {

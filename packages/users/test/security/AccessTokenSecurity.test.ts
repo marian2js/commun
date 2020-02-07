@@ -36,21 +36,21 @@ describe('AccessTokenSecurity', () => {
   describe('sign', () => {
     it('should return a jwt signed token', async () => {
       jwt.sign = <jest.Mock>jest.fn((
-        payload: { _id: string },
+        payload: { id: string },
         secretOrPrivateKey: AccessTokenKeys['privateKey'],
         options: SignOptions,
         callback: SignCallback
       ) => {
-        callback(null!, `SIGN(${payload._id}:${secretOrPrivateKey.key}:${secretOrPrivateKey.passphrase})`)
+        callback(null!, `SIGN(${payload.id}:${secretOrPrivateKey.key}:${secretOrPrivateKey.passphrase})`)
       })
 
-      const signed = await AccessTokenSecurity.sign({ _id: userId })
+      const signed = await AccessTokenSecurity.sign({ id: userId })
       expect(signed).toBe(`SIGN(${userId}:${privateKey}:${privateKeyPassphrase})`)
     })
 
     it('should return an error if the sign fails', async () => {
       jwt.sign = <jest.Mock>jest.fn((
-        payload: { _id: string },
+        payload: { id: string },
         secretOrPrivateKey: Secret,
         options: SignOptions,
         callback: SignCallback
@@ -58,7 +58,7 @@ describe('AccessTokenSecurity', () => {
         callback(new Error('Sign failed'), '')
       })
 
-      await expect(AccessTokenSecurity.sign({ _id: userId })).rejects.toThrow('Sign failed')
+      await expect(AccessTokenSecurity.sign({ id: userId })).rejects.toThrow('Sign failed')
     })
   })
 
@@ -102,7 +102,7 @@ describe('AccessTokenSecurity', () => {
 
   describe('setRequestAuthMiddleware', () => {
     it('should set auth info in the Request using the token from Headers', async () => {
-      AccessTokenSecurity.verify = jest.fn(() => Promise.resolve({ _id: userId }))
+      AccessTokenSecurity.verify = jest.fn(() => Promise.resolve({ id: userId }))
 
       const req = {
         headers: {
@@ -112,12 +112,12 @@ describe('AccessTokenSecurity', () => {
       const next = jest.fn()
       await AccessTokenSecurity.setRequestAuthMiddleware(req, {} as Response, next)
       expect(AccessTokenSecurity.verify).toHaveBeenCalledWith('TOKEN')
-      expect(req.auth?._id).toBe(userId)
+      expect(req.auth?.id).toBe(userId)
       expect(next).toHaveBeenCalled()
     })
 
     it('should not set auth info if the authorization is missing', async () => {
-      AccessTokenSecurity.verify = jest.fn(() => Promise.resolve({ _id: userId }))
+      AccessTokenSecurity.verify = jest.fn(() => Promise.resolve({ id: userId }))
 
       const req = {
         headers: {}

@@ -31,7 +31,7 @@ const entityEnumsCache: { [key: string]: GraphQLEnumType } = {}
 const nodeInterface = new GraphQLInterfaceType({
   name: 'Node',
   fields: {
-    _id: {
+    id: {
       type: GraphQLNonNull(GraphQLID)
     }
   },
@@ -115,7 +115,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
     const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'type') as GraphQLOutputType
     fields[key] = {
-      type: attribute!.required || key === '_id' ? new GraphQLNonNull(type) : type,
+      type: attribute!.required || key === 'id' ? new GraphQLNonNull(type) : type,
       resolve: getAttributeGraphQLResolver(entityConfig, attribute!)
     }
   }
@@ -143,7 +143,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
 
 function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
-  const apiKey = entityConfig.apiKey || '_id'
+  const apiKey = entityConfig.apiKey || 'id'
 
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, action)) {
     const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'input') as GraphQLInputType
@@ -312,9 +312,9 @@ function getAttributeGraphQLResolver (entityConfig: EntityConfig<EntityModel>, a
     const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
     return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
       const requestedKeys = graphqlFields(info)
-      if (Object.keys(requestedKeys).filter(key => key !== '_id').length) {
+      if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
         context.params = {
-          id: source[info.fieldName]._id
+          id: source[info.fieldName].id
         }
         const res = await Commun.getEntityController(entityName).get(context, { findModelById: true })
         return res.item
@@ -325,16 +325,16 @@ function getAttributeGraphQLResolver (entityConfig: EntityConfig<EntityModel>, a
 }
 
 function getEntityAttributesByAction (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
-  const apiKey = entityConfig.apiKey || '_id'
+  const apiKey = entityConfig.apiKey || 'id'
 
   // apiKey should always be the first attribute
   return Object.entries(entityConfig.attributes)
     .sort(([key]) => key === apiKey ? -1 : 1)
     .filter(([key, attribute]) => {
-      if (action === 'create' && key === '_id') {
+      if (action === 'create' && key === 'id') {
         return false
       }
-      if (action === 'update' && apiKey !== '_id' && key === '_id') {
+      if (action === 'update' && apiKey !== 'id' && key === 'id') {
         return false
       }
       if (action === 'delete' && key !== apiKey) {

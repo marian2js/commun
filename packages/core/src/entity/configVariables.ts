@@ -26,7 +26,7 @@ export function getVariableData<T extends EntityModel> (variable: string, entity
       return
     }
     return {
-      variableValue: variableParts[1] === '_id' ? userId : undefined,
+      variableValue: variableParts[1] === 'id' ? userId : undefined,
       variableEntity: 'users',
       variableId: userId,
       variableKey: variableParts[1],
@@ -55,7 +55,7 @@ export function getVariableData<T extends EntityModel> (variable: string, entity
     variableAttribute = Commun.getEntityConfig(variableEntity).attributes[variableKey as keyof EntityModel] as ModelAttribute
   } else {
     variableEntity = entityName
-    variableId = model._id!
+    variableId = model.id!
     variableKey = variableParts[1]
     variableAttribute = attributeEntries[1]
     variableValue = model[variableKey as keyof T]

@@ -119,7 +119,7 @@ describe('BaseUserController', () => {
         .send(userData)
         .expect(200)
       expect(EmailClient.sendEmail).toHaveBeenCalledWith('emailVerification', 'user@example.org', {
-        _id: res.body.item._id,
+        id: res.body.item.id,
         username: 'user',
         verificationCode: 'plain-code',
         createdAt: expect.any(Date),
@@ -151,7 +151,7 @@ describe('BaseUserController', () => {
       expect(res.body.tokens.accessToken).toBeDefined()
       expect(res.body.tokens.accessTokenExpiration).toBeDefined()
       expect(res.body.tokens.refreshToken).toBeDefined()
-      expect(AccessTokenSecurity.sign).toHaveBeenCalledWith({ _id: res.body.user._id })
+      expect(AccessTokenSecurity.sign).toHaveBeenCalledWith({ id: res.body.user.id })
     })
 
     it('should return user and tokens if email and password are valid', async () => {
@@ -248,7 +248,7 @@ describe('BaseUserController', () => {
         .expect(200)
 
       expect(EmailClient.sendEmail).toHaveBeenCalledWith('welcomeEmail', 'user@example.org', {
-        _id: fakeUser._id,
+        id: fakeUser.id,
         username: 'user',
         createdAt: expect.any(Date),
       })
@@ -308,7 +308,7 @@ describe('BaseUserController', () => {
         .expect(200)
 
       expect(EmailClient.sendEmail).toHaveBeenCalledWith('resetPassword', 'user@example.org', {
-        _id: user._id,
+        id: user.id,
         username: 'user',
         resetPasswordCode: 'plain-code',
         createdAt: expect.any(Date),
@@ -438,7 +438,7 @@ describe('BaseUserController', () => {
         .expect(200)
       expect(res.body).toEqual({
         user: {
-          _id: expect.any(String),
+          id: expect.any(String),
           username: 'new-user',
           createdAt: expect.anything(),
         },

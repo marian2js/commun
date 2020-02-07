@@ -20,9 +20,9 @@ describe('Commun', () => {
           entityName: 'test',
           collectionName: 'test',
           entitySingularName: 'testItem',
-          apiKey: '_id',
+          apiKey: 'id',
           attributes: {
-            _id: {
+            id: {
               type: 'id',
               permissions: {}
             },

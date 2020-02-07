@@ -199,7 +199,7 @@ async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof
   if (!ObjectId.isValid(value)) {
     throw new BadRequestError(`${key} is not a valid ID`)
   }
-  const item = await Commun.getEntityDao(attribute.entity).findOne({ _id: new ObjectId(value) })
+  const item = await Commun.getEntityDao(attribute.entity).findOne({ id: new ObjectId(value) })
   if (!item) {
     throw new NotFoundError(`${key} not found`)
   }

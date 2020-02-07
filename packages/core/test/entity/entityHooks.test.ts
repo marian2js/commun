@@ -68,7 +68,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(5)
       })
 
@@ -85,7 +85,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(2)
       })
     })
@@ -99,7 +99,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(5)
       })
 
@@ -110,11 +110,11 @@ describe('entityHooks', () => {
           target: 'this.ref.value'
         }])
         const item1 = await getDao().insertOne({ value: 2 })
-        const item2 = await getDao().insertOne({ ref: item1._id!.toString(), value: 2 })
+        const item2 = await getDao().insertOne({ ref: item1.id!.toString(), value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item2)
-        const updatedItem1 = await getDao().findOneById(item1._id!)
+        const updatedItem1 = await getDao().findOneById(item1.id!)
         expect(updatedItem1!.value).toBe(5)
-        const updatedItem2 = await getDao().findOneById(item2._id!)
+        const updatedItem2 = await getDao().findOneById(item2.id!)
         expect(updatedItem2!.value).toBe(2)
       })
 
@@ -126,7 +126,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2, num: 3 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(5)
       })
 
@@ -137,9 +137,9 @@ describe('entityHooks', () => {
           target: 'this.value'
         }])
         const item1 = await getDao().insertOne({ num: 3 })
-        const item2 = await getDao().insertOne({ ref: item1._id!.toString(), value: 2 })
+        const item2 = await getDao().insertOne({ ref: item1.id!.toString(), value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item2)
-        const updatedItem = await getDao().findOneById(item2._id!)
+        const updatedItem = await getDao().findOneById(item2.id!)
         expect(updatedItem!.value).toBe(5)
       })
     })
@@ -153,7 +153,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(3)
       })
 
@@ -164,11 +164,11 @@ describe('entityHooks', () => {
           target: 'this.ref.value'
         }])
         const item1 = await getDao().insertOne({ value: 2 })
-        const item2 = await getDao().insertOne({ ref: item1._id!.toString(), value: 2 })
+        const item2 = await getDao().insertOne({ ref: item1.id!.toString(), value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item2)
-        const updatedItem1 = await getDao().findOneById(item1._id!)
+        const updatedItem1 = await getDao().findOneById(item1.id!)
         expect(updatedItem1!.value).toBe(3)
-        const updatedItem2 = await getDao().findOneById(item2._id!)
+        const updatedItem2 = await getDao().findOneById(item2.id!)
         expect(updatedItem2!.value).toBe(2)
       })
 
@@ -180,7 +180,7 @@ describe('entityHooks', () => {
         }])
         const item = await getDao().insertOne({ value: 2, num: 3 })
         await entityHooks.run(entityName, 'afterUpdate', item)
-        const updatedItem = await getDao().findOneById(item._id!)
+        const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(3)
       })
 
@@ -191,9 +191,9 @@ describe('entityHooks', () => {
           target: 'this.value'
         }])
         const item1 = await getDao().insertOne({ num: 3 })
-        const item2 = await getDao().insertOne({ ref: item1._id!.toString(), value: 2 })
+        const item2 = await getDao().insertOne({ ref: item1.id!.toString(), value: 2 })
         await entityHooks.run(entityName, 'afterUpdate', item2)
-        const updatedItem = await getDao().findOneById(item2._id!)
+        const updatedItem = await getDao().findOneById(item2.id!)
         expect(updatedItem!.value).toBe(3)
       })
     })

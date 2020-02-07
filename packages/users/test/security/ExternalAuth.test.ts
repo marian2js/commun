@@ -196,7 +196,7 @@ describe('ExternalAuth', () => {
 
     it('should return an error if the sign fails', async () => {
       jwt.sign = <jest.Mock>jest.fn((
-        payload: { _id: string },
+        payload: { id: string },
         secretOrPrivateKey: Secret,
         options: SignOptions,
         callback: SignCallback

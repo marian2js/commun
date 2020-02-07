@@ -261,7 +261,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `{
-               item (_id: "${node._id}") {
+               item (id: "${node.id}") {
                  name
                }
              }`
@@ -283,7 +283,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `{
-               item (_id: "${new ObjectId()}") {
+               item (id: "${new ObjectId()}") {
                  name
                }
              }`
@@ -340,7 +340,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `mutation {
-               updateItem (input: { _id: "${item._id}", name: "updated" }) {
+               updateItem (input: { id: "${item.id}", name: "updated" }) {
                  item {
                    name
                  }
@@ -359,7 +359,7 @@ describe('GraphQLController', () => {
         }
       })
 
-      expect((await getDao().findOneById(item._id!))!.name).toEqual('updated')
+      expect((await getDao().findOneById(item.id!))!.name).toEqual('updated')
     })
 
     it('should throw an error if the item does not exist', async () => {
@@ -368,7 +368,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `mutation {
-               updateItem (input: { _id: "${new ObjectId()}", name: "updated" }) {
+               updateItem (input: { id: "${new ObjectId()}", name: "updated" }) {
                  item {
                    name
                  }
@@ -399,7 +399,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `mutation {
-               deleteItem (input: { _id: "${item._id}" }) {
+               deleteItem (input: { id: "${item.id}" }) {
                  result
                }
              }`
@@ -414,7 +414,7 @@ describe('GraphQLController', () => {
         }
       })
 
-      expect(await getDao().findOneById(item._id!)).toBe(null)
+      expect(await getDao().findOneById(item.id!)).toBe(null)
     })
 
     it('should succeed even if the item does not exist', async () => {
@@ -423,7 +423,7 @@ describe('GraphQLController', () => {
         .send({
           query:
             `mutation {
-               deleteItem (input: { _id: "${new ObjectId()}" }) {
+               deleteItem (input: { id: "${new ObjectId()}" }) {
                  result
                }
              }`

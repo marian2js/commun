@@ -1,5 +1,5 @@
 export interface EntityModel {
-  _id?: string
+  id?: string
   createdAt?: Date
   updatedAt?: Date
 }

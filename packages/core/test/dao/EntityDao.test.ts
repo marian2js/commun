@@ -6,11 +6,11 @@ import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 describe('EntityDao', () => {
   const entityName = 'entityDao'
   const collectionName = 'entityDao'
-  let dao: EntityDao<{ _id?: string, name: string }>
+  let dao: EntityDao<{ id?: string, name: string }>
   let collection: Collection
 
   beforeEach(() => {
-    dao = new EntityDao<{ _id?: string, name: string }>(collectionName)
+    dao = new EntityDao<{ id?: string, name: string }>(collectionName)
     collection = MongoDbConnection.getDb().collection(collectionName)
   })
 
@@ -26,11 +26,11 @@ describe('EntityDao', () => {
       const items = await dao.find({})
       expect(items.length).toBe(3)
       expect(items[0].name).toBe('item1')
-      expect(items[0]._id).toBeDefined()
+      expect(items[0].id).toBeDefined()
       expect(items[1].name).toBe('item2')
-      expect(items[1]._id).toBeDefined()
+      expect(items[1].id).toBeDefined()
       expect(items[2].name).toBe('item3')
-      expect(items[2]._id).toBeDefined()
+      expect(items[2].id).toBeDefined()
     })
 
     it('should return elements matching the filter from mongodb', async () => {
@@ -59,9 +59,9 @@ describe('EntityDao', () => {
     it('should return a single element by id', async () => {
       const item1 = await dao.insertOne({ name: 'item1' })
       const item2 = await dao.insertOne({ name: 'item2' })
-      const result1 = await dao.findOneById(item1._id!)
+      const result1 = await dao.findOneById(item1.id!)
       expect(result1 && result1.name).toBe('item1')
-      const result2 = await dao.findOneById(item2._id!)
+      const result2 = await dao.findOneById(item2.id!)
       expect(result2 && result2.name).toBe('item2')
     })
   })
@@ -80,8 +80,8 @@ describe('EntityDao', () => {
   describe('updateOne', () => {
     it('should update an item on mongodb', async () => {
       const item = await dao.insertOne({ name: 'item' })
-      await dao.updateOne(item._id!, { name: 'updated' })
-      const itemUpdated = await dao.findOneById(item._id!)
+      await dao.updateOne(item.id!, { name: 'updated' })
+      const itemUpdated = await dao.findOneById(item.id!)
       expect(itemUpdated!.name).toBe('updated')
     })
   })
@@ -91,7 +91,7 @@ describe('EntityDao', () => {
       const item = await dao.insertOne({ name: 'item' })
       const find1 = await dao.find({})
       expect(find1.length).toBe(1)
-      await dao.deleteOne(item._id!)
+      await dao.deleteOne(item.id!)
       const find2 = await dao.find({})
       expect(find2.length).toBe(0)
     })

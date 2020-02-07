@@ -16,8 +16,8 @@ import { AdminModule } from '../AdminModule'
 
 export class AdminController extends PluginController {
   async validateAdminPermissions (req: Request, res: Response, next: NextFunction) {
-    if (req.auth?._id) {
-      const authUser = await Commun.getEntityDao('users').findOneById(req.auth._id)
+    if (req.auth?.id) {
+      const authUser = await Commun.getEntityDao('users').findOneById(req.auth.id)
       if (authUser && (authUser as BaseUserModel).admin) {
         return next()
       }
@@ -204,10 +204,10 @@ export class AdminController extends PluginController {
     AdminModule.validateFirstRunCode(req.body.code)
     const usersEntity = Commun.getEntity<BaseUserModel>('users')
     const result = await usersEntity.controller.create(req)
-    if (!result.item._id) {
+    if (!result.item.id) {
       throw new ServerError('Error occurred when creating the account, please try again')
     }
-    await usersEntity.dao.updateOne(result.item._id, { admin: true })
+    await usersEntity.dao.updateOne(result.item.id, { admin: true })
     return result
   }
 }

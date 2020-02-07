@@ -60,7 +60,7 @@ export const GraphQLController = {
   },
 
   getEntity (entity: Entity<EntityModel>, entityType: GraphQLObjectType) {
-    const apiKey = entity.config.apiKey || '_id'
+    const apiKey = entity.config.apiKey || 'id'
     return {
       type: new GraphQLNonNull(entityType),
       args: {
@@ -113,7 +113,7 @@ export const GraphQLController = {
         ...(entityInput && { input: { type: entityInput } }),
       },
       resolve: async (_: any, args: any, req: Request) => {
-        const apiKey = entity.config.apiKey || '_id'
+        const apiKey = entity.config.apiKey || 'id'
         req.params = {
           id: args.input[apiKey]
         }
@@ -141,7 +141,7 @@ export const GraphQLController = {
         ...(entityInput && { input: { type: entityInput } }),
       },
       resolve: async (_: any, args: any, req: Request) => {
-        const apiKey = entity.config.apiKey || '_id'
+        const apiKey = entity.config.apiKey || 'id'
         req.params = {
           id: args.input[apiKey]
         }
@@ -157,11 +157,11 @@ export const GraphQLController = {
     return {
       type: new GraphQLNonNull(usersEntityType),
       resolve: async (_: any, args: any, req: Request) => {
-        if (!req.auth?._id) {
+        if (!req.auth?.id) {
           throw new UnauthorizedError()
         }
         req.params = {
-          id: req.auth._id
+          id: req.auth.id
         }
         const res = await controller.get(req, { findModelById: true })
         return res.item
