@@ -1,5 +1,5 @@
 import { EntityConfig, EntityModel } from '..'
-import { Collection, ObjectId } from 'mongodb'
+import { Collection, FindOneOptions, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
 export type DaoFilter<T> = EntityFilter<T> & SearchFilter<T>
@@ -50,8 +50,17 @@ export class EntityDao<T extends EntityModel> {
   constructor (protected readonly collectionName: string) {}
 
   async find (filter: DaoFilter<T>, options: FindOptions<T> = {}): Promise<T[]> {
+    let sort: FindOneOptions['sort'] = parseDbFieldsInput(options.sort)
+    let projection
+    if (filter.$text?.$search && (!sort || !Object.keys(sort).length)) {
+      projection = sort = {
+        __score: { $meta: 'textScore' }
+      }
+    }
+
     return (await this.collection.find(parseDbFieldsInput(filter), {
-      sort: parseDbFieldsInput(options.sort),
+      sort,
+      projection,
       limit: options.limit
     }).toArray()).map(item => parseDbFieldsOutput(item))
   }
