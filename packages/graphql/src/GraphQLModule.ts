@@ -10,7 +10,11 @@ import path from 'path'
 export const GraphQLModule = {
   async setup () {
     Commun.registerPlugin('graphql', {
-      onExpressAppCreated: this.setupGraphql.bind(this)
+      onExpressAppCreated: this.setupGraphql.bind(this),
+      afterServerStart: () => {
+        console.log(`    👌 GraphQL endpoint: ${Commun.getOptions().endpoint}/graphql`)
+        console.log()
+      },
     })
   },
 
