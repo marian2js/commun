@@ -78,8 +78,10 @@ async function copyDirectory (resourcesPath: string, appPath: string, relativePa
     const destFile = path.join(currentAppPath, file)
 
     if ((await stat(currentFile)).isDirectory()) {
-      await mkdir(destFile)
-      await copyDirectory(resourcesPath, appPath, path.join(relativePath, file), replaceVars)
+      if (file !== 'resources') {
+        await mkdir(destFile)
+        await copyDirectory(resourcesPath, appPath, path.join(relativePath, file), replaceVars)
+      }
       continue
     }
 
