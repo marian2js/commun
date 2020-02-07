@@ -4,6 +4,16 @@ With Commun you can build complete backends for communities and user based apps 
 
 Commun helps you build scalable APIs in hours instead of months by giving you powerful tools to model your app in a graphic UI.   
 
+## Key Features
+
+- Supports **GraphQL** and **REST API** out of the box
+- Secure authentication with email and password or third party systems (Google, Facebook and GitHub)
+- Fully-featured user and permissions management
+- Fast full-text search
+- UI Dashboard for managing the entire application without coding
+- Create the entities and custom attributes that your app needs
+- Use hooks for performing operations in response of lifecycle events 
+
 ## Installation
 
 #### Quick start
