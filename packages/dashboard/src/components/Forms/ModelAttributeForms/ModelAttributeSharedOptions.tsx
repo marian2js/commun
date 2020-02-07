@@ -33,7 +33,7 @@ export const ModelAttributeSharedOptions = (props: Props) => {
   const { attribute, subAttribute, onChange, noDefault } = props
   const [required, setRequired] = useState(attribute?.required)
   const [unique, setUnique] = useState(attribute?.unique)
-  const [attributeDefault, setAttributeDefault] = useState(attribute?.default || '')
+  const [attributeDefault, setAttributeDefault] = useState(attribute?.default ?? '')
 
   const handleAttributeDefaultChange = (value: string) => {
     switch (attribute?.type) {
@@ -53,7 +53,7 @@ export const ModelAttributeSharedOptions = (props: Props) => {
     return (
       <TextField
         onChange={e => handleAttributeDefaultChange(e.target.value)}
-        value={attributeDefault || ''}
+        value={attributeDefault ?? ''}
         name="default"
         type={attribute?.type === 'number' ? 'number' : 'text'}
         variant="outlined"
