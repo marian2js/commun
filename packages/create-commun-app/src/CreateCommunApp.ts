@@ -3,6 +3,7 @@ import adminPackageJson from '../../admin/package.json'
 import corePackageJson from '../../core/package.json'
 import dashboardPackageJson from '../../dashboard/package.json'
 import emailsPackageJson from '../../emails/package.json'
+import graphqlPackageJson from '../../graphql/package.json'
 import usersPackageJson from '../../users/package.json'
 import chalk from 'chalk'
 import fs from 'fs'
@@ -48,6 +49,7 @@ export const CreateCommunApp = async (appName: string, commandArgs: { [key: stri
     coreVersion: corePackageJson.version,
     dashboardVersion: dashboardPackageJson.version,
     emailsVersion: emailsPackageJson.version,
+    graphqlVersion: graphqlPackageJson.version,
     usersVersion: usersPackageJson.version,
     ...commandArgs,
   })
