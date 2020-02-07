@@ -86,6 +86,10 @@ export function createGraphQLSchema (): GraphQLSchema {
       GraphQLController.updateEntity(entity, entityType, updateEntityInput)
     mutationConfig.fields[`delete${capitalize(entity.config.entitySingularName!)}`] =
       GraphQLController.deleteEntity(entity, entityType, deleteEntityInput)
+
+    if (entity.config.entityName === 'users') {
+      queryConfig.fields.viewer = GraphQLController.getViewer(entityType)
+    }
   }
 
   const queryType = new GraphQLObjectType(queryConfig)
