@@ -1,6 +1,6 @@
 {
   "name": "@commun/emails",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Commun emails module",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -20,7 +20,7 @@
     "url": "https://github.com/commundev/commun/issues"
   },
   "dependencies": {
-    "@commun/core": "^0.3.0",
+    "@commun/core": "^0.3.1",
     "nodemailer": "^6.4.2"
   },
   "devDependencies": {
