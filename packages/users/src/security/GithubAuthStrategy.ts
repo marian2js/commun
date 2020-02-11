@@ -7,7 +7,7 @@ import { VerifyCallback } from 'passport-oauth2'
 export const GithubAuthStrategy = {
   registerStrategy () {
     passport.use(new Strategy({
-        clientID: process.env.GITHUB_CLIENTid!,
+        clientID: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         callbackURL: `${Commun.getOptions().endpoint}/api/v1/auth/github/callback`,
         scope: ['user:email'],
