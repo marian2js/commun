@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EntityConfig, EntityIndex, EntityModel } from '@commun/core'
 import {
+  Box,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -15,13 +16,14 @@ import {
 import { AttributeSelector } from './Selectors/AttributeSelector'
 import DeleteIcon from '@material-ui/icons/Delete'
 import { handleAttrChange } from '../../utils/attributes'
+import { Alert } from '@material-ui/lab'
 
 const useStyles = makeStyles(theme => ({
   keySelectorFormControl: {
     margin: theme.spacing(2, 0),
     width: '100%',
   },
-  directionSelectorFormControl: {
+  indexKeyTypeSelectorFormControl: {
     margin: theme.spacing(2, 0),
     width: '100%',
   },
@@ -39,11 +41,18 @@ interface Props {
 
 export const IndexForm = (props: Props) => {
   const classes = useStyles()
-  const { entity, index, onChange } = props
-  const [keys, setKeys] = useState({ ...(index?.keys || {}), '': undefined })
-  const [name, setName] = useState(index?.name)
-  const [unique, setUnique] = useState(index?.unique)
-  const [sparse, setSparse] = useState(index?.sparse)
+  const { onChange } = props
+  const [entity, setEntity] = useState(props.entity)
+  const [index, setIndex] = useState(props.index)
+  const [keys, setKeys] = useState<{ [key: string]: number | string | undefined }>({ ...(index?.keys || {}), '': '' })
+  const [name, setName] = useState(index?.name || '')
+  const [unique, setUnique] = useState(index?.unique || false)
+  const [sparse, setSparse] = useState(index?.sparse || false)
+
+  useEffect(() => {
+    setEntity(props.entity)
+    setIndex(props.index)
+  }, [props])
 
   const handleIndexKeyChange = (oldKey: string, newKey: string) => {
     const newIndexKeys = {
@@ -56,7 +65,7 @@ export const IndexForm = (props: Props) => {
     setKeys(newIndexKeys)
   }
 
-  const handleIndexKeyDirectionChange = (key: string, value: number) => {
+  const handleIndexKeyTypeChange = (key: string, value: number) => {
     const newKeys = {
       ...keys,
       [key]: value,
@@ -68,17 +77,48 @@ export const IndexForm = (props: Props) => {
   const handleIndexKeyDeleteClick = (key: string) => {
     const newKeys = { ...keys }
     delete (newKeys as any)[key]
-    onChange('keys', { ...newKeys, '': undefined })
+    onChange('keys', { ...newKeys, '': '' })
     setKeys(newKeys)
+  }
+
+  const getTextIndexAlert = () => {
+    if (!Object.values(keys).includes('text')) {
+      return
+    }
+    const entityTextIndex = (entity.indexes || []).find(index => Object.values(index.keys).includes('text'))
+    let alert
+    if (entityTextIndex && entityTextIndex !== index) {
+      alert = (
+        <Alert severity="error">
+          There can only be one Text Index per entity, but it can contain multiple attributes.
+        </Alert>
+      )
+    } else {
+      alert = (
+        <Alert severity="info">
+          A Text Index enables searches in the attribute's text.
+          There can only be one Text Index per entity, but it can contain multiple attributes.
+        </Alert>
+      )
+    }
+    return (
+      <Box mb={2}>
+        {alert}
+      </Box>
+    )
   }
 
   return (
     <Grid container>
+      {
+        getTextIndexAlert()
+      }
+
       <InputLabel id="dir-selector">
         Index keys
       </InputLabel>
       {
-        Object.entries(keys).map(([key, direction]) => (
+        Object.entries(keys).map(([key, indexType]) => (
           <Grid container key={key}>
             <Grid item xs={6}>
               <AttributeSelector value={key}
@@ -88,18 +128,19 @@ export const IndexForm = (props: Props) => {
                                  className={classes.keySelectorFormControl}/>
             </Grid>
             <Grid item xs={5}>
-              <FormControl className={classes.directionSelectorFormControl}>
-                <InputLabel id="dir-selector">
-                  Direction
+              <FormControl className={classes.indexKeyTypeSelectorFormControl}>
+                <InputLabel id="key-type-selector">
+                  Index type
                 </InputLabel>
                 <Select
-                  onChange={e => handleIndexKeyDirectionChange(key, e.target.value as number)}
-                  value={direction}
-                  labelId="dir-selector"
-                  id="dir-selector"
+                  onChange={e => handleIndexKeyTypeChange(key, e.target.value as number)}
+                  value={indexType}
+                  labelId="key-type-selector"
+                  id="key-type-selector"
                   fullWidth>
                   <MenuItem value={1}>Ascending</MenuItem>
                   <MenuItem value={-1}>Descending</MenuItem>
+                  <MenuItem value="text">Text</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Button,
   Grid,
@@ -55,6 +55,10 @@ export const SelectTable = (props: Props) => {
   const classes = useStyles()
   const { headerKeys, items, addButtonLabel, onSelectChange, onAddClick, onUpdateClick, onDeleteClick } = props
   const [selected, setSelected] = useState<number>(-1)
+
+  useEffect(() => {
+    setSelected(-1)
+  }, [items])
 
   const handleSelectChange = (index: number) => {
     if (items[index].noSelectable || selected === index) {
