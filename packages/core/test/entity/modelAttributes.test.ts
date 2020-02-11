@@ -451,6 +451,8 @@ describe('modelAttributes', () => {
       expect(await getModelAttribute({ type: 'slug', setFrom: 'title' }, 'key',
         { title: 'This is   @1   title?!', key: '' })
       ).toBe('this-is-1-title')
+      expect(await getModelAttribute({ type: 'slug', setFrom: 'title' }, 'key', { title: '---$ Test Title $---', key: '' }))
+        .toBe('test-title')
     })
 
     it('should handle the prefix attribute', async () => {
