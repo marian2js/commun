@@ -35,6 +35,7 @@ const nodeInterface = new GraphQLInterfaceType({
       type: GraphQLNonNull(GraphQLID)
     }
   },
+  description: `An object with an ID.`
 })
 
 const filterComparatorSymbol = new GraphQLEnumType({
@@ -46,7 +47,8 @@ const filterComparatorSymbol = new GraphQLEnumType({
     GREATER_THAN_OR_EQUAL: { value: '>=' },
     LESS_THAN: { value: '<' },
     LESS_THAN_OR_EQUAL: { value: '<=' },
-  }
+  },
+  description: 'Specify how 2 values are going to be compared.'
 })
 
 const orderByDirectionType = new GraphQLEnumType({
@@ -54,17 +56,20 @@ const orderByDirectionType = new GraphQLEnumType({
   values: {
     DESC: { value: 'desc' },
     ASC: { value: 'asc' },
-  }
+  },
+  description: 'Specify the direction on which the items are going to be returned.'
 })
 
 export function createGraphQLSchema (): GraphQLSchema {
   const queryConfig: any = {
     name: 'Query',
-    fields: {}
+    fields: {},
+    description: 'The query root of the GraphQL interface.',
   }
   const mutationConfig: any = {
     name: 'Mutation',
-    fields: {}
+    fields: {},
+    description: 'The root query for implementing GraphQL mutations.',
   }
 
   for (const entity of Object.values(Commun.getEntities())) {
@@ -110,6 +115,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
     name: capitalize(entityConfig.entitySingularName!),
     fields: () => fields,
     interfaces: [nodeInterface],
+    description: `A single ${capitalize(entityConfig.entitySingularName!)}.`
   })
 
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {

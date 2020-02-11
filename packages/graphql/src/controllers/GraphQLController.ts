@@ -55,7 +55,8 @@ export const GraphQLController = {
         return {
           nodes: res.items
         }
-      }
+      },
+      description: `Find ${capitalize(entity.config.entityName)}.`
     }
   },
 
@@ -72,7 +73,8 @@ export const GraphQLController = {
         }
         const res = await entity.controller.get(req)
         return res.item
-      }
+      },
+      description: `Find a ${capitalize(entity.config.entitySingularName!)} by ${apiKey}.`,
     }
   },
 
@@ -95,7 +97,8 @@ export const GraphQLController = {
         return {
           [entity.config.entitySingularName!]: res.item
         }
-      }
+      },
+      description: `Create a ${capitalize(entity.config.entitySingularName!)}.`
     }
   },
 
@@ -123,7 +126,8 @@ export const GraphQLController = {
         return {
           [entity.config.entitySingularName!]: res.item
         }
-      }
+      },
+      description: `Update a ${capitalize(entity.config.entitySingularName!)}.`
     }
   },
 
@@ -148,7 +152,8 @@ export const GraphQLController = {
         delete args.input[apiKey]
         req.body = args.input
         return await entity.controller.delete(req)
-      }
+      },
+      description: `Delete a ${capitalize(entity.config.entitySingularName!)}.`
     }
   },
 
@@ -165,7 +170,8 @@ export const GraphQLController = {
         }
         const res = await controller.get(req, { findModelById: true })
         return res.item
-      }
+      },
+      description: 'The currently authenticated user.',
     }
   },
 }
