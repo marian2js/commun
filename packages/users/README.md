@@ -1,11 +1,7 @@
-# `users`
+# `@commun/users`
 
-> TODO: description
+This module for [Commun](https://github.com/commundev/commun) adds a complete user management system with authentication.  
 
-## Usage
+This module is installed by default by create-commun-app.
 
-```
-const users = require('users');
-
-// TODO: DEMONSTRATE API
-```
+[Read more about Commun](https://github.com/commundev/commun)

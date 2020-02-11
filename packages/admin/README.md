@@ -1,11 +1,7 @@
-# `admin`
+# `@commun/admin`
 
-> TODO: description
+This plugin for [Commun](https://github.com/commundev/commun) adds APIs to allow administrator to manage settings.  
 
-## Usage
+This module is installed by default by create-commun-app.
 
-```
-const admin = require('@commun/admin');
-
-// TODO: DEMONSTRATE API
-```
+[Read more about Commun](https://github.com/commundev/commun)

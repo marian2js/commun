@@ -1,11 +1,5 @@
-# `core`
+# `@commun/core`
 
-> TODO: description
+This module for [Commun](https://github.com/commundev/commun) contains Commun's core functionality.
 
-## Usage
-
-```
-const core = require('core');
-
-// TODO: DEMONSTRATE API
-```
+[Read more about Commun](https://github.com/commundev/commun)

@@ -1,11 +1,5 @@
-# `test-utils`
+# `@commun/test-utils`
 
-> TODO: description
+Internal package for [Commun](https://github.com/commundev/commun) with test helpers
 
-## Usage
-
-```
-const testUtils = require('@commun/test-utils');
-
-// TODO: DEMONSTRATE API
-```
+[Read more about Commun](https://github.com/commundev/commun)

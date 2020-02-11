@@ -1,11 +1,7 @@
-# `emails`
+# `@commun/emails`
 
-> TODO: description
+This plugin for [Commun](https://github.com/commundev/commun) adds support sending emails to your users.  
 
-## Usage
+This module is installed by default by create-commun-app.
 
-```
-const emails = require('@commun/emails');
-
-// TODO: DEMONSTRATE API
-```
+[Read more about Commun](https://github.com/commundev/commun)
