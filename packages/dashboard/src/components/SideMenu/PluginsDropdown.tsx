@@ -1,6 +1,7 @@
 import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ExtensionIcon from '@material-ui/icons/Extension'
+import CodeIcon from '@material-ui/icons/Code'
 import ListItemText from '@material-ui/core/ListItemText'
 import { ExpandLess, ExpandMore } from '@material-ui/icons'
 import { Collapse } from '@material-ui/core'
@@ -29,6 +30,10 @@ export function PluginsDropdown () {
           <ListItem button component={Link} to="/plugins/emails" selected={location.pathname === '/plugins/emails'}>
             <ListItemIcon><EmailIcon/></ListItemIcon>
             <ListItemText primary="Emails"/>
+          </ListItem>
+          <ListItem button component={Link} to="/plugins/graphql" selected={location.pathname === '/plugins/graphql'}>
+            <ListItemIcon><CodeIcon/></ListItemIcon>
+            <ListItemText primary="GraphQL"/>
           </ListItem>
           <ListItem button component={Link} to="/plugins/users" selected={location.pathname === '/plugins/users'}>
             <ListItemIcon><VpnKeyIcon/></ListItemIcon>

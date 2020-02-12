@@ -8,6 +8,7 @@ import { EmailPluginPage } from './pages/EmailPluginPage/EmailPluginPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
 import { UsersPluginPage } from './pages/UsersPluginPage/UsersPluginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
+import { GraphQLPluginPage } from './pages/GraphQLPluginPage/GraphQLPluginPage'
 
 export const routes = {
   Home: {
@@ -39,6 +40,11 @@ export const routes = {
     path: '/plugins/emails',
     exact: true,
     component: EmailPluginPage
+  },
+  GraphQLPlugin: {
+    path: '/plugins/graphql',
+    exact: true,
+    component: GraphQLPluginPage,
   },
   UsersPlugin: {
     path: '/plugins/users',

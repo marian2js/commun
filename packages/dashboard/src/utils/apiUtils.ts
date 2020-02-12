@@ -6,17 +6,11 @@ export const STORE_TOKENS_KEY = 'commun_dashboard_tokens'
 export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: any) {
   console.log(`[${method.toUpperCase()}] /api/v1${path}`)
 
-  const headers: { [key: string]: string } = {
+  const authHeader = getAuthenticationHeader()
+  const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-  }
-
-  const tokens = localStorage.getItem(STORE_TOKENS_KEY)
-  if (tokens) {
-    const accessToken = JSON.parse(tokens).accessToken
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
+    ...(authHeader && { Authorization: authHeader }),
   }
 
   const res = await fetch('/api/v1' + path, {
@@ -39,6 +33,17 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
   }
 
   return await res.json()
+}
+
+export function getAuthenticationHeader () {
+  const tokens = localStorage.getItem(STORE_TOKENS_KEY)
+  if (tokens) {
+    const accessToken = JSON.parse(tokens).accessToken
+    if (accessToken) {
+      return `Bearer ${accessToken}`
+    }
+  }
+  return null
 }
 
 export async function requestUntilSuccess (
