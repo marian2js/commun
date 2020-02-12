@@ -163,7 +163,7 @@ Entities can specify a list of indexes that will be created on MongoDB.
 
 ### Dashboard
 
-![Commun Dashboard](https://i.imgur.com/CgHlnVk.png)
+![Commun Dashboard](https://i.imgur.com/OfssVs1.png)
 
 Commun comes with a complete dashboard that you can use to manage your application without having to write any code.
 
