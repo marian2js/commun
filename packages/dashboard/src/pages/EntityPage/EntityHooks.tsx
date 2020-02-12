@@ -73,6 +73,7 @@ export const EntityHooks = (props: Props) => {
         onCancel={() => setAttributeDialogOpen(false)}/>
 
       <SelectTable headerKeys={tableHeaderKeys}
+                   entity={entity}
                    items={tableAttributes}
                    addButtonLabel="Add Hook"
                    onSelectChange={item => setSelected(item ? {

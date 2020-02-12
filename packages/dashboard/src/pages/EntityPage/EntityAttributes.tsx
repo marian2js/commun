@@ -83,6 +83,7 @@ export const EntityAttributes = (props: Props) => {
       <SelectTable headerKeys={tableHeaderKeys}
                    items={tableAttributes}
                    addButtonLabel="Add Attribute"
+                   entity={entity}
                    onSelectChange={item => setSelected(item?.key?.toString() || '')}
                    onAddClick={handleAddClicked}
                    onUpdateClick={handleUpdateClicked}

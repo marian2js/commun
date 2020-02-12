@@ -11,6 +11,7 @@ import {
   TableHead,
   TableRow
 } from '@material-ui/core'
+import { EntityConfig, EntityModel } from '@commun/core'
 
 const useStyles = makeStyles(theme => ({
   table: {
@@ -49,6 +50,7 @@ interface Props {
   onAddClick?: () => void
   onUpdateClick?: () => void
   onDeleteClick?: () => void
+  entity?: EntityConfig<EntityModel>
 }
 
 export const SelectTable = (props: Props) => {
@@ -58,7 +60,7 @@ export const SelectTable = (props: Props) => {
 
   useEffect(() => {
     setSelected(-1)
-  }, [items])
+  }, [props.entity])
 
   const handleSelectChange = (index: number) => {
     if (items[index].noSelectable || selected === index) {

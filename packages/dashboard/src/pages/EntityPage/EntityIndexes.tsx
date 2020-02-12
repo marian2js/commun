@@ -68,6 +68,7 @@ export const EntityIndexes = (props: Props) => {
         onCancel={() => setIndexDialogOpen(false)}/>
 
       <SelectTable headerKeys={tableHeaderKeys}
+                   entity={entity}
                    items={tableAttributes}
                    addButtonLabel="Add Index"
                    onSelectChange={item => setSelected(item ? Number(item.position) : null)}

@@ -65,6 +65,7 @@ export const EntityJoinAttributes = (props: Props) => {
         onCancel={() => setAttributeDialogOpen(false)}/>
 
       <SelectTable headerKeys={tableHeaderKeys}
+                   entity={entity}
                    items={tableAttributes}
                    addButtonLabel="Add Join Attribute"
                    onSelectChange={item => setSelected(item?.key?.toString() || '')}
