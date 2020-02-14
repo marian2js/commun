@@ -23,6 +23,7 @@ import {
 import graphqlFields from 'graphql-fields'
 import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
+import { GraphQLUserController } from './controllers/GraphQLUserController'
 
 const entityObjectTypesCache: { [key: string]: GraphQLObjectType } = {}
 const entityFilterTypesCache: { [key: string]: GraphQLInputObjectType } = {}
@@ -93,7 +94,14 @@ export function createGraphQLSchema (): GraphQLSchema {
       GraphQLController.deleteEntity(entity, entityType, deleteEntityInput)
 
     if (entity.config.entityName === 'users') {
-      queryConfig.fields.viewer = GraphQLController.getViewer(entityType)
+      queryConfig.fields.viewer = GraphQLUserController.getViewer(entityType)
+      queryConfig.fields.accessToken = GraphQLUserController.getAccessToken()
+      mutationConfig.fields.login = GraphQLUserController.login(entityType)
+      mutationConfig.fields.logout = GraphQLUserController.logout()
+      mutationConfig.fields.verifyEmail = GraphQLUserController.verifyEmail()
+      mutationConfig.fields.sendResetPasswordEmail = GraphQLUserController.sendResetPasswordEmail()
+      mutationConfig.fields.resetPassword = GraphQLUserController.resetPassword()
+      mutationConfig.fields.completeSocialAuthentication = GraphQLUserController.completeSocialAuthentication(entityType)
     }
   }
 

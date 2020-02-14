@@ -1,7 +1,7 @@
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql/type/definition'
 import { GraphQLBoolean, GraphQLInt, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql'
 import { Request } from 'express'
-import { Commun, Entity, EntityModel, UnauthorizedError } from '@commun/core'
+import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
 
 export const GraphQLController = {
@@ -154,24 +154,6 @@ export const GraphQLController = {
         return await entity.controller.delete(req)
       },
       description: `Delete a ${capitalize(entity.config.entitySingularName!)}.`
-    }
-  },
-
-  getViewer (usersEntityType: GraphQLObjectType) {
-    const controller = Commun.getEntityController('users')
-    return {
-      type: new GraphQLNonNull(usersEntityType),
-      resolve: async (_: any, args: any, req: Request) => {
-        if (!req.auth?.id) {
-          throw new UnauthorizedError()
-        }
-        req.params = {
-          id: req.auth.id
-        }
-        const res = await controller.get(req, { findModelById: true })
-        return res.item
-      },
-      description: 'The currently authenticated user.',
     }
   },
 }
