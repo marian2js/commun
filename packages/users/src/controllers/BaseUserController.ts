@@ -51,6 +51,14 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
   }
 
+  async logout (req: Request): Promise<{ result: boolean }> {
+    if (!req.auth?.id) {
+      return { result: false }
+    }
+    await this.dao.updateOne(req.auth.id, { refreshTokenHash: undefined })
+    return { result: true }
+  }
+
   async getAccessToken (req: Request): Promise<AccessToken> {
     const user = await this.dao.findOne({ username: req.body.username })
     if (!user) {

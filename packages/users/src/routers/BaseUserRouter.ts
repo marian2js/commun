@@ -9,6 +9,8 @@ export const BaseUserRouter = express.Router()
     sendResponse(req, res, next, getController().create(req)))
   .post('/auth/password/login', (req, res, next) =>
     sendResponse(req, res, next, getController().loginWithPassword(req)))
+  .post('/auth/logout', (req, res, next) =>
+    sendResponse(req, res, next, getController().logout(req)))
   .post('/auth/token', (req, res, next) =>
     sendResponse(req, res, next, getController().getAccessToken(req)))
   .post('/auth/verify', (req, res, next) =>

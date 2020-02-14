@@ -1,7 +1,7 @@
 import { Commun, ConfigManager, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
 import { AuthProvider, BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 import { EmailClient } from '@commun/emails'
-import { closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
+import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
 import { AccessTokenSecurity } from '../../src/security/AccessTokenSecurity'
 import passport from 'passport'
 import { NextFunction, Request, Response } from 'express'
@@ -168,6 +168,27 @@ describe('BaseUserController', () => {
       const res = await request().post(`${baseUrl}/password/login`)
         .send({ username: 'user', password: 'wrong-password' })
         .expect(401)
+    })
+  })
+
+  describe('logout - [POST] /auth/password/logout', () => {
+    let user: BaseUserModel
+
+    beforeEach(async () => {
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      user = await getDao().insertOne({
+        username: 'user',
+        email: 'user@example.org',
+        refreshTokenHash: 'refresh-token',
+        verified: true,
+      })
+    })
+
+    it('should invalidate the refresh token', async () => {
+      const res = await authenticatedRequest(user.id).post(`${baseUrl}/logout`)
+        .expect(200)
+      const updatedUser = await getDao().findOneById(user.id!)
+      expect(updatedUser!.refreshTokenHash).toBe(null)
     })
   })
 
