@@ -13,9 +13,8 @@ export const GraphQLController = {
     orderByEntityInput?: GraphQLInputObjectType
   ) {
     const args: any = {
-      first: {
-        type: GraphQLInt
-      }
+      first: { type: GraphQLInt },
+      last: { type: GraphQLInt },
     }
     if (getEntityInput) {
       args.filter = {
@@ -36,7 +35,7 @@ export const GraphQLController = {
 
     return {
       type: new GraphQLObjectType({
-        name: `List${capitalize(entity.config.entitySingularName!)}Payload`,
+        name: `${capitalize(entity.config.entitySingularName!)}Connection`,
         fields: {
           nodes: {
             type: new GraphQLNonNull(new GraphQLList(entityType))

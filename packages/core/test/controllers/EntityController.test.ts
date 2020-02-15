@@ -189,7 +189,7 @@ describe('EntityController', () => {
       })
     })
 
-    describe('Limits', () => {
+    describe('First', () => {
       beforeEach(async () => {
         await registerTestEntity({ get: 'anyone' })
         for (let i = 0; i < 10; i++) {
@@ -203,6 +203,24 @@ describe('EntityController', () => {
 
         const res2 = await request().get(`${baseUrl}?first=30`).expect(200)
         expect(res2.body.items.length).toBe(10)
+      })
+    })
+
+    describe('Last', () => {
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}` })
+        }
+      })
+
+      it('should skip the given number of items', async () => {
+        const res = await request().get(`${baseUrl}?last=4`).expect(200)
+        expect(res.body.items.length).toBe(6)
+        expect(res.body.items[0].name).toBe('item-4')
+
+        const res2 = await request().get(`${baseUrl}?last=30`).expect(200)
+        expect(res2.body.items.length).toBe(0)
       })
     })
 

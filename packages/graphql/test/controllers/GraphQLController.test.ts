@@ -250,6 +250,46 @@ describe('GraphQLController', () => {
         expect(res2.body.data.items.nodes.length).toBe(10)
       })
     })
+
+    describe('Last', () => {
+      beforeEach(async () => {
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}` })
+        }
+      })
+
+      it('should skip the given number of items', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (last: 4) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(res.body.data.items.nodes.length).toBe(6)
+
+        const res2 = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (last: 40) {
+                 nodes {
+                   name
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(res2.body.data.items.nodes.length).toBe(0)
+      })
+    })
   })
 
   describe('getEntity', () => {

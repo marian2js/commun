@@ -19,6 +19,7 @@ type SearchFilter<T> = {
 type FindOptions<T> = {
   sort?: SortOption<T>
   limit?: number
+  skip?: number
 }
 
 type SortOption<T> = {
@@ -61,7 +62,8 @@ export class EntityDao<T extends EntityModel> {
     return (await this.collection.find(parseDbFieldsInput(filter), {
       sort,
       projection,
-      limit: options.limit
+      limit: options.limit,
+      skip: options.skip,
     }).toArray()).map(item => parseDbFieldsOutput(item))
   }
 

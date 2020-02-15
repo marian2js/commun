@@ -69,10 +69,14 @@ export class EntityController<T extends EntityModel> {
     if (limit > MAX_PAGE_SIZE) {
       limit = MAX_PAGE_SIZE
     }
+    let skip
+    if (Number.isInteger(Number(req.query.last)) && Number(req.query.last) > 0) {
+      skip = Number(req.query.last)
+    }
 
     const populate = this.getPopulateFromRequest(req)
 
-    const models = await this.dao.find(filter, { sort, limit })
+    const models = await this.dao.find(filter, { sort, limit, skip })
     const modelPermissions = await Promise.all(models.map(async model => await this.hasValidPermissions(req, model, 'get', this.config.permissions)))
     const modelsWithValidPermissions = models.filter((_, i) => modelPermissions[i])
 
