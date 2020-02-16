@@ -12,10 +12,15 @@ import {
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
-import { parseFilter, strToApiFilter } from '../utils/ApiUtils'
+import { decodePaginationCursor, encodePaginationCursor, parseFilter, strToApiFilter } from '../utils/ApiUtils'
 
 type RequestOptions = {
   findModelById?: boolean
+}
+
+type PageInfo = {
+  startCursor?: string
+  endCursor?: string
 }
 
 const DEFAULT_PAGE_SIZE = 50
@@ -33,7 +38,7 @@ export class EntityController<T extends EntityModel> {
     return Commun.getEntityDao<T>(this.entityName)
   }
 
-  async list (req: Request): Promise<{ items: T[] }> {
+  async list (req: Request): Promise<{ items: T[], pageInfo: PageInfo }> {
     if (this.config.permissions?.get !== 'own') {
       await this.validateActionPermissions(req, null, 'get')
     }
@@ -73,15 +78,32 @@ export class EntityController<T extends EntityModel> {
     if (Number.isInteger(Number(req.query.last)) && Number(req.query.last) > 0) {
       skip = Number(req.query.last)
     }
+    let before
+    if (req.query.before) {
+      before = decodePaginationCursor<T>(req.query.before.trim())
+    }
+    let after
+    if (req.query.after) {
+      after = decodePaginationCursor<T>(req.query.after.trim())
+    }
 
     const populate = this.getPopulateFromRequest(req)
 
-    const models = await this.dao.find(filter, { sort, limit, skip })
+    const models = await this.dao.find(filter, { sort, limit, skip, before, after })
     const modelPermissions = await Promise.all(models.map(async model => await this.hasValidPermissions(req, model, 'get', this.config.permissions)))
     const modelsWithValidPermissions = models.filter((_, i) => modelPermissions[i])
 
+    const items = await Promise.all(modelsWithValidPermissions.map(async model => await this.prepareModelResponse(req, model, populate)))
+
+    const pageInfo: PageInfo = {}
+    if (items.length) {
+      pageInfo.startCursor = encodePaginationCursor(items[0], sort)
+      pageInfo.endCursor = encodePaginationCursor(items[items.length - 1], sort)
+    }
+
     return {
-      items: await Promise.all(modelsWithValidPermissions.map(async model => await this.prepareModelResponse(req, model, populate)))
+      items,
+      pageInfo,
     }
   }
 

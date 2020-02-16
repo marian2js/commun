@@ -1,5 +1,5 @@
 import { EntityConfig, EntityModel } from '..'
-import { Collection, FindOneOptions, ObjectId } from 'mongodb'
+import { Collection, ObjectId } from 'mongodb'
 import { MongoDbConnection } from './MongoDbConnection'
 
 export type DaoFilter<T> = EntityFilter<T> & SearchFilter<T>
@@ -20,19 +20,21 @@ type FindOptions<T> = {
   sort?: SortOption<T>
   limit?: number
   skip?: number
+  before?: Partial<T>
+  after?: Partial<T>
 }
 
-type SortOption<T> = {
+export type SortOption<T> = {
   [P in keyof T]?: 1 | -1
 }
 
-const parseDbFieldsInput = <T extends EntityModel> (fields?: { [P in keyof T]?: any }) => {
+const parseDbFieldsInput = <T extends EntityModel> (fields?: { [P in keyof T]?: any }, convertValues = true): any => {
   if (!fields) {
     return {}
   }
   const mongoFilterQuery = {
     ...fields,
-    ...(fields.id && { _id: fields.id }),
+    ...(fields.id && { _id: convertValues ? new ObjectId(fields.id) : fields.id }),
   }
   delete mongoFilterQuery.id
   return mongoFilterQuery
@@ -51,7 +53,7 @@ export class EntityDao<T extends EntityModel> {
   constructor (protected readonly collectionName: string) {}
 
   async find (filter: DaoFilter<T>, options: FindOptions<T> = {}): Promise<T[]> {
-    let sort: FindOneOptions['sort'] = parseDbFieldsInput(options.sort)
+    let sort = parseDbFieldsInput(options.sort, false)
     let projection
     if (filter.$text?.$search && (!sort || !Object.keys(sort).length)) {
       projection = sort = {
@@ -59,7 +61,21 @@ export class EntityDao<T extends EntityModel> {
       }
     }
 
-    return (await this.collection.find(parseDbFieldsInput(filter), {
+    let filterData = parseDbFieldsInput(filter)
+    if (options.before) {
+      filterData = {
+        ...filterData,
+        ...cursorToFilter(options.before, sort, true)
+      }
+    }
+    if (options.after) {
+      filterData = {
+        ...filterData,
+        ...cursorToFilter(options.after, sort, false)
+      }
+    }
+
+    return (await this.collection.find(filterData, {
       sort,
       projection,
       limit: options.limit,
@@ -135,4 +151,40 @@ export class EntityDao<T extends EntityModel> {
     }
     return this._collection
   }
+}
+
+function cursorToFilter<T extends EntityModel> (cursor: Partial<T>, sort: { [key: string]: any }, reverse: boolean) {
+  const cursorFields = parseDbFieldsInput(cursor)
+  const cursorEntries = Object.entries(cursorFields)
+  const sortData = Object.keys(sort).length > 0 ? sort : { _id: 1 }
+  const sortValue = reverse ? 1 : -1
+
+  if (!cursorEntries.length) {
+    return {}
+  }
+
+  const [firstKey, firstValue] = cursorEntries[0]
+  const filterCondition = {
+    [firstKey]: sortData[firstKey] === sortValue ? { $lt: firstValue } : { $gt: firstValue }
+  }
+
+  if (cursorEntries.length === 1) {
+    return filterCondition
+  }
+
+  const filter = {
+    $or: [filterCondition]
+  }
+
+  const orFilter: { [key: string]: any } = {}
+  for (const [key, value] of Object.entries(cursorFields)) {
+    if (key === firstKey) {
+      orFilter[key] = value
+    } else {
+      orFilter[key] = sortData[key] === sortValue ? { $lt: value } : { $gt: value }
+    }
+  }
+  filter.$or.push(orFilter)
+
+  return filter
 }

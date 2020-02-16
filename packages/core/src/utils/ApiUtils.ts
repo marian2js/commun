@@ -1,5 +1,5 @@
 import { ModelAttribute } from '../types'
-import { parseModelAttribute } from '..'
+import { EntityModel, parseModelAttribute, SortOption } from '..'
 
 type ApiEntityFilter = {
   [key: string]: ApiEntityFilter[] | ApiEntityFilterQuery
@@ -80,4 +80,29 @@ export function strToApiFilter<T> (filter: string, attributes: { [key in keyof T
   }
 
   return apiFilter
+}
+
+export function encodePaginationCursor<T extends EntityModel> (item: T, sort: SortOption<T>): string {
+  let cursorData
+  const sortKeys = Object.keys(sort)
+  if (sortKeys.length) {
+    if (!sortKeys.includes('id')) {
+      sortKeys.push('id')
+    }
+    cursorData = sortKeys.reduce((prev: { [key: string]: any }, curr) => {
+      prev[curr] = item[curr as keyof T]
+      return prev
+    }, {})
+  } else {
+    cursorData = { id: item.id }
+  }
+  return Buffer.from(JSON.stringify(cursorData)).toString('base64')
+}
+
+export function decodePaginationCursor<T extends EntityModel> (cursor: string): Partial<T> | undefined {
+  try {
+    return JSON.parse(Buffer.from(cursor, 'base64').toString('ascii'))
+  } catch (e) {
+    return
+  }
 }

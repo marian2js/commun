@@ -224,6 +224,86 @@ describe('EntityController', () => {
       })
     })
 
+    describe('Cursor Pagination', () => {
+      beforeEach(async () => {
+        await registerTestEntity({ get: 'anyone' })
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}`, num: i % 2 === 0 ? 1 : 0 })
+        }
+      })
+
+      it('should support a cursor for pagination', async () => {
+        const page1 = await request().get(`${baseUrl}?first=4`)
+          .expect(200)
+        expect(page1.body.items.length).toBe(4)
+        expect(page1.body.items[0].name).toBe('item-0')
+        expect(page1.body.items[1].name).toBe('item-1')
+        expect(page1.body.items[2].name).toBe('item-2')
+        expect(page1.body.items[3].name).toBe('item-3')
+
+        const page2 = await request().get(`${baseUrl}?first=4&after=${page1.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page2.body.items.length).toBe(4)
+        expect(page2.body.items[0].name).toBe('item-4')
+        expect(page2.body.items[1].name).toBe('item-5')
+        expect(page2.body.items[2].name).toBe('item-6')
+        expect(page2.body.items[3].name).toBe('item-7')
+
+        const page3 = await request().get(`${baseUrl}?first=4&after=${page2.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page3.body.items.length).toBe(2)
+        expect(page3.body.items[0].name).toBe('item-8')
+        expect(page3.body.items[1].name).toBe('item-9')
+
+        const page4 = await request().get(`${baseUrl}?first=4&after=${page3.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page4.body.items.length).toBe(0)
+      })
+
+      it('should support a cursor for pagination on a sorted query', async () => {
+        const page1 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC`)
+          .expect(200)
+        expect(page1.body.items.length).toBe(4)
+        expect(page1.body.items[0].name).toBe('item-0')
+        expect(page1.body.items[1].name).toBe('item-2')
+        expect(page1.body.items[2].name).toBe('item-4')
+        expect(page1.body.items[3].name).toBe('item-6')
+
+        const page2 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page1.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page2.body.items.length).toBe(4)
+        expect(page2.body.items[0].name).toBe('item-8')
+        expect(page2.body.items[1].name).toBe('item-1')
+        expect(page2.body.items[2].name).toBe('item-3')
+        expect(page2.body.items[3].name).toBe('item-5')
+
+        const page3 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page2.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page3.body.items.length).toBe(2)
+        expect(page3.body.items[0].name).toBe('item-7')
+        expect(page3.body.items[1].name).toBe('item-9')
+
+        const page4 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page3.body.pageInfo.endCursor}`)
+          .expect(200)
+        expect(page4.body.items.length).toBe(0)
+      })
+
+      it('should support a before cursor for pagination', async () => {
+        const res = await request().get(`${baseUrl}?last=7`)
+
+        const page1 = await request().get(`${baseUrl}?before=${res.body.pageInfo.startCursor}`)
+          .expect(200)
+        expect(page1.body.items.length).toBe(7)
+        expect(page1.body.items[0].name).toBe('item-0')
+        expect(page1.body.items[1].name).toBe('item-1')
+        expect(page1.body.items[2].name).toBe('item-2')
+        expect(page1.body.items[3].name).toBe('item-3')
+        expect(page1.body.items[4].name).toBe('item-4')
+        expect(page1.body.items[5].name).toBe('item-5')
+        expect(page1.body.items[6].name).toBe('item-6')
+      })
+    })
+
     describe('Search', () => {
       beforeEach(async () => {
         await registerTestEntity({ get: 'anyone' }, null, {}, [{

@@ -3,6 +3,7 @@ import { GraphQLBoolean, GraphQLInt, GraphQLList, GraphQLObjectType, GraphQLStri
 import { Request } from 'express'
 import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
+import { pageInfoType } from '../graphql-types/PageInfo'
 
 export const GraphQLController = {
   listEntities (
@@ -15,6 +16,8 @@ export const GraphQLController = {
     const args: any = {
       first: { type: GraphQLInt },
       last: { type: GraphQLInt },
+      before: { type: GraphQLString },
+      after: { type: GraphQLString },
     }
     if (getEntityInput) {
       args.filter = {
@@ -39,6 +42,9 @@ export const GraphQLController = {
         fields: {
           nodes: {
             type: new GraphQLNonNull(new GraphQLList(entityType))
+          },
+          pageInfo: {
+            type: pageInfoType,
           }
         }
       }),
@@ -51,9 +57,12 @@ export const GraphQLController = {
             .join(';')
         }
         const res = await entity.controller.list(req)
-        return {
+        const data = {
+          ...res,
           nodes: res.items
         }
+        delete data.items
+        return data
       },
       description: `Find ${capitalize(entity.config.entityName)}.`
     }
