@@ -1,6 +1,6 @@
 import { EntityModel } from './EntityModel'
 import { EntityConfig } from './EntityConfig'
-import { EntityController, EntityDao, OptionalKeys } from '..'
+import { EntityController, EntityDao } from '..'
 import { Module } from './Module'
 
 interface RegisterEntityRequiredProps<MODEL extends EntityModel> {
@@ -14,4 +14,4 @@ export interface Entity<MODEL extends EntityModel> extends Module, RegisterEntit
 
 export type RegisterEntityOptions<MODEL extends EntityModel> =
   RegisterEntityRequiredProps<MODEL>
-  & OptionalKeys<Entity<MODEL>>
+  & Partial<Entity<MODEL>>

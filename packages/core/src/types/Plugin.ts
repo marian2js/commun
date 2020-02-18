@@ -1,4 +1,4 @@
-import { OptionalKeys, PluginController } from '..'
+import { PluginController } from '..'
 import { Module } from './Module'
 
 export interface PluginConfig {}
@@ -8,4 +8,4 @@ export interface Plugin extends Module {
   controller: PluginController
 }
 
-export type RegisterPluginOptions = OptionalKeys<Plugin>
+export type RegisterPluginOptions = Partial<Plugin>
