@@ -42,37 +42,15 @@ Options:
   -h, --help         output usage information
 ```
 
-## Features
+## Dashboard
 
-### User Management
+![Commun Dashboard](https://i.imgur.com/OfssVs1.png)
 
-Commun includes a fully featured user system with authentication and permission management.
+Commun comes with a complete dashboard that you can use to manage your application without having to write any code.
 
-Supported authentication strategies include: Email & Password, Google, Facebook and GitHub.
+The dashboard also works perfectly on mobile devices, so you can manage your app on the go.
 
-**Provided APIs:**
-
-* `[POST] /api/v1/auth/password`
-  - Creates a new user with email, username and password
-  - Sends an email with a code to verify the email 
-
-* `[POST] /api/v1/auth/password/login`
-  - Authenticates an user with email/username and password
-  - Returns refresh and access token
-
-* `[POST] /api/v1/auth/token`
-  - Returns an access token given a refresh token
-
-* `[POST] /api/v1/auth/verify`
-  - Verifies an user's email given the code sent after registration
-
-* `[POST] /api/v1/auth/password/forgot`
-  - Sends a forgot password code by email
-
-* `[POST] /api/v1/auth/password/reset`
-  - Allows to change a password, given a valid forgot password code
-
-Users are entities, so you can also use all the APIs specified bellow, where `:entity` is `users`
+## Documentation
 
 ### Entities
 
@@ -161,15 +139,37 @@ For example, a `PostVote` entity which stores a vote of an user on a given post 
 
 Entities can specify a list of indexes that will be created on MongoDB.
 
-### Dashboard
+### User Management
 
-![Commun Dashboard](https://i.imgur.com/OfssVs1.png)
+Commun includes a fully featured user system with authentication and permission management.
 
-Commun comes with a complete dashboard that you can use to manage your application without having to write any code.
+Supported authentication strategies include: Email & Password, Google, Facebook and GitHub.
 
-The dashboard also works perfectly on mobile devices, so you can manage your app on the go.
+**Provided APIs:**
 
-### Production readiness
+* `[POST] /api/v1/auth/password`
+  - Creates a new user with email, username and password
+  - Sends an email with a code to verify the email 
+
+* `[POST] /api/v1/auth/password/login`
+  - Authenticates an user with email/username and password
+  - Returns refresh and access token
+
+* `[POST] /api/v1/auth/token`
+  - Returns an access token given a refresh token
+
+* `[POST] /api/v1/auth/verify`
+  - Verifies an user's email given the code sent after registration
+
+* `[POST] /api/v1/auth/password/forgot`
+  - Sends a forgot password code by email
+
+* `[POST] /api/v1/auth/password/reset`
+  - Allows to change a password, given a valid forgot password code
+
+Users are entities, so you can also use all the entity APIs replacing `:entity` with `users`
+
+## Production readiness
 
 All the configuration used by Commun is stored in json files, which are updated by the dashboard.
 
