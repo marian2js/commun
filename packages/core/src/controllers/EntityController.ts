@@ -21,6 +21,8 @@ type RequestOptions = {
 type PageInfo = {
   startCursor?: string
   endCursor?: string
+  hasPreviousPage?: boolean
+  hasNextPage?: boolean
 }
 
 const DEFAULT_PAGE_SIZE = 50
@@ -38,10 +40,12 @@ export class EntityController<T extends EntityModel> {
     return Commun.getEntityDao<T>(this.entityName)
   }
 
-  async list (req: Request): Promise<{ items: T[], pageInfo: PageInfo }> {
+  async list (req: Request, requestedKeys?: 'all' | { nodes?: any, pageInfo?: PageInfo }): Promise<{ items: T[], pageInfo: PageInfo }> {
     if (this.config.permissions?.get !== 'own') {
       await this.validateActionPermissions(req, null, 'get')
     }
+
+    const pageInfo: PageInfo = {}
 
     const sort: { [P in keyof T]?: 1 | -1 } = {}
     const orderBy = req.query.orderby || req.query.orderBy
@@ -74,6 +78,13 @@ export class EntityController<T extends EntityModel> {
     if (limit > MAX_PAGE_SIZE) {
       limit = MAX_PAGE_SIZE
     }
+
+    // if hasNextPage was requested, increase the limit in 1, but don't return that item
+    const requestedHasNextPage = requestedKeys === 'all' || requestedKeys?.pageInfo?.hasNextPage
+    if (requestedHasNextPage) {
+      limit++
+    }
+
     let skip
     if (Number.isInteger(Number(req.query.last)) && Number(req.query.last) > 0) {
       skip = Number(req.query.last)
@@ -90,15 +101,23 @@ export class EntityController<T extends EntityModel> {
     const populate = this.getPopulateFromRequest(req)
 
     const models = await this.dao.find(filter, { sort, limit, skip, before, after })
+    if (requestedHasNextPage && models.length === limit) {
+      models.pop()
+      pageInfo.hasNextPage = true
+    }
+
     const modelPermissions = await Promise.all(models.map(async model => await this.hasValidPermissions(req, model, 'get', this.config.permissions)))
     const modelsWithValidPermissions = models.filter((_, i) => modelPermissions[i])
 
     const items = await Promise.all(modelsWithValidPermissions.map(async model => await this.prepareModelResponse(req, model, populate)))
 
-    const pageInfo: PageInfo = {}
     if (items.length) {
       pageInfo.startCursor = encodePaginationCursor(items[0], sort)
       pageInfo.endCursor = encodePaginationCursor(items[items.length - 1], sort)
+    }
+    if (requestedKeys === 'all' || requestedKeys?.pageInfo) {
+      pageInfo.hasPreviousPage = !!skip || !!after
+      pageInfo.hasNextPage = pageInfo.hasNextPage || false
     }
 
     return {

@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLString } from 'graphql'
+import { GraphQLBoolean, GraphQLObjectType, GraphQLString } from 'graphql'
 
 export const pageInfoType = new GraphQLObjectType({
   name: 'PageInfo',
@@ -8,6 +8,12 @@ export const pageInfoType = new GraphQLObjectType({
     },
     endCursor: {
       type: GraphQLString,
+    },
+    hasPreviousPage: {
+      type: GraphQLBoolean
+    },
+    hasNextPage: {
+      type: GraphQLBoolean
     },
   },
 })

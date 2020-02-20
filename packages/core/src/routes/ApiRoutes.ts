@@ -4,7 +4,7 @@ import { sendResponse } from '../utils'
 
 const router = express.Router()
   .get('/:entity', (req, res, next) =>
-    sendResponse(req, res, next, Commun.getEntityController(req.params.entity).list(req)))
+    sendResponse(req, res, next, Commun.getEntityController(req.params.entity).list(req, 'all')))
   .post('/:entity', (req, res, next) =>
     sendResponse(req, res, next, Commun.getEntityController(req.params.entity).create(req)))
   .get('/:entity/:id', (req, res, next) =>

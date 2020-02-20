@@ -240,6 +240,8 @@ describe('EntityController', () => {
         expect(page1.body.items[1].name).toBe('item-1')
         expect(page1.body.items[2].name).toBe('item-2')
         expect(page1.body.items[3].name).toBe('item-3')
+        expect(page1.body.pageInfo.hasPreviousPage).toBe(false)
+        expect(page1.body.pageInfo.hasNextPage).toBe(true)
 
         const page2 = await request().get(`${baseUrl}?first=4&after=${page1.body.pageInfo.endCursor}`)
           .expect(200)
@@ -248,16 +250,22 @@ describe('EntityController', () => {
         expect(page2.body.items[1].name).toBe('item-5')
         expect(page2.body.items[2].name).toBe('item-6')
         expect(page2.body.items[3].name).toBe('item-7')
+        expect(page2.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page2.body.pageInfo.hasNextPage).toBe(true)
 
         const page3 = await request().get(`${baseUrl}?first=4&after=${page2.body.pageInfo.endCursor}`)
           .expect(200)
         expect(page3.body.items.length).toBe(2)
         expect(page3.body.items[0].name).toBe('item-8')
         expect(page3.body.items[1].name).toBe('item-9')
+        expect(page3.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page3.body.pageInfo.hasNextPage).toBe(false)
 
         const page4 = await request().get(`${baseUrl}?first=4&after=${page3.body.pageInfo.endCursor}`)
           .expect(200)
         expect(page4.body.items.length).toBe(0)
+        expect(page4.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page4.body.pageInfo.hasNextPage).toBe(false)
       })
 
       it('should support a cursor for pagination on a sorted query', async () => {
@@ -268,6 +276,8 @@ describe('EntityController', () => {
         expect(page1.body.items[1].name).toBe('item-2')
         expect(page1.body.items[2].name).toBe('item-4')
         expect(page1.body.items[3].name).toBe('item-6')
+        expect(page1.body.pageInfo.hasPreviousPage).toBe(false)
+        expect(page1.body.pageInfo.hasNextPage).toBe(true)
 
         const page2 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page1.body.pageInfo.endCursor}`)
           .expect(200)
@@ -276,16 +286,22 @@ describe('EntityController', () => {
         expect(page2.body.items[1].name).toBe('item-1')
         expect(page2.body.items[2].name).toBe('item-3')
         expect(page2.body.items[3].name).toBe('item-5')
+        expect(page2.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page2.body.pageInfo.hasNextPage).toBe(true)
 
         const page3 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page2.body.pageInfo.endCursor}`)
           .expect(200)
         expect(page3.body.items.length).toBe(2)
         expect(page3.body.items[0].name).toBe('item-7')
         expect(page3.body.items[1].name).toBe('item-9')
+        expect(page3.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page3.body.pageInfo.hasNextPage).toBe(false)
 
         const page4 = await request().get(`${baseUrl}?first=4&orderBy=num:DESC&after=${page3.body.pageInfo.endCursor}`)
           .expect(200)
         expect(page4.body.items.length).toBe(0)
+        expect(page4.body.pageInfo.hasPreviousPage).toBe(true)
+        expect(page4.body.pageInfo.hasNextPage).toBe(false)
       })
 
       it('should support a before cursor for pagination', async () => {
@@ -301,6 +317,8 @@ describe('EntityController', () => {
         expect(page1.body.items[4].name).toBe('item-4')
         expect(page1.body.items[5].name).toBe('item-5')
         expect(page1.body.items[6].name).toBe('item-6')
+        expect(page1.body.pageInfo.hasPreviousPage).toBe(false)
+        expect(page1.body.pageInfo.hasNextPage).toBe(false)
       })
     })
 
