@@ -32,6 +32,7 @@ export const AttributeTypeSelector = (props: Props) => {
         required
         fullWidth>
         <MenuItem value="boolean">Boolean</MenuItem>
+        <MenuItem value="date">Date</MenuItem>
         <MenuItem value="email">Email</MenuItem>
         <MenuItem value="enum">Enum</MenuItem>
         <MenuItem value="list">List</MenuItem>
