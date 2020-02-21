@@ -35,6 +35,7 @@ describe('EmailClient', () => {
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
+        templates: {},
       })
       await EmailClient.sendEmail('template', 'to@example.org', {})
       expect(transporter.sendMail).toHaveBeenCalledWith({
@@ -55,6 +56,7 @@ describe('EmailClient', () => {
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
+        templates: {},
       })
       await EmailClient.sendEmail('template', 'to@example.org', { hi: 'test-name' })
       expect(transporter.sendMail).toHaveBeenCalledWith({
@@ -80,6 +82,7 @@ describe('EmailClient', () => {
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
+        templates: {},
       })
       await EmailClient.sendEmail('template', 'to@example.org')
       expect(transporter.sendMail).toHaveBeenCalledWith({
@@ -100,6 +103,7 @@ describe('EmailClient', () => {
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
+        templates: {},
       })
       await EmailClient.sendEmail('template', 'to@example.org', {})
       expect(transporter.sendMail).not.toHaveBeenCalled()
@@ -109,6 +113,7 @@ describe('EmailClient', () => {
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
+        templates: {},
       })
       await EmailClient.sendEmail('template', 'to@example.org', {})
       expect(transporter.sendMail).not.toHaveBeenCalled()

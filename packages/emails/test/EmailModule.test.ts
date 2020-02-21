@@ -14,7 +14,8 @@ describe('EmailModule', () => {
       expect(EmailModule.wasSetup).toBe(false)
       const options = {
         transporter: nodemailer.createTransport({ host: 'example.org' }),
-        sendFrom: 'hi@example.org'
+        sendFrom: 'hi@example.org',
+        templates: {},
       }
       await EmailModule.setup(options)
       expect(EmailModule.wasSetup).toBe(true)
