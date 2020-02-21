@@ -290,6 +290,92 @@ describe('GraphQLController', () => {
         expect(res2.body.data.items.nodes.length).toBe(0)
       })
     })
+
+    describe('Cursor Pagination', () => {
+      beforeEach(async () => {
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item-${i}` })
+        }
+      })
+
+      it('should paginate using endCursor', async () => {
+        const page1 = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 4) {
+                 nodes {
+                   name
+                 }
+                 pageInfo {
+                   endCursor
+                   hasPreviousPage
+                   hasNextPage
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(page1.body.data.items.nodes.length).toBe(4)
+        expect(page1.body.data.items.nodes[0].name).toBe('item-0')
+        expect(page1.body.data.items.nodes[1].name).toBe('item-1')
+        expect(page1.body.data.items.nodes[2].name).toBe('item-2')
+        expect(page1.body.data.items.nodes[3].name).toBe('item-3')
+        expect(page1.body.data.items.pageInfo.hasPreviousPage).toBe(false)
+        expect(page1.body.data.items.pageInfo.hasNextPage).toBe(true)
+
+        const page2 = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 4, after: "${page1.body.data.items.pageInfo.endCursor}") {
+                 nodes {
+                   name
+                 }
+                 pageInfo {
+                   endCursor
+                   hasPreviousPage
+                   hasNextPage
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(page2.body.data.items.nodes.length).toBe(4)
+        expect(page2.body.data.items.nodes[0].name).toBe('item-4')
+        expect(page2.body.data.items.nodes[1].name).toBe('item-5')
+        expect(page2.body.data.items.nodes[2].name).toBe('item-6')
+        expect(page2.body.data.items.nodes[3].name).toBe('item-7')
+        expect(page2.body.data.items.pageInfo.hasPreviousPage).toBe(true)
+        expect(page2.body.data.items.pageInfo.hasNextPage).toBe(true)
+
+        const page3 = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 4, after: "${page2.body.data.items.pageInfo.endCursor}") {
+                 nodes {
+                   name
+                 }
+                 pageInfo {
+                   endCursor
+                   hasPreviousPage
+                   hasNextPage
+                 }
+               }
+             }`
+          })
+          .expect(200)
+        expect(page3.body.data.items.nodes.length).toBe(2)
+        expect(page3.body.data.items.nodes[0].name).toBe('item-8')
+        expect(page3.body.data.items.nodes[1].name).toBe('item-9')
+        expect(page3.body.data.items.pageInfo.hasPreviousPage).toBe(true)
+        expect(page3.body.data.items.pageInfo.hasNextPage).toBe(false)
+      })
+    })
   })
 
   describe('getEntity', () => {

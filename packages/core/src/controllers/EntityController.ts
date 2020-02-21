@@ -40,7 +40,7 @@ export class EntityController<T extends EntityModel> {
     return Commun.getEntityDao<T>(this.entityName)
   }
 
-  async list (req: Request, requestedKeys?: 'all' | { nodes?: any, pageInfo?: PageInfo }): Promise<{ items: T[], pageInfo: PageInfo }> {
+  async list (req: Request, requestedKeys?: 'all' | { nodes?: object, pageInfo?: PageInfo }): Promise<{ items: T[], pageInfo: PageInfo }> {
     if (this.config.permissions?.get !== 'own') {
       await this.validateActionPermissions(req, null, 'get')
     }

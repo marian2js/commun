@@ -4,6 +4,7 @@ import { Request } from 'express'
 import { Entity, EntityModel } from '@commun/core'
 import { capitalize } from '../utils/StringUtils'
 import { pageInfoType } from '../graphql-types/PageInfo'
+import graphqlFields from 'graphql-fields'
 
 export const GraphQLController = {
   listEntities (
@@ -49,14 +50,15 @@ export const GraphQLController = {
         }
       }),
       args,
-      resolve: async (parentValue: any, args: any, req: Request) => {
+      resolve: async (parentValue: any, args: any, req: Request, info: any) => {
+        const requestedKeys = graphqlFields(info)
         req.query = args
         if (args.orderBy) {
           req.query.orderBy = args.orderBy
             .map((orderBy: { [key: string]: 'asc' | 'desc' }) => Object.entries(orderBy).map(entry => entry.join(':')).join(';'))
             .join(';')
         }
-        const res = await entity.controller.list(req)
+        const res = await entity.controller.list(req, requestedKeys)
         const data = {
           ...res,
           nodes: res.items
