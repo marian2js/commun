@@ -24,6 +24,8 @@ describe('AdminModule', () => {
       await AdminModule.setup()
       SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('secure-code'))
       Commun.registerEntity({ config: DefaultUserConfig })
+      const dao = Commun.getEntityDao('users')
+      dao.getEstimatedCount = jest.fn(() => Promise.resolve(0))
       await startTestApp(Commun)
     })
 
