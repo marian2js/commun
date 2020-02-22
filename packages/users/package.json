@@ -1,6 +1,6 @@
 {
   "name": "@commun/users",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Commun users",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -20,8 +20,8 @@
     "url": "https://github.com/commundev/commun/issues"
   },
   "dependencies": {
-    "@commun/core": "^0.3.3",
-    "@commun/emails": "^0.3.3",
+    "@commun/core": "^0.3.4",
+    "@commun/emails": "^0.3.4",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "express-session": "^1.17.0",

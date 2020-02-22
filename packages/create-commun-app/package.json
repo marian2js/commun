@@ -1,6 +1,6 @@
 {
   "name": "create-commun-app",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Package for creating a new Commun app",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -23,7 +23,7 @@
     "url": "https://github.com/commundev/commun/issues"
   },
   "dependencies": {
-    "@commun/core": "^0.3.3",
+    "@commun/core": "^0.3.4",
     "chalk": "^3.0.0",
     "commander": "^4.1.0"
   },
