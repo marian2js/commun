@@ -451,6 +451,17 @@ describe('EntityController', () => {
           expect(res.body.items.length).toBe(3)
         })
 
+        it('should return items with "own" get permission if the user is an admin', async () => {
+          await registerTestEntity({ get: 'own' })
+          const res = await request().get(baseUrl).expect(200)
+          expect(res.body.items.length).toBe(0)
+
+          const resNonAdmin = await authenticatedRequest(admin.id)
+            .get(baseUrl)
+            .expect(200)
+          expect(resNonAdmin.body.items.length).toBe(3)
+        })
+
         it('should only return values with "admin" get permissions if the user is an admin', async () => {
           await registerTestEntityWithCustomAttrPermissions('get', 'anyone', 'admin')
 

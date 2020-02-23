@@ -3,6 +3,7 @@ import {
   Commun,
   DaoFilter,
   EntityModel,
+  EntityPermission,
   getJoinAttribute,
   getModelAttribute,
   ModelAttribute,
@@ -236,7 +237,11 @@ export class EntityController<T extends EntityModel> {
 
     // Prepare attributes
     for (const [key, attribute] of attributes) {
+      if (key === 'email') {
+      }
       if (await this.hasValidPermissions(req, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
+        if (key === 'email') {
+        }
         item[key as keyof T] = await this.prepareModelAttributeResponse(req, model, key as keyof T, attribute!, populate)
       }
     }
@@ -302,8 +307,9 @@ export class EntityController<T extends EntityModel> {
       return false
     }
 
-    const hasAnyoneAccess = Array.isArray(permissions[action]) ?
-      permissions[action]!.includes('anyone') : permissions[action] === 'anyone'
+    const permission = permissions[action]!
+
+    const hasAnyoneAccess = Array.isArray(permission) ? permission.includes('anyone') : permission === 'anyone'
     if (hasAnyoneAccess) {
       return true
     }
@@ -311,25 +317,25 @@ export class EntityController<T extends EntityModel> {
       return false
     }
 
-    const hasUserAccess = Array.isArray(permissions[action]) ?
-      permissions[action]!.includes('user') : permissions[action] === 'user'
+    const hasUserAccess = Array.isArray(permission) ? permission.includes('user') : permission === 'user'
     if (hasUserAccess) {
       return true
     }
 
-    const hasOwnAccess = Array.isArray(permissions[action]) ?
-      permissions[action]!.includes('own') : permissions[action] === 'own'
+    const hasOwnAccess = Array.isArray(permission) ? permission.includes('own') : permission === 'own'
     if (hasOwnAccess && model) {
       const userAttrEntries = Object.entries(this.config.attributes).find(([_, value]) => value?.type === 'user')
       if (userAttrEntries && userAttrEntries[0]) {
         const userId = '' + (model as { [key in keyof T]?: any })[userAttrEntries[0] as keyof T]
-        return userId && userId === req.auth.id
+        if (userId && userId === req.auth.id) {
+          return true
+        }
       }
     }
 
-    const hasAdminAccess = Array.isArray(permissions[action]) ?
-      permissions[action]!.includes('admin') : permissions[action] === 'admin'
-    if (hasAdminAccess) {
+    const hasSystemOnlyAccess = Array.isArray(permission) ?
+      !(permission as EntityPermission[]).find(permission => permission !== 'system') : permission === 'system'
+    if (!hasSystemOnlyAccess) {
       const user = await Commun.getEntityDao<EntityModel & { admin: boolean }>('users').findOneById(req.auth.id)
       return user && user.admin
     }
