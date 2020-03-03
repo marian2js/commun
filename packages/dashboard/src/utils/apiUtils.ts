@@ -3,10 +3,10 @@ import { routes } from '../routes'
 export const STORE_USER_KEY = 'commun_dashboard_user'
 export const STORE_TOKENS_KEY = 'commun_dashboard_tokens'
 
-export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: any) {
+export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: any, useToken = true) {
   console.log(`[${method.toUpperCase()}] /api/v1${path}`)
 
-  const authHeader = getAuthenticationHeader()
+  const authHeader = useToken && await getAuthenticationHeader()
   const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
@@ -35,15 +35,37 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
   return await res.json()
 }
 
-export function getAuthenticationHeader () {
-  const tokens = localStorage.getItem(STORE_TOKENS_KEY)
-  if (tokens) {
-    const accessToken = JSON.parse(tokens).accessToken
+export async function getAuthenticationHeader () {
+  const tokensJson = localStorage.getItem(STORE_TOKENS_KEY)
+  if (tokensJson) {
+    const tokens = JSON.parse(tokensJson)
+    let accessToken
+    if (tokens.accessTokenExpiration < new Date().getTime()) {
+      const userJson = localStorage.getItem(STORE_USER_KEY)
+      if (!userJson) {
+        return null
+      }
+      accessToken = await refreshCredentials(JSON.parse(userJson).username, tokens.refreshToken)
+    } else {
+      accessToken = tokens.accessToken
+    }
     if (accessToken) {
       return `Bearer ${accessToken}`
     }
   }
   return null
+}
+
+async function refreshCredentials (username: string, refreshToken: string): Promise<string> {
+  const res = await request('POST', '/auth/token', {
+    username,
+    refreshToken
+  }, false)
+  localStorage.setItem(STORE_TOKENS_KEY, JSON.stringify({
+    refreshToken,
+    ...res,
+  }))
+  return res.accessToken
 }
 
 export async function requestUntilSuccess (

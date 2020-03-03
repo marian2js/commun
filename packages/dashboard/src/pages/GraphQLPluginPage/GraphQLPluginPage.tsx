@@ -29,7 +29,7 @@ export const GraphQLPluginPage = () => {
   }, [])
 
   async function graphQLFetcher (graphQLParams: any) {
-    const authHeader = getAuthenticationHeader()
+    const authHeader = await getAuthenticationHeader()
     const res = await fetch('/graphql', {
       method: 'post',
       headers: {
