@@ -402,10 +402,12 @@ describe('BaseUserController', () => {
         user: expect.any(Object),
         tokens: {
           accessToken: 'signed-token',
-          accessTokenExpiration: '3 days',
+          accessTokenExpiration: expect.any(Number),
           refreshToken: 'plain-code',
         }
       })
+      expect(Math.round(res.body.tokens.accessTokenExpiration / 10000))
+        .toBe(Math.round((new Date().getTime() + 259200000) / 10000))
     })
 
     it('should return a client error if the user does not exist', async () => {
@@ -465,7 +467,7 @@ describe('BaseUserController', () => {
         },
         tokens: {
           accessToken: 'signed-token',
-          accessTokenExpiration: '3 days',
+          accessTokenExpiration: expect.any(Number),
           refreshToken: 'plain-code',
         }
       })

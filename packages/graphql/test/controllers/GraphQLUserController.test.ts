@@ -59,7 +59,7 @@ describe('GraphQLUserController', () => {
     it('should return an access token', async () => {
       controller.getAccessToken = jest.fn(() => Promise.resolve({
         accessToken: 'test-access-token',
-        accessTokenExpiration: '1 day',
+        accessTokenExpiration: 123456,
       }))
 
       const res = await authenticatedRequest(user.id!.toString())
@@ -75,7 +75,7 @@ describe('GraphQLUserController', () => {
         })
         .expect(200)
       expect(res.body.data.accessToken.accessToken).toBe('test-access-token')
-      expect(res.body.data.accessToken.accessTokenExpiration).toBe('1 day')
+      expect(res.body.data.accessToken.accessTokenExpiration).toBe(123456)
     })
   })
 
@@ -202,7 +202,7 @@ describe('GraphQLUserController', () => {
         tokens: {
           accessToken: 'test-access-token',
           refreshToken: 'test-refresh-token',
-          accessTokenExpiration: '1 day',
+          accessTokenExpiration: 123456,
         },
         user,
       }))
@@ -227,7 +227,7 @@ describe('GraphQLUserController', () => {
         .expect(200)
       expect(res.body.data.completeSocialAuthentication.tokens.accessToken).toBe('test-access-token')
       expect(res.body.data.completeSocialAuthentication.tokens.refreshToken).toBe('test-refresh-token')
-      expect(res.body.data.completeSocialAuthentication.tokens.accessTokenExpiration).toBe('1 day')
+      expect(res.body.data.completeSocialAuthentication.tokens.accessTokenExpiration).toBe(123456)
       expect(res.body.data.completeSocialAuthentication.user.username).toBe('test')
     })
   })

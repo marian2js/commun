@@ -1,6 +1,6 @@
 export interface AccessToken {
   accessToken: string
-  accessTokenExpiration?: string | number
+  accessTokenExpiration?: number
 }
 
 export interface UserTokens extends AccessToken {

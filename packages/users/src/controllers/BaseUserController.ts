@@ -15,6 +15,7 @@ import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
 import { EmailClient } from '@commun/emails'
 import passport from 'passport'
 import { ExternalAuth } from '../security/ExternalAuth'
+import ms from 'ms'
 
 export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
   async create (req: Request): Promise<{ item: MODEL }> {
@@ -216,9 +217,11 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
   protected async generateAccessToken (user: MODEL) {
     const accessToken = await AccessTokenSecurity.sign({ id: user.id! })
+    let expiresIn = UserModule.getOptions().accessToken?.expiresIn || 0
+    const expirationMilliseconds = typeof expiresIn === 'number' ? expiresIn : ms(expiresIn)
     return {
       accessToken,
-      accessTokenExpiration: UserModule.getOptions().accessToken?.expiresIn
+      accessTokenExpiration: new Date().getTime() + expirationMilliseconds
     }
   }
 
