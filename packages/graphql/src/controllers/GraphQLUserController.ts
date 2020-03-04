@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLInt, GraphQLObjectType, GraphQLString } from 'graphql'
+import { GraphQLBoolean, GraphQLFloat, GraphQLObjectType, GraphQLString } from 'graphql'
 import { GraphQLNonNull } from 'graphql/type/definition'
 import { Request } from 'express'
 import { Commun, UnauthorizedError } from '@commun/core'
@@ -12,7 +12,7 @@ const tokensType = new GraphQLObjectType({
   name: 'Tokens',
   fields: {
     accessToken: { type: new GraphQLNonNull(GraphQLString) },
-    accessTokenExpiration: { type: GraphQLInt },
+    accessTokenExpiration: { type: GraphQLFloat },
     refreshToken: { type: GraphQLString },
   }
 })
@@ -48,7 +48,7 @@ export const GraphQLUserController = {
         name: 'AccessToken',
         fields: {
           accessToken: { type: new GraphQLNonNull(GraphQLString) },
-          accessTokenExpiration: { type: GraphQLInt },
+          accessTokenExpiration: { type: GraphQLFloat },
         }
       }),
       resolve: async (_: any, args: any, req: Request) => {
