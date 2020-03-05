@@ -128,8 +128,12 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
 
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
     const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'type') as GraphQLOutputType
+    const permission = { ...entityConfig.permissions, ...attribute!.permissions }['get']
+    const hasAnyoneAccess = Array.isArray(permission) ? permission.includes('anyone') : permission === 'anyone'
+    const required = attribute!.required && (hasAnyoneAccess || ['ref', 'user'].includes(attribute!.type))
+
     fields[key] = {
-      type: attribute!.required || key === 'id' ? new GraphQLNonNull(type) : type,
+      type: key === 'id' || required ? new GraphQLNonNull(type) : type,
       resolve: getAttributeGraphQLResolver(entityConfig, attribute!)
     }
   }
