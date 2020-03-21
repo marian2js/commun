@@ -6,7 +6,7 @@ export const STORE_TOKENS_KEY = 'commun_dashboard_tokens'
 export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: any, useToken = true) {
   console.log(`[${method.toUpperCase()}] /api/v1${path}`)
 
-  const authHeader = useToken && await getAuthenticationHeader()
+  const authHeader = useToken && await getAuthenticationHeader(path !== '/auth/logout')
   const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
@@ -35,7 +35,7 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
   return await res.json()
 }
 
-export async function getAuthenticationHeader () {
+export async function getAuthenticationHeader (refreshExpiredCredentials = true) {
   const tokensJson = localStorage.getItem(STORE_TOKENS_KEY)
   if (tokensJson) {
     const tokens = JSON.parse(tokensJson)
@@ -45,7 +45,9 @@ export async function getAuthenticationHeader () {
       if (!userJson) {
         return null
       }
-      accessToken = await refreshCredentials(JSON.parse(userJson).username, tokens.refreshToken)
+      if (refreshExpiredCredentials) {
+        accessToken = await refreshCredentials(JSON.parse(userJson).username, tokens.refreshToken)
+      }
     } else {
       accessToken = tokens.accessToken
     }

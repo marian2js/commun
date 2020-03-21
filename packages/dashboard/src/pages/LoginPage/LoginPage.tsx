@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react'
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react'
 import { Redirect } from 'react-router'
 import Avatar from '@material-ui/core/Avatar'
 import Button from '@material-ui/core/Button'
@@ -38,6 +38,10 @@ export function LoginPage () {
   const [username, setUsername] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [loggedIn, setLoggedIn] = useState<boolean>(false)
+
+  useEffect(() => {
+    (async () => await UserService.logout())()
+  }, [])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

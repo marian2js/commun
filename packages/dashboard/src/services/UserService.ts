@@ -8,8 +8,14 @@ export const UserService = {
     return res
   },
 
+  async logout () {
+    await request('POST', '/auth/logout')
+    localStorage.removeItem(STORE_USER_KEY)
+    localStorage.removeItem(STORE_TOKENS_KEY)
+  },
+
   async register (data: { email: string, username: string, password: string, code: string }) {
     await request('POST', '/admin', data)
     return await this.login({ username: data.username, password: data.password })
-  }
+  },
 }
