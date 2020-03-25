@@ -3,6 +3,8 @@ import { Commun } from '../Commun'
 import { sendResponse } from '../utils'
 
 const router = express.Router()
+  .get('/ping', (req, res) => res.send('OK'))
+
   .get('/:entity', (req, res, next) =>
     sendResponse(req, res, next, Commun.getEntityController(req.params.entity).list(req, 'all')))
   .post('/:entity', (req, res, next) =>
