@@ -1,4 +1,5 @@
 import { routes } from '../routes'
+import { ServerService } from '../services/ServerService'
 
 export const STORE_USER_KEY = 'commun_dashboard_user'
 export const STORE_TOKENS_KEY = 'commun_dashboard_tokens'
@@ -30,6 +31,10 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
       throw new Error(data.error.message)
     }
     throw new Error('Something went wrong, please try again later')
+  }
+
+  if (method !== 'GET') {
+    await ServerService.handleServerRestart()
   }
 
   return await res.json()

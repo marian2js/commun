@@ -5,7 +5,7 @@ import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
-import { createStyles, makeStyles, Theme } from '@material-ui/core'
+import { Backdrop, CircularProgress, createStyles, makeStyles, Theme } from '@material-ui/core'
 import { SideMenu } from '../SideMenu/SideMenu'
 import { ServerService } from '../../services/ServerService'
 
@@ -37,7 +37,11 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     contentPadding: {
       padding: theme.spacing(3),
-    }
+    },
+    backdrop: {
+      zIndex: theme.zIndex.drawer + 10000,
+      color: '#fff',
+    },
   }),
 )
 
@@ -51,10 +55,12 @@ export function Layout (props: Props) {
   const { noPadding } = props
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [serverSettings, setServerSettings] = React.useState()
+  const [serverOnline, setServerOnline] = React.useState(ServerService.online)
 
   useEffect(() => {
     (async () => {
       setServerSettings(await ServerService.getServerSettings())
+      setInterval(async () => setServerOnline(ServerService.online), 100)
     })()
   }, [])
 
@@ -82,7 +88,9 @@ export function Layout (props: Props) {
           {
             serverSettings && (
               <Typography variant="subtitle2" noWrap>
-                Running in {serverSettings.environment}
+                {
+                  serverOnline ? `Running in ${serverSettings.environment}` : 'Waiting for server response...'
+                }
               </Typography>
             )
           }
@@ -94,6 +102,10 @@ export function Layout (props: Props) {
         <div className={classes.toolbar}/>
         {props.children}
       </main>
+
+      <Backdrop className={classes.backdrop} open={!serverOnline}>
+        <CircularProgress color="inherit"/>
+      </Backdrop>
     </div>
   )
 }

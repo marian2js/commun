@@ -3,6 +3,7 @@ import { AdminRouter } from './routers/AdminRouter'
 import { AdminController } from './controllers/AdminController'
 
 let firstRunCode: string | undefined
+let serverStartTime: number
 
 export const AdminModule = {
   async setup () {
@@ -25,6 +26,7 @@ export const AdminModule = {
       console.log(`    🔑 Register your first admin account: ${Commun.getOptions().endpoint}/dashboard/signup?code=${firstRunCode}`)
       console.log()
     }
+    serverStartTime = new Date().getTime()
   },
 
   validateFirstRunCode (code: string) {
@@ -32,5 +34,9 @@ export const AdminModule = {
       throw new UnauthorizedError()
     }
     return true
-  }
+  },
+
+  getServerStartTime () {
+    return serverStartTime
+  },
 }

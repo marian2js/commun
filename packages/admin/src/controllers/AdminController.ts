@@ -195,6 +195,7 @@ export class AdminController extends PluginController {
 
   async getServerSettings (req: Request, res: Response) {
     return {
+      startTime: AdminModule.getServerStartTime(),
       environment: process.env.NODE_ENV,
       communVersion: (process.env.npm_package_dependencies__commun_core || '').replace(/^\^/, ''),
     }

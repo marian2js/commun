@@ -423,12 +423,14 @@ describe('AdminController', () => {
     it('should return server settings', async () => {
       process.env.NODE_ENV = 'development'
       process.env.npm_package_dependencies__commun_core = '^1.2.3'
+      AdminModule.getServerStartTime = jest.fn(() => 1234)
 
       const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/server`)
         .expect(200)
 
       expect(res.body).toEqual({
+        startTime: 1234,
         environment: 'development',
         communVersion: '1.2.3',
       })
