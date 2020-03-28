@@ -33,7 +33,8 @@ export async function request (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: 
     throw new Error('Something went wrong, please try again later')
   }
 
-  if (method !== 'GET') {
+  const requiresServerRestart = method !== 'GET' && (path === '/admin' || !path.startsWith('/auth'))
+  if (requiresServerRestart) {
     await ServerService.handleServerRestart()
   }
 
