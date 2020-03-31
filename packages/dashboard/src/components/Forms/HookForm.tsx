@@ -60,6 +60,15 @@ export const HookForm = (props: Props) => {
     })()
   }, [])
 
+  useEffect(() => {
+    setLifecycle(props.lifecycle)
+    setAction(hook?.action)
+    setValue(hook?.value)
+    setTarget(hook?.target)
+    setCondition(hook?.condition)
+    setHasCondition(!!hook?.condition)
+  }, [hook, props.lifecycle])
+
   if (!entities) {
     return <CircularProgress/>
   }

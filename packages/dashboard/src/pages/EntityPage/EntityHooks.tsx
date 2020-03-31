@@ -35,6 +35,7 @@ export const EntityHooks = (props: Props) => {
     const newHooks = { ...(hooks || {}) }
     newHooks[selected.lifecycle]!.splice(selected.index, 1)
     const res = await EntityService.updateEntity(entity.entityName, { hooks: newHooks })
+    entity.hooks = res.item.hooks
     setHooks(res.item.hooks || {})
     setSelected(null)
   }
@@ -42,6 +43,7 @@ export const EntityHooks = (props: Props) => {
   const handleHookChange = (hooks: LifecycleEntityHooks) => {
     setHooks(hooks)
     setAttributeDialogOpen(false)
+    entity.hooks = hooks
   }
 
   const tableHeaderKeys = [{
