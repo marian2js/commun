@@ -1,6 +1,6 @@
 module.exports = {
   communSidebar: {
-    Commun: ['introduction'],
-    'Getting Started': ['installation'],
+    'Getting Started': ['introduction', 'installation'],
+    Reference: ['entities'],
   },
 }
