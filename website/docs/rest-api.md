@@ -6,6 +6,13 @@ sidebar_label: Rest API
 
 Commun provides a set of APIs for each entity and for the authenticated user.
 
+## Authentication
+
+In order to authenticate any request, a valid access token is needed.
+See [User APIs](#user-apis) for details on how to get a valid access token.
+
+Add a header field to the request with key `Authorization` and value `Bearer <accessToken>`.
+
 ## Entity APIs
 
 Each entity has a set of APIs that can be used to manage the items on the entity.
