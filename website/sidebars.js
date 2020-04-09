@@ -10,6 +10,7 @@ module.exports = {
       'entity-permissions',
       'entity-attributes',
       'entity-join-attributes',
+      'entity-hooks',
     ],
   },
 }
