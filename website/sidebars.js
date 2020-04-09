@@ -11,6 +11,7 @@ module.exports = {
       'entity-attributes',
       'entity-join-attributes',
       'entity-hooks',
+      'entity-indexes',
     ],
   },
 }
