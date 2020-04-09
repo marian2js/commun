@@ -12,6 +12,7 @@ module.exports = {
       'entity-join-attributes',
       'entity-hooks',
       'entity-indexes',
+      'rest-api',
     ],
   },
 }
