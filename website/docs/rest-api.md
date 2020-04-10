@@ -25,8 +25,8 @@ GET permissions are checked for each item, and only those that the viewer can ge
 
 #### Query string options
 
-- **sort**: Sorts the returned items using a specific attribute and a direction.
-For example `sort=attr:asc` or `sort=attr:desc`.    
+- **orderBy**: Sorts the returned items using a specific attribute and a direction.
+For example `orderBy=attr:asc` or `orderBy=attr:desc`.    
   
 - **filter**: Filters the returned items using specific values for one or more attributes.
 For example `filter=attr1:bar` or `filter=attr1:bar;attr2:foo`.
