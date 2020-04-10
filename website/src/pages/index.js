@@ -102,6 +102,13 @@ function Home () {
               to={useBaseUrl('docs/introduction')}>
               Get Started
             </Link>
+            <iframe
+              className={styles.githubButton}
+              src="https://ghbtns.com/github-btn.html?user=commundev&amp;repo=commun&amp;type=star&amp;count=true&amp;size=large"
+              title="GitHub Stars"
+              width={160}
+              height={30}
+            />
           </div>
         </div>
       </header>
