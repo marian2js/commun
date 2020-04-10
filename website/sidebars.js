@@ -13,6 +13,7 @@ module.exports = {
       'entity-hooks',
       'entity-indexes',
       'rest-api',
+      'graphql',
     ],
   },
 }
