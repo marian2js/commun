@@ -1,0 +1,9 @@
+.showcaseCard {
+  height: 300px;
+  text-decoration: none;
+  color: var(--ifm-heading-color)
+}
+
+a.showcaseLink:hover {
+  text-decoration: none;
+}

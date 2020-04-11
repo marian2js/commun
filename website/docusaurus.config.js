@@ -17,6 +17,11 @@ module.exports = {
           position: 'left',
         },
         {
+          to: 'showcase',
+          label: 'Showcase',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/commundev/commun',
           label: 'GitHub',
           position: 'right',
