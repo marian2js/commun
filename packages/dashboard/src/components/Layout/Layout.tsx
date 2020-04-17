@@ -7,7 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
 import { Backdrop, CircularProgress, createStyles, makeStyles, Theme } from '@material-ui/core'
 import { SideMenu } from '../SideMenu/SideMenu'
-import { ServerService } from '../../services/ServerService'
+import { ServerService, ServerSettings } from '../../services/ServerService'
 
 const drawerWidth = 240
 
@@ -54,7 +54,7 @@ export function Layout (props: Props) {
   const classes = useStyles()
   const { noPadding } = props
   const [mobileOpen, setMobileOpen] = React.useState(false)
-  const [serverSettings, setServerSettings] = React.useState()
+  const [serverSettings, setServerSettings] = React.useState<ServerSettings>()
   const [serverOnline, setServerOnline] = React.useState(ServerService.online)
 
   useEffect(() => {
