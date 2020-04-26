@@ -1,7 +1,7 @@
 import { ModelAttribute } from '../types'
 import { EntityModel, parseModelAttribute, SortOption } from '..'
 
-type ApiEntityFilter = {
+export type ApiEntityFilter = {
   [key: string]: ApiEntityFilter[] | ApiEntityFilterQuery
 }
 

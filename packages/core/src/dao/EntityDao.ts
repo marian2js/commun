@@ -10,9 +10,7 @@ type EntityFilter<T> = {
 
 type SearchFilter<T> = {
   $text?: {
-    $search: {
-      [P in keyof T]?: string
-    }
+    $search: string
   }
 }
 

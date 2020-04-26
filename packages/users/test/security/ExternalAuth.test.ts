@@ -3,9 +3,8 @@ import { ExternalAuth } from '../../src/security/ExternalAuth'
 import { closeTestApp, getTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 import { Commun, ConfigManager } from '@commun/core'
 import { Express } from 'express'
-import { BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
+import { AuthProvider, BaseUserModel, DefaultUserConfig, ExternalAuthPayload, UserModule } from '../../src'
 import { GoogleAuthStrategy } from '../../src/security/GoogleAuthStrategy'
-import { AuthProvider, ExternalAuthPayload } from '../../src/types/ExternalAuth'
 import jwt, {
   GetPublicKeyOrSecret,
   JsonWebTokenError,
@@ -216,10 +215,10 @@ describe('ExternalAuth', () => {
         secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
-        callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
+        callback(null!, { id: `VERIFIED(${token}:${secretOrPublicKey})` })
       })
 
-      expect(await ExternalAuth.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
+      expect(await ExternalAuth.verify('token')).toEqual({ id: `VERIFIED(token:${publicKey})` })
     })
 
     it('should return the information from a valid token using a public key', async () => {
@@ -228,10 +227,10 @@ describe('ExternalAuth', () => {
         secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
-        callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
+        callback(null!, { id: `VERIFIED(${token}:${secretOrPublicKey})` })
       })
 
-      expect(await ExternalAuth.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
+      expect(await ExternalAuth.verify('token')).toEqual({ id: `VERIFIED(token:${publicKey})` })
     })
 
     it('should throw an error if the token cannot be verified', async () => {
@@ -240,7 +239,7 @@ describe('ExternalAuth', () => {
         secretOrPublicKey: Secret | GetPublicKeyOrSecret,
         callback: VerifyCallback
       ) => {
-        callback(new JsonWebTokenError('BAD TOKEN'), '')
+        callback(new JsonWebTokenError('BAD TOKEN'), undefined)
       })
 
       await expect(ExternalAuth.verify('token')).rejects.toThrow('BAD TOKEN')

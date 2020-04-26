@@ -10,7 +10,8 @@ describe('GraphQLModule', () => {
     it('should register the plugin', async () => {
       await GraphQLModule.setup()
       expect(Commun.registerPlugin).toHaveBeenCalledWith('graphql', {
-        onExpressAppCreated: expect.any(Function)
+        onExpressAppCreated: expect.any(Function),
+        afterServerStart: expect.any(Function),
       })
     })
   })

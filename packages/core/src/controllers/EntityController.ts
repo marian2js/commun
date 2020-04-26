@@ -13,7 +13,13 @@ import {
 import { EntityActionPermissions } from '../types'
 import { ClientError, NotFoundError } from '../errors'
 import { entityHooks } from '../entity/entityHooks'
-import { decodePaginationCursor, encodePaginationCursor, parseFilter, strToApiFilter } from '../utils/ApiUtils'
+import {
+  ApiEntityFilter,
+  decodePaginationCursor,
+  encodePaginationCursor,
+  parseFilter,
+  strToApiFilter
+} from '../utils/ApiUtils'
 
 type RequestOptions = {
   findModelById?: boolean
@@ -50,7 +56,7 @@ export class EntityController<T extends EntityModel> {
 
     const sort: { [P in keyof T]?: 1 | -1 } = {}
     const orderBy = req.query.orderby || req.query.orderBy
-    if (orderBy) {
+    if (orderBy && typeof orderBy === 'string') {
       const [sortKey, sortDir] = orderBy.split(':')
       const dir = sortDir === 'asc' ? 1 : -1
       if (sortKey === 'createdAt') {
@@ -66,10 +72,10 @@ export class EntityController<T extends EntityModel> {
       if (typeof req.query.filter === 'string') {
         entityFilter = strToApiFilter(req.query.filter, this.config.attributes)
       }
-      filter = parseFilter(entityFilter || req.query.filter, this.config.attributes) as DaoFilter<T>
+      filter = parseFilter(entityFilter || req.query.filter as ApiEntityFilter, this.config.attributes) as DaoFilter<T>
     }
 
-    if (req.query.search) {
+    if (req.query.search && typeof req.query.search === 'string') {
       filter.$text = {
         $search: req.query.search
       }
@@ -91,11 +97,11 @@ export class EntityController<T extends EntityModel> {
       skip = Number(req.query.last)
     }
     let before
-    if (req.query.before) {
+    if (req.query.before && typeof req.query.before === 'string') {
       before = decodePaginationCursor<T>(req.query.before.trim())
     }
     let after
-    if (req.query.after) {
+    if (req.query.after && typeof req.query.after === 'string') {
       after = decodePaginationCursor<T>(req.query.after.trim())
     }
 
@@ -287,7 +293,7 @@ export class EntityController<T extends EntityModel> {
 
   protected getPopulateFromRequest (req: Request) {
     const populate: { [P in keyof T]?: any } = {}
-    if (req.query.populate) {
+    if (req.query.populate && typeof req.query.populate === 'string') {
       const populateKeys = req.query.populate.split(';')
       for (const key of populateKeys) {
         populate[key as keyof T] = true

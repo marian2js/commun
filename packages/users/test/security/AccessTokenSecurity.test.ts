@@ -69,10 +69,10 @@ describe('AccessTokenSecurity', () => {
         secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
-        callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
+        callback(null!, { id: `VERIFIED(${token}:${secretOrPublicKey})` })
       })
 
-      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
+      expect(await AccessTokenSecurity.verify('token')).toEqual({ id: `VERIFIED(token:${publicKey})` })
     })
 
     it('should return the information from a valid token using a public key', async () => {
@@ -81,10 +81,10 @@ describe('AccessTokenSecurity', () => {
         secretOrPublicKey: AccessTokenKeys['publicKey'],
         callback: VerifyCallback
       ) => {
-        callback(null!, `VERIFIED(${token}:${secretOrPublicKey})`)
+        callback(null!, { id: `VERIFIED(${token}:${secretOrPublicKey})` })
       })
 
-      expect(await AccessTokenSecurity.verify('token')).toBe(`VERIFIED(token:${publicKey})`)
+      expect(await AccessTokenSecurity.verify('token')).toEqual({ id: `VERIFIED(token:${publicKey})` })
     })
 
     it('should throw an error if the token cannot be verified', async () => {
@@ -93,7 +93,7 @@ describe('AccessTokenSecurity', () => {
         secretOrPublicKey: Secret | GetPublicKeyOrSecret,
         callback: VerifyCallback
       ) => {
-        callback(new JsonWebTokenError('BAD TOKEN'), '')
+        callback(new JsonWebTokenError('BAD TOKEN'), undefined)
       })
 
       await expect(AccessTokenSecurity.verify('token')).rejects.toThrow('BAD TOKEN')

@@ -1,5 +1,0 @@
-describe('SchemaBuilder', () => {
-  describe('createGraphQLSchema', () => {
-
-  })
-})
