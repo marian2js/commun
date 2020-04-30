@@ -1,6 +1,6 @@
 {
   "name": "@commun/users",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Commun users",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -20,8 +20,8 @@
     "url": "https://github.com/commundev/commun/issues"
   },
   "dependencies": {
-    "@commun/core": "^0.3.8",
-    "@commun/emails": "^0.3.8",
+    "@commun/core": "^0.3.9",
+    "@commun/emails": "^0.3.9",
     "express": "^4.17.1",
     "express-jwt": "^5.3.1",
     "express-session": "^1.17.0",
@@ -34,7 +34,7 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
-    "@commun/test-utils": "^0.3.1",
+    "@commun/test-utils": "^0.3.9",
     "@shelf/jest-mongodb": "^1.1.5",
     "@types/express": "^4.17.2",
     "@types/express-jwt": "^0.0.42",
