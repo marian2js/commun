@@ -376,6 +376,44 @@ describe('GraphQLController', () => {
         expect(page3.body.data.items.pageInfo.hasNextPage).toBe(false)
       })
     })
+
+    describe('Total Count', () => {
+      it('should return the total count of items', async () => {
+        for (let i = 0; i < 10; i++) {
+          await getDao().insertOne({ name: `item${i}` })
+        }
+
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `{
+               items (first: 3) {
+                 nodes {
+                   name
+                 }
+                 totalCount
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            items: {
+              nodes: [{
+                name: 'item0'
+              }, {
+                name: 'item1'
+              }, {
+                name: 'item2'
+              }],
+              totalCount: 10
+            }
+          }
+        })
+      })
+    })
   })
 
   describe('getEntity', () => {

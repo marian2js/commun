@@ -32,6 +32,18 @@ type PageInfo = {
   hasNextPage?: boolean
 }
 
+interface EntityListRequestedKeys {
+  nodes?: object
+  pageInfo?: PageInfo
+  totalCount?: number
+}
+
+interface EntityListResult<T extends EntityModel> {
+  items: T[]
+  pageInfo: PageInfo
+  totalCount?: number
+}
+
 const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 100
 
@@ -47,7 +59,7 @@ export class EntityController<T extends EntityModel> {
     return Commun.getEntityDao<T>(this.entityName)
   }
 
-  async list (req: Request, requestedKeys?: 'all' | { nodes?: object, pageInfo?: PageInfo }): Promise<{ items: T[], pageInfo: PageInfo }> {
+  async list (req: Request, requestedKeys?: 'all' | EntityListRequestedKeys): Promise<EntityListResult<T>> {
     if (this.config.permissions?.get !== 'own') {
       await this.validateActionPermissions(req, null, 'get')
     }
@@ -107,7 +119,9 @@ export class EntityController<T extends EntityModel> {
 
     const populate = this.getPopulateFromRequest(req)
 
-    const models = await this.dao.find(filter, { sort, limit, skip, before, after })
+    const queryResult = await this.dao.findAndReturnCursor(filter, { sort, limit, skip, before, after })
+    const models = queryResult.items
+
     if (requestedHasNextPage && models.length === limit) {
       models.pop()
       pageInfo.hasNextPage = true
@@ -127,10 +141,16 @@ export class EntityController<T extends EntityModel> {
       pageInfo.hasNextPage = pageInfo.hasNextPage || false
     }
 
-    return {
+    const entityListResult: EntityListResult<T> = {
       items,
       pageInfo,
     }
+
+    if (typeof requestedKeys === 'object' && requestedKeys.totalCount) {
+      entityListResult.totalCount = await queryResult.cursor.count()
+    }
+
+    return entityListResult
   }
 
   async get (req: Request, options: RequestOptions = {}): Promise<{ item: T }> {

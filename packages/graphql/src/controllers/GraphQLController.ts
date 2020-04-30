@@ -46,7 +46,11 @@ export const GraphQLController = {
           },
           pageInfo: {
             type: pageInfoType,
-          }
+          },
+          totalCount: {
+            type: new GraphQLNonNull(GraphQLInt),
+            description: 'Returns the total count of items in the connection.'
+          },
         }
       }),
       args,

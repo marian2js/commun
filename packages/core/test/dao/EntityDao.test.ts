@@ -45,6 +45,35 @@ describe('EntityDao', () => {
     })
   })
 
+  describe('findAndReturnCursor', () => {
+    it('should return multiple elements from mongodb', async () => {
+      await dao.insertOne({ name: 'item1' })
+      await dao.insertOne({ name: 'item2' })
+      await dao.insertOne({ name: 'item3' })
+      const result = await dao.findAndReturnCursor({})
+      expect(result.items.length).toBe(3)
+      expect(result.items[0].name).toBe('item1')
+      expect(result.items[0].id).toBeDefined()
+      expect(result.items[1].name).toBe('item2')
+      expect(result.items[1].id).toBeDefined()
+      expect(result.items[2].name).toBe('item3')
+      expect(result.items[2].id).toBeDefined()
+      expect(await result.cursor.count()).toBe(3)
+    })
+
+    it('should return elements matching the filter from mongodb', async () => {
+      await dao.insertOne({ name: 'item1' })
+      await dao.insertOne({ name: 'item1' })
+      await dao.insertOne({ name: 'item2' })
+      await dao.insertOne({ name: 'item2' })
+      const result = await dao.findAndReturnCursor({ name: 'item1' })
+      expect(result.items.length).toBe(2)
+      expect(result.items[0].name).toBe('item1')
+      expect(result.items[1].name).toBe('item1')
+      expect(await result.cursor.count()).toBe(2)
+    })
+  })
+
   describe('findOne', () => {
     it('should return a single element from mongodb', async () => {
       await dao.insertOne({ name: 'item1' })

@@ -51,6 +51,19 @@ export class EntityDao<T extends EntityModel> {
   constructor (protected readonly collectionName: string) {}
 
   async find (filter: DaoFilter<T>, options: FindOptions<T> = {}): Promise<T[]> {
+    const cursor = this.getFindCursor(filter, options)
+    return (await cursor.toArray()).map(item => parseDbFieldsOutput(item))
+  }
+
+  async findAndReturnCursor (filter: DaoFilter<T>, options: FindOptions<T> = {}) {
+    const cursor = this.getFindCursor(filter, options)
+    return {
+      items: (await cursor.toArray()).map(item => parseDbFieldsOutput(item)),
+      cursor,
+    }
+  }
+
+  protected getFindCursor (filter: DaoFilter<T>, options: FindOptions<T> = {}) {
     let sort = parseDbFieldsInput(options.sort, false)
     let projection
     if (filter.$text?.$search && (!sort || !Object.keys(sort).length)) {
@@ -73,12 +86,12 @@ export class EntityDao<T extends EntityModel> {
       }
     }
 
-    return (await this.collection.find(filterData, {
+    return this.collection.find(filterData, {
       sort,
       projection,
       limit: options.limit,
       skip: options.skip,
-    }).toArray()).map(item => parseDbFieldsOutput(item))
+    })
   }
 
   async findOne (filter: DaoFilter<T> = {}): Promise<T | null> {
