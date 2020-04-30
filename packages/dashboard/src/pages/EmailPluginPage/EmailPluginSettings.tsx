@@ -23,7 +23,7 @@ interface Props {
 
 export const EmailPluginSettings = (props: Props) => {
   const classes = useStyles()
-  const [sendFrom, setSendFrom] = useState()
+  const [sendFrom, setSendFrom] = useState('')
   const [message, setMessage] = useState<{ text: string, severity: Color }>()
 
   useEffect(() => setSendFrom(props.plugin.sendFrom), [props.plugin])

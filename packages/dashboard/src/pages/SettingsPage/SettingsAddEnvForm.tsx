@@ -22,7 +22,7 @@ interface Props {
 
 export const SettingsAddEnvForm = (props: Props) => {
   const classes = useStyles()
-  const [envName, setEnvName] = useState()
+  const [envName, setEnvName] = useState('')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

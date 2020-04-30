@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Snackbar } from '@material-ui/core'
 import { Alert, Color } from '@material-ui/lab'
 
+export type MessageSnackbarType = { text: string, severity?: Color }
+
 interface Props {
   message?: { text: string, severity?: Color }
 }

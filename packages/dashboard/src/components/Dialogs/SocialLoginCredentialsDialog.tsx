@@ -9,7 +9,7 @@ import { useTheme } from '@material-ui/core/styles'
 import { Grid, TextField } from '@material-ui/core'
 import { AuthProvider } from '@commun/users'
 import { PluginService } from '../../services/PluginService'
-import { MessageSnackbar } from '../MessageSnackbar'
+import { MessageSnackbar, MessageSnackbarType } from '../MessageSnackbar'
 
 interface Props {
   open: boolean
@@ -23,7 +23,7 @@ export const SocialLoginCredentialsDialog = (props: Props) => {
   const [provider, setProvider] = useState(props.provider)
   const [id, setId] = useState('')
   const [secret, setSecret] = useState('')
-  const [message, setMessage] = useState()
+  const [message, setMessage] = useState<MessageSnackbarType>()
 
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
 

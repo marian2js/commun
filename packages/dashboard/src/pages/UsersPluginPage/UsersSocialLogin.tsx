@@ -15,7 +15,7 @@ import {
 } from '@material-ui/core'
 import { SocialLoginCredentialsDialog } from '../../components/Dialogs/SocialLoginCredentialsDialog'
 import { PluginService } from '../../services/PluginService'
-import { MessageSnackbar } from '../../components/MessageSnackbar'
+import { MessageSnackbar, MessageSnackbarType } from '../../components/MessageSnackbar'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -41,7 +41,7 @@ export const UsersSocialLogin = (props: Props) => {
   const [autoGenerateUsername, setAutoGenerateUsername] = useState(externalAuth?.autoGenerateUsername || false)
   const [changeCredentialsDialogOpen, setChangeCredentialsDialogOpen] = useState(false)
   const [changeCredentialsProvider, setChangeCredentialsProvider] = useState<ProviderData | undefined>()
-  const [message, setMessage] = useState()
+  const [message, setMessage] = useState<MessageSnackbarType>()
 
   const providersData: ProviderData[] = [{
     key: 'google',

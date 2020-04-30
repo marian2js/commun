@@ -4,7 +4,7 @@ import { Box, Container, makeStyles } from '@material-ui/core'
 import 'graphiql/graphiql.css'
 import { getAuthenticationHeader } from '../../utils/apiUtils'
 import { Alert } from '@material-ui/lab'
-import { ServerService } from '../../services/ServerService'
+import { ServerService, ServerSettings } from '../../services/ServerService'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { useTheme } from '@material-ui/core/styles'
 
@@ -18,7 +18,7 @@ export const GraphQLPluginPage = () => {
   const classes = useStyles()
   const theme = useTheme()
   const GraphiQL = require('graphiql').default
-  const [serverSettings, setServerSettings] = React.useState()
+  const [serverSettings, setServerSettings] = React.useState<ServerSettings>()
 
   const docsOpen = useMediaQuery(theme.breakpoints.down('md'))
 
