@@ -78,9 +78,10 @@ export type SlugModelAttribute = BaseModelAttribute & {
 export type StringModelAttribute = BaseModelAttribute & {
   type: 'string'
   maxLength?: number
+  validRegex?: string
   hash?: {
-    algorithm: 'bcrypt',
-    salt_rounds: number,
+    algorithm: 'bcrypt'
+    salt_rounds: number
   }
   default?: string
 }

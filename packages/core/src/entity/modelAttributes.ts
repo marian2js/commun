@@ -243,6 +243,10 @@ async function getStringModelAttribute<T> (attribute: StringModelAttribute, key:
     return parsedValue === '' ? '' : undefined
   }
 
+  if (attribute.validRegex && !new RegExp(attribute.validRegex).test(parsedValue)) {
+    throw new BadRequestError(`${key} contains invalid characters`)
+  }
+
   if (attribute.maxLength !== undefined && parsedValue.length > attribute.maxLength) {
     throw new BadRequestError(`${key} must be shorter than ${attribute.maxLength} characters`)
   }

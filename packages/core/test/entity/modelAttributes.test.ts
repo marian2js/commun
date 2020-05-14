@@ -520,6 +520,23 @@ describe('modelAttributes', () => {
         .rejects.toThrow('key must be shorter than 3 characters')
     })
 
+    it('should handle the validRegex attribute', async () => {
+      expect(await getModelAttribute({ type: 'string', validRegex: '^[a-z]*$' }, 'key', { key: 'test' }))
+        .toBe('test')
+      await expect(getModelAttribute({ type: 'string', validRegex: '^[a-z]*$' }, 'key', { key: 'Test' }))
+        .rejects.toThrow('key contains invalid characters')
+
+      expect(await getModelAttribute({ type: 'string', validRegex: '^[a-zA-Z]*$' }, 'key', { key: 'Test' }))
+        .toBe('Test')
+      await expect(getModelAttribute({ type: 'string', validRegex: '^[a-zA-Z]*$' }, 'key', { key: 'Test 1' }))
+        .rejects.toThrow('key contains invalid characters')
+
+      expect(await getModelAttribute({ type: 'string', validRegex: '^[a-z0-9\\s]*$' }, 'key', { key: 'test 123' }))
+        .toBe('test 123')
+      await expect(getModelAttribute({ type: 'string', validRegex: '^[a-z0-9\\s]*$' }, 'key', { key: 'test @1' }))
+        .rejects.toThrow('key contains invalid characters')
+    })
+
     it('should handle the hash attribute', async () => {
       SecurityUtils.hashWithBcrypt = jest
         .fn(async (str: string, saltRounds: number) => `hashed_${str}_${saltRounds}`)
