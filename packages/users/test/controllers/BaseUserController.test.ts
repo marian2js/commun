@@ -125,6 +125,32 @@ describe('BaseUserController', () => {
         createdAt: expect.any(Date),
       })
     })
+
+    it('should validate usernames', async () => {
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      const validUserData = {
+        username: 'User.123_456',
+        email: 'user.123_456@example.org',
+        password: 'password',
+      }
+      await request().post(`${baseUrl}/password`).send(validUserData).expect(200)
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      const invalidUserData1 = {
+        username: 'User 123',
+        email: 'user.123@example.org',
+        password: 'password',
+      }
+      await request().post(`${baseUrl}/password`).send(invalidUserData1).expect(400)
+
+      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      const invalidUserData2 = {
+        username: 'User@123',
+        email: 'user123@example.org',
+        password: 'password',
+      }
+      await request().post(`${baseUrl}/password`).send(invalidUserData2).expect(400)
+    })
   })
 
   describe('login with password - [POST] /auth/password/login', () => {

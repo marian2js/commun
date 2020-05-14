@@ -11,6 +11,7 @@ export const DefaultUserConfig: EntityConfig<BaseUserModel> = {
     },
     username: {
       type: 'string',
+      validRegex: '^[a-zA-Z0-9_.]*$',
       required: true,
       unique: true,
       readonly: true,
