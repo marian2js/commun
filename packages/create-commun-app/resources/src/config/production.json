@@ -6,5 +6,8 @@
     "uri": "mongodb://{{dbhost}}:{{dbport}}",
     "dbName": "{{dbname}}",
     "options": {}
+  },
+  "logger": {
+    "request": ":remote-addr :user-id :method :url :graphql-operation HTTP/:http-version :status - :response-time ms"
   }
 }
