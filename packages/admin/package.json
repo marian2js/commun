@@ -1,6 +1,6 @@
 {
   "name": "@commun/admin",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Commun admin module",
   "author": "Commun <admin@commun.dev>",
   "homepage": "https://commun.dev",
@@ -20,8 +20,8 @@
     "url": "https://github.com/commundev/commun/issues"
   },
   "dependencies": {
-    "@commun/core": "^0.3.9",
-    "@commun/users": "^0.3.9",
+    "@commun/core": "^0.3.10",
+    "@commun/users": "^0.3.10",
     "express": "^4.17.1"
   },
   "devDependencies": {
