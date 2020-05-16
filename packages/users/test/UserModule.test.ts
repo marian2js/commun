@@ -14,6 +14,7 @@ describe('UserModule', () => {
       ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
       ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({ attributes: {} })) as jest.Mock
       spyOn(Commun, 'registerEntity')
+      spyOn(Commun, 'registerLogsToken')
       process.env.COMMUN_ACCESS_TOKEN_PK_PASSPHRASE = 'secret'
     })
 
@@ -41,6 +42,11 @@ describe('UserModule', () => {
         router: BaseUserRouter,
         onExpressAppCreated: expect.any(Function)
       })
+    })
+
+    it('should register the user-id log token', async () => {
+      await UserModule.setup(setupOptions)
+      expect(Commun.registerLogsToken).toHaveBeenCalledWith('user-id', expect.any(Function))
     })
   })
 })

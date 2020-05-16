@@ -44,6 +44,7 @@ export const UserModule = {
     }
 
     this.setOptions(options)
+    Commun.registerLogsToken('user-id', req => req.auth?.id)
 
     Commun.registerEntity<MODEL>({
       config,

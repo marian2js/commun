@@ -6,6 +6,7 @@ import { Express } from 'express'
 describe('GraphQLModule', () => {
   describe('setup', () => {
     beforeEach(() => jest.spyOn(Commun, 'registerPlugin'))
+    beforeEach(() => jest.spyOn(Commun, 'registerLogsToken'))
 
     it('should register the plugin', async () => {
       await GraphQLModule.setup()
@@ -13,6 +14,11 @@ describe('GraphQLModule', () => {
         onExpressAppCreated: expect.any(Function),
         afterServerStart: expect.any(Function),
       })
+    })
+
+    it('should register the graphql-operation log token', async () => {
+      await GraphQLModule.setup()
+      expect(Commun.registerLogsToken).toHaveBeenCalledWith('graphql-operation', expect.any(Function))
     })
   })
 
