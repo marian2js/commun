@@ -9,6 +9,7 @@ import path from 'path'
 
 export const GraphQLModule = {
   async setup () {
+    Commun.registerLogsToken('graphql-operation', req => req.body?.operationName)
     Commun.registerPlugin('graphql', {
       onExpressAppCreated: this.setupGraphql.bind(this),
       afterServerStart: () => {

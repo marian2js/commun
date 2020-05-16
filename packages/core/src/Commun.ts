@@ -1,4 +1,4 @@
-import express, { Express } from 'express'
+import express, { Express, Request } from 'express'
 import compression from 'compression'
 import bodyParser from 'body-parser'
 import lusca from 'lusca'
@@ -37,6 +37,9 @@ export type CommunOptions = {
     dbName: string
     options?: MongoClientCommonOption
   }
+  logger?: {
+    request?: string
+  }
 }
 
 export const Commun = {
@@ -51,10 +54,8 @@ export const Commun = {
     app.use(lusca.xframe('SAMEORIGIN'))
     app.use(lusca.xssProtection(true))
 
-    if (process.env.NODE_ENV === 'production') {
-      app.use(morgan('short'))
-    } else {
-      app.use(morgan('tiny'))
+    if (communOptions.logger?.request) {
+      app.use(morgan(communOptions.logger?.request))
     }
 
     return app
@@ -278,6 +279,10 @@ export const Commun = {
 
   setOptions (options: CommunOptions) {
     communOptions = options
+  },
+
+  registerLogsToken (token: string, cb: (req: Request) => any) {
+    morgan.token(token, cb)
   },
 
   deregisterAll () {
