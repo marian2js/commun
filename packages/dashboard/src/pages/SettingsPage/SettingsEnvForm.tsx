@@ -1,7 +1,8 @@
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useEffect, useState } from 'react'
 import { CommunOptions } from '@commun/core'
-import { Button, Card, Grid, makeStyles, TextField } from '@material-ui/core'
+import { Box, Button, Card, Grid, makeStyles, TextField } from '@material-ui/core'
 import { SettingsService } from '../../services/SettingsService'
+import { TextDivider } from '../../components/TextDivider'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -30,6 +31,16 @@ export const SettingsEnvForm = (props: Props) => {
   const [port, setPort] = useState(settings.port)
   const [mongoDbUri, setMongoDbUri] = useState(settings.mongoDB.uri)
   const [mongoDbName, setMongoDbName] = useState(settings.mongoDB.dbName)
+  const [loggerRequest, setLoggerRequest] = useState(settings.logger?.request || '')
+
+  useEffect(() => {
+    setAppName(props.settings.appName)
+    setEndpoint(props.settings.endpoint)
+    setPort(props.settings.port)
+    setMongoDbUri(props.settings.mongoDB.uri)
+    setMongoDbName(props.settings.mongoDB.dbName)
+    setLoggerRequest(props.settings.logger?.request || '')
+  }, [props.settings])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -41,7 +52,10 @@ export const SettingsEnvForm = (props: Props) => {
         ...settings.mongoDB,
         uri: mongoDbUri,
         dbName: mongoDbName,
-      }
+      },
+      logger: {
+        request: loggerRequest || undefined,
+      },
     }
     await SettingsService.setSettings(environment, newSettings)
     onUpdate(environment, newSettings)
@@ -89,6 +103,9 @@ export const SettingsEnvForm = (props: Props) => {
           </Grid>
 
           <Grid item xs={12}>
+            <Box mt={2} mb={2}>
+              <TextDivider><span>MongoDB Settings</span></TextDivider>
+            </Box>
             <TextField
               onChange={e => setMongoDbUri(e.target.value)}
               value={mongoDbUri}
@@ -110,6 +127,21 @@ export const SettingsEnvForm = (props: Props) => {
               required
               fullWidth
               label="MongoDB database name"/>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Box mt={2} mb={2}>
+              <TextDivider><span>Logger Settings</span></TextDivider>
+            </Box>
+            <TextField
+              onChange={e => setLoggerRequest(e.target.value)}
+              value={loggerRequest}
+              name="requestLogger"
+              variant="outlined"
+              margin="normal"
+              fullWidth
+              label="Request log"
+              helperText="Information logged on every request. Leave empty for disabling request logging."/>
           </Grid>
 
           <Grid item xs={12}>
