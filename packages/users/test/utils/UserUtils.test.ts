@@ -4,9 +4,13 @@ import { Commun, ConfigManager, SecurityUtils } from '@commun/core'
 import { BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
 
 describe('UserUtils', () => {
+  const collectionName = 'user_utils_test'
 
   beforeAll(async () => {
-    ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
+    ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
+      ...DefaultUserConfig,
+      collectionName,
+    })) as jest.Mock
     ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
     await UserModule.setup({
       accessToken: {},
@@ -14,7 +18,7 @@ describe('UserUtils', () => {
     })
     await startTestApp(Commun)
   })
-  afterEach(async () => await stopTestApp('users'))
+  afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
   const getDao = () => Commun.getEntityDao<BaseUserModel>('users')

@@ -10,7 +10,7 @@ import { ExternalAuth } from '../../src/security/ExternalAuth'
 describe('BaseUserController', () => {
   const baseUrl = '/api/v1/auth'
   const entityName = 'users'
-  const collectionName = 'users'
+  const collectionName = 'user_controller_test'
 
   const registerUserEntity = async (
     permissions: EntityActionPermissions,
@@ -26,6 +26,7 @@ describe('BaseUserController', () => {
     }, {
       config: {
         ...DefaultUserConfig,
+        collectionName,
         permissions,
         attributes,
       }

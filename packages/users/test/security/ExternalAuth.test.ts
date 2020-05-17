@@ -21,6 +21,7 @@ describe('ExternalAuth', () => {
   const privateKey = 'private'
   const privateKeyPassphrase = 'secret'
   const publicKey = 'public'
+  const collectionName = 'external_auth_test'
 
   beforeEach(async () => {
     UserModule.accessTokenKeys = {
@@ -30,7 +31,10 @@ describe('ExternalAuth', () => {
         passphrase: privateKeyPassphrase
       }
     }
-    ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
+    ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
+      ...DefaultUserConfig,
+      collectionName,
+    })) as jest.Mock
     ConfigManager.getKeys = jest.fn(() => Promise.resolve({
       publicKey: publicKey,
       privateKey: privateKey,
@@ -44,7 +48,7 @@ describe('ExternalAuth', () => {
     await startTestApp(Commun)
     app = getTestApp()
   })
-  afterEach(async () => await stopTestApp('users'))
+  afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
   const getDao = () => Commun.getEntityDao<BaseUserModel>('users')
