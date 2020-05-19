@@ -2,7 +2,9 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "publish": "lerna run tsc && lerna publish"
+    "publish": "lerna run tsc && lerna publish",
+    "build": "lerna bootstrap && lerna run tsc",
+    "test": "lerna run test"
   },
   "devDependencies": {
     "@shelf/jest-mongodb": "^1.1.5",

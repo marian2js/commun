@@ -139,7 +139,7 @@ describe('EntityDao', () => {
         }
       })
       await dao.insertOne({ name: 'item' })
-      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error dup key/)
+      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error/)
 
       const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
       expect(index.sparse).toBe(true)
@@ -159,7 +159,7 @@ describe('EntityDao', () => {
         }
       })
       await dao.insertOne({ name: 'item' })
-      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error dup key/)
+      await expect(dao.insertOne({ name: 'item' })).rejects.toThrow(/E11000 duplicate key error/)
 
       const index = (await collection.indexes()).find((index: { [key: string]: any }) => index.name === 'name_1')
       expect(index.sparse).toBeFalsy()
