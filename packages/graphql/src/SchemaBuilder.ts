@@ -6,6 +6,7 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInputType,
+  GraphQLInt,
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
@@ -256,7 +257,7 @@ function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
   })
 }
 
-function getAttributeGraphQLType (
+export function getAttributeGraphQLType (
   entityConfig: EntityConfig<EntityModel>,
   attributeKey: string,
   attribute: ModelAttribute,
@@ -265,11 +266,12 @@ function getAttributeGraphQLType (
   switch (attribute.type) {
     case 'boolean':
       return GraphQLBoolean
-    case 'date':
     case 'email':
     case 'slug':
     case 'string':
       return GraphQLString
+    case 'date':
+      return GraphQLInt
     case 'id':
       return GraphQLID
     case 'number':
