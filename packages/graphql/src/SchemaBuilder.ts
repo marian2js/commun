@@ -6,7 +6,6 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInputType,
-  GraphQLInt,
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
@@ -25,6 +24,7 @@ import graphqlFields from 'graphql-fields'
 import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
 import { GraphQLUserController } from './controllers/GraphQLUserController'
+import { GraphQLDate } from './graphql-types/GraphQLDate'
 
 const entityObjectTypesCache: { [key: string]: GraphQLObjectType } = {}
 const entityFilterTypesCache: { [key: string]: GraphQLInputObjectType } = {}
@@ -271,7 +271,7 @@ export function getAttributeGraphQLType (
     case 'string':
       return GraphQLString
     case 'date':
-      return GraphQLInt
+      return GraphQLDate
     case 'id':
       return GraphQLID
     case 'number':

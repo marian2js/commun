@@ -1,6 +1,7 @@
 import { getAttributeGraphQLType } from '../src/SchemaBuilder'
-import { GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLInt, GraphQLString } from 'graphql'
+import { GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLString } from 'graphql'
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
+import { GraphQLDate } from '../src/graphql-types/GraphQLDate'
 
 describe('SchemaBuilder', () => {
   describe('getAttributeGraphQLType', () => {
@@ -36,7 +37,7 @@ describe('SchemaBuilder', () => {
 
     it('should convert date to GraphQL type', async () => {
       const config = createEntityConfig({ type: 'date' })
-      expect(getAttributeGraphQLType(config, 'key', config.attributes.key, 'type')).toEqual(GraphQLInt)
+      expect(getAttributeGraphQLType(config, 'key', config.attributes.key, 'type')).toEqual(GraphQLDate)
     })
 
     it('should convert id to GraphQL type', async () => {
