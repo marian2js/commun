@@ -9,6 +9,7 @@ describe('GraphQLController', () => {
 
   interface TestEntity extends EntityModel {
     name: string
+    date?: Date
   }
 
   beforeAll(async () => {
@@ -26,7 +27,11 @@ describe('GraphQLController', () => {
         },
         attributes: {
           name: {
-            type: 'string'
+            type: 'string',
+            required: true,
+          },
+          date: {
+            type: 'date'
           },
         },
       }
@@ -492,6 +497,64 @@ describe('GraphQLController', () => {
       })
 
       expect(await getDao().findOne({ name: 'new-item' })).toBeDefined()
+    })
+
+    describe('Date Scalar', () => {
+      it('should set a date from a timestamp', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `mutation {
+               createItem (input: { name: "test", date: 1577847600000 }) {
+                 item {
+                   name
+                   date
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            createItem: {
+              item: {
+                name: 'test',
+                date: new Date(1577847600000).toISOString(),
+              }
+            }
+          }
+        })
+      })
+
+      it('should set a date from an ISO date string', async () => {
+        const res = await request()
+          .post('/graphql')
+          .send({
+            query:
+              `mutation {
+               createItem (input: { name: "test", date: "2020-01-01T00:00:00.000" }) {
+                 item {
+                   name
+                   date
+                 }
+               }
+             }`
+          })
+          .expect(200)
+
+        expect(res.body).toEqual({
+          data: {
+            createItem: {
+              item: {
+                name: 'test',
+                date: new Date('2020-01-01T00:00:00.000').toISOString(),
+              }
+            }
+          }
+        })
+      })
     })
   })
 
