@@ -109,7 +109,7 @@ async function createAccessTokenKeys (appPath: string) {
   const keysPath = path.join(appPath, 'keys')
   await mkdir(keysPath)
 
-  const passphrase = await SecurityUtils.generateRandomString(48)
+  const passphrase = SecurityUtils.generateRandomString(48)
   const res = await generateKeyPair('rsa', {
     modulusLength: 4096,
     publicKeyEncoding: {

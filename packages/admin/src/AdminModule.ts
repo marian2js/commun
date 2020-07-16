@@ -22,7 +22,7 @@ export const AdminModule = {
       throw new Error('Admin plugin depends on users entity')
     }
     if (!await dao.getEstimatedCount()) {
-      firstRunCode = await SecurityUtils.generateRandomString(36)
+      firstRunCode = SecurityUtils.generateRandomString(36)
       console.log(`    🔑 Register your first admin account: ${Commun.getOptions().endpoint}/dashboard/signup?code=${firstRunCode}`)
       console.log()
     }

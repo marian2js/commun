@@ -440,7 +440,7 @@ describe('modelAttributes', () => {
 
   describe('Slug', () => {
     beforeEach(() => {
-      SecurityUtils.generateRandomString = jest.fn((chars) => Promise.resolve(`RANDOM:${chars}`))
+      SecurityUtils.generateRandomString = jest.fn((chars) => `RANDOM:${chars}`)
     })
 
     it('should return a slug string from the target', async () => {
@@ -451,7 +451,10 @@ describe('modelAttributes', () => {
       expect(await getModelAttribute({ type: 'slug', setFrom: 'title' }, 'key',
         { title: 'This is   @1   title?!', key: '' })
       ).toBe('this-is-1-title')
-      expect(await getModelAttribute({ type: 'slug', setFrom: 'title' }, 'key', { title: '---$ Test Title $---', key: '' }))
+      expect(await getModelAttribute({ type: 'slug', setFrom: 'title' }, 'key', {
+        title: '---$ Test Title $---',
+        key: ''
+      }))
         .toBe('test-title')
     })
 
@@ -635,11 +638,11 @@ describe('parseModelAttribute', () => {
       type: 'map',
       keyType: { type: 'string' },
       valueType: { type: 'number' }
-    }, { a: '1', b: '2' })).toEqual({ a: 1, b: 2})
+    }, { a: '1', b: '2' })).toEqual({ a: 1, b: 2 })
     expect(parseModelAttribute({
       type: 'map',
       keyType: { type: 'string' },
       valueType: { type: 'boolean' }
-    }, { a: 'true', b: 'false' })).toEqual({ a: true, b: false})
+    }, { a: 'true', b: 'false' })).toEqual({ a: true, b: false })
   })
 })

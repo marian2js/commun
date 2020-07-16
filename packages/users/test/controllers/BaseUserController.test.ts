@@ -108,7 +108,7 @@ describe('BaseUserController', () => {
 
     it('should send a verification email', async () => {
       jest.spyOn(EmailClient, 'sendEmail')
-      SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('plain-code'))
+      SecurityUtils.generateRandomString = jest.fn(() => 'plain-code')
 
       await registerUserEntity({ get: 'anyone', create: 'anyone' })
       const userData = {
@@ -341,7 +341,7 @@ describe('BaseUserController', () => {
   describe('forgot password - [POST] /auth/password/forgot', () => {
     it('should send a reset password email', async () => {
       jest.spyOn(EmailClient, 'sendEmail')
-      SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('plain-code'))
+      SecurityUtils.generateRandomString = jest.fn(() => 'plain-code')
 
       const userData = {
         username: 'user',
@@ -491,6 +491,8 @@ describe('BaseUserController', () => {
           id: expect.any(String),
           username: 'new-user',
           createdAt: expect.anything(),
+          admin: false,
+          email: 'new-user@example.org',
         },
         tokens: {
           accessToken: 'signed-token',

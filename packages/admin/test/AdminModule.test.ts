@@ -22,7 +22,7 @@ describe('AdminModule', () => {
   describe('prepareFirstRun - validateFirstRunCode', () => {
     beforeEach(async () => {
       await AdminModule.setup()
-      SecurityUtils.generateRandomString = jest.fn(() => Promise.resolve('secure-code'))
+      SecurityUtils.generateRandomString = jest.fn(() => 'secure-code')
       Commun.registerEntity({ config: DefaultUserConfig })
       const dao = Commun.getEntityDao('users')
       dao.getEstimatedCount = jest.fn(() => Promise.resolve(0))

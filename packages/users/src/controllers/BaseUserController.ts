@@ -24,7 +24,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
 
     const { item } = await super.create(req)
-    const plainVerificationCode = await SecurityUtils.generateRandomString(48)
+    const plainVerificationCode = SecurityUtils.generateRandomString(48)
     const verificationCode = await SecurityUtils.hashWithBcrypt(plainVerificationCode, 12)
     const user = await this.dao.updateOne(item.id!, { verificationCode, verified: false })
 
@@ -43,8 +43,9 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       throw new UnauthorizedError('Invalid username or password')
     }
 
+    const auth = await this.getAuthPermissions(req)
     return {
-      user: await this.prepareModelResponse(req, user),
+      user: await this.prepareModelResponse(req, auth, user),
       tokens: {
         ...(await this.generateAccessToken(user)),
         refreshToken: await this.generateRefreshToken(user),
@@ -85,7 +86,8 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     if (await SecurityUtils.bcryptHashIsValid(req.body.code, user.verificationCode)) {
       await this.dao.updateOne(user.id!, { verified: true, verificationCode: undefined })
 
-      const userData = await this.prepareModelResponse(req, user, {})
+      const auth = await this.getAuthPermissions(req)
+      const userData = await this.prepareModelResponse(req, auth, user, {})
       EmailClient.sendEmail('welcomeEmail', user.email, userData)
 
       return { result: true }
@@ -104,13 +106,14 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
 
     const resetPasswordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.resetPasswordCodeHash
-    const plainResetPasswordCode = await SecurityUtils.generateRandomString(48)
+    const plainResetPasswordCode = SecurityUtils.generateRandomString(48)
     const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', {
       resetPasswordCodeHash: plainResetPasswordCode
     })
     await this.dao.updateOne(user.id!, { resetPasswordCodeHash })
 
-    const userData = await this.prepareModelResponse(req, user, {})
+    const auth = await this.getAuthPermissions(req)
+    const userData = await this.prepareModelResponse(req, auth, user, {})
     EmailClient.sendEmail('resetPassword', user.email, {
       resetPasswordCode: plainResetPasswordCode,
       ...userData,
@@ -170,6 +173,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     const token = req.body.code
     const payload = await ExternalAuth.verify(token)
     let user
+    let auth
 
     if (payload.userCreated) {
       user = await this.dao.findOne({ email: payload.user.email })
@@ -180,6 +184,10 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
         payload.provider?.id === user.providers?.[provider]?.id
       if (!validProvider) {
         throw new BadRequestError('Invalid authentication code')
+      }
+      auth = {
+        userId: user.id!,
+        isAdmin: user.admin || false,
       }
     } else {
       let userData
@@ -195,13 +203,17 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
         userData = payload.user
       }
       user = await this.dao.insertOne(userData as MODEL)
+      auth = {
+        userId: user.id!,
+        isAdmin: user.admin || false,
+      }
 
-      userData = await this.prepareModelResponse(req, user, {})
+      userData = await this.prepareModelResponse(req, auth, user, {})
       EmailClient.sendEmail('welcomeEmail', user.email, userData)
     }
 
     return {
-      user: await this.prepareModelResponse(req, user),
+      user: await this.prepareModelResponse(req, auth, user),
       tokens: {
         ...(await this.generateAccessToken(user)),
         refreshToken: await this.generateRefreshToken(user),
@@ -228,7 +240,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
   protected async generateRefreshToken (user: MODEL): Promise<string | undefined> {
     if (UserModule.getOptions().refreshToken.enabled) {
       const refreshTokenAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.refreshTokenHash
-      const plainRefreshToken = await SecurityUtils.generateRandomString(48)
+      const plainRefreshToken = SecurityUtils.generateRandomString(48)
       const refreshTokenHash = await getModelAttribute(refreshTokenAttr!, 'refreshTokenHash', {
         refreshTokenHash: plainRefreshToken
       })

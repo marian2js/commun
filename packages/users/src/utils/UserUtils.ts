@@ -11,7 +11,7 @@ export const UserUtils = {
     let username = prefix
     while (user) {
       for (let i = 0; i < 3; i++) {
-        username = `${prefix}-${await SecurityUtils.generateRandomString(chars)}`
+        username = `${prefix}-${SecurityUtils.generateRandomString(chars)}`
         user = await Commun.getEntityDao<BaseUserModel>('users')
           .findOne({ username })
         if (!user) {

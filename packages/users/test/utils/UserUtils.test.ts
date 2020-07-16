@@ -25,7 +25,7 @@ describe('UserUtils', () => {
 
   describe('generateUniqueUsername', () => {
     beforeEach(() => {
-      SecurityUtils.generateRandomString = jest.fn(chars => Promise.resolve('R'.repeat(chars)))
+      SecurityUtils.generateRandomString = jest.fn(chars => 'R'.repeat(chars))
     })
 
     it('should return the prefix if a username does not exist', async () => {

@@ -85,6 +85,11 @@ describe('EntityController', () => {
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
   const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
+  const registerNewUser = async (userId = new ObjectId()) => {
+    return await Commun.getEntityDao<EntityModel & { username: string, email: string }>('users')
+      .insertOne({ id: userId.toString(), username: `user${userId}`, email: `${userId}@example.org` })
+  }
+
   beforeAll(async () => {
     Commun.registerEntity<AdminUser>({
       config: {
@@ -151,10 +156,12 @@ describe('EntityController', () => {
     })
 
     describe('Filters', () => {
-      const user1 = new ObjectId()
-      const user2 = new ObjectId()
+      let user1: ObjectId
+      let user2: ObjectId
 
       beforeEach(async () => {
+        user1 = new ObjectId((await registerNewUser()).id!)
+        user2 = new ObjectId((await registerNewUser()).id!)
         await registerTestEntity({ get: 'anyone' })
         await getDao().insertOne({ name: 'item1', num: 20, user: user1 })
         await getDao().insertOne({ name: 'item2', num: 8, user: user1 })
@@ -350,7 +357,6 @@ describe('EntityController', () => {
       })
     })
 
-
     describe('Populate', () => {
       let item1: TestEntity
       let item2: TestEntity
@@ -377,10 +383,12 @@ describe('EntityController', () => {
     })
 
     describe('Permissions', () => {
-      const user1 = new ObjectId().toString()
-      const user2 = new ObjectId().toString()
+      let user1: string
+      let user2: string
 
       beforeEach(async () => {
+        user1 = (await registerNewUser()).id!
+        user2 = (await registerNewUser()).id!
         await getDao().insertOne({ name: 'item1', num: 1, user: user1 })
         await getDao().insertOne({ name: 'item2', num: 2, user: user1 })
         await getDao().insertOne({ name: 'item3', num: 3, user: user2 })
@@ -391,7 +399,7 @@ describe('EntityController', () => {
           await registerTestEntity({ get: 'user' })
           await request().get(baseUrl).expect(401)
 
-          const res = await authenticatedRequest()
+          const res = await authenticatedRequest(user1)
             .get(baseUrl)
             .expect(200)
           expect(res.body.items.length).toBe(3)
@@ -405,7 +413,7 @@ describe('EntityController', () => {
           expect(resUnauth.body.items[0].name).toBeUndefined()
           expect(resUnauth.body.items[0].num).toBe(1)
 
-          const resAuth = await authenticatedRequest().get(baseUrl).expect(200)
+          const resAuth = await authenticatedRequest(user1).get(baseUrl).expect(200)
           expect(resAuth.body.items.length).toBe(3)
           expect(resAuth.body.items[0].name).toBe('item1')
           expect(resAuth.body.items[0].num).toBe(1)
@@ -576,9 +584,10 @@ describe('EntityController', () => {
 
     describe('Permissions', () => {
       let item: TestEntity
-      const user = new ObjectId().toString()
+      let user: string
 
       beforeEach(async () => {
+        user = (await registerNewUser()).id!
         item = await getDao().insertOne({ name: 'item1', num: 1, user })
       })
 
@@ -588,7 +597,7 @@ describe('EntityController', () => {
           await request().get(`${baseUrl}/${item.id}`).expect(401)
 
           await registerTestEntity({ get: 'user' })
-          await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
+          await authenticatedRequest(user).get(`${baseUrl}/${item.id}`).expect(200)
         })
 
         it('should only return values with "user" get permissions if the request is authenticated', async () => {
@@ -598,7 +607,7 @@ describe('EntityController', () => {
           expect(resUnauth.body.item.name).toBeUndefined()
           expect(resUnauth.body.item.num).toBe(1)
 
-          const resAuth = await authenticatedRequest().get(`${baseUrl}/${item.id}`).expect(200)
+          const resAuth = await authenticatedRequest(user).get(`${baseUrl}/${item.id}`).expect(200)
           expect(resAuth.body.item.name).toBe('item1')
           expect(resAuth.body.item.num).toBe(1)
         })
@@ -744,13 +753,14 @@ describe('EntityController', () => {
 
         it('should only create values with "user" create permissions if the request is authenticated', async () => {
           await registerTestEntityWithCustomAttrPermissions('create', 'anyone', 'user')
+          const user = await registerNewUser()
           await request().post(baseUrl)
             .send({ name: 'item1', num: 1 })
             .expect(200)
           const item1 = await getDao().findOne({ num: 1 })
           expect(item1!.name).toBeUndefined()
 
-          await authenticatedRequest().post(baseUrl)
+          await authenticatedRequest(user.id).post(baseUrl)
             .send({ name: 'item2', num: 2 })
             .expect(200)
           const item2 = await getDao().findOne({ num: 2 })
@@ -895,9 +905,10 @@ describe('EntityController', () => {
 
     describe('Permissions', () => {
       let item: TestEntity
-      const user = new ObjectId().toString()
+      let user: string
 
       beforeEach(async () => {
+        user = (await registerNewUser()).id!
         item = await getDao().insertOne({ name: 'item', user })
       })
 
@@ -908,7 +919,7 @@ describe('EntityController', () => {
             .send({ name: 'updated' })
             .expect(401)
 
-          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
+          await authenticatedRequest(user).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated' })
             .expect(200)
           const updatedItem = await getDao().findOneById(item.id!)
@@ -924,7 +935,7 @@ describe('EntityController', () => {
           expect(updatedItem1!.name).toBe('item')
           expect(updatedItem1!.num).toBe(10)
 
-          await authenticatedRequest().put(`${baseUrl}/${item.id}`)
+          await authenticatedRequest(user).put(`${baseUrl}/${item.id}`)
             .send({ name: 'updated', num: 20 })
             .expect(200)
           const updatedItem2 = await getDao().findOneById(item.id!)
@@ -1069,10 +1080,13 @@ describe('EntityController', () => {
 
     describe('Permissions', () => {
       let item: TestEntity
-      const user = new ObjectId().toString()
+      let user1: string
+      let user2: string
 
       beforeEach(async () => {
-        item = await getDao().insertOne({ name: 'item', user })
+        user1 = (await registerNewUser()).id!
+        user2 = (await registerNewUser()).id!
+        item = await getDao().insertOne({ name: 'item', user: user1 })
       })
 
       describe('User', () => {
@@ -1080,7 +1094,7 @@ describe('EntityController', () => {
           await registerTestEntity({ delete: 'user' })
           await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
+          await authenticatedRequest(user1).delete(`${baseUrl}/${item.id}`)
             .expect(200)
         })
       })
@@ -1090,9 +1104,9 @@ describe('EntityController', () => {
           await registerTestEntity({ delete: 'own' })
           await request().delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest().delete(`${baseUrl}/${item.id}`)
+          await authenticatedRequest(user2).delete(`${baseUrl}/${item.id}`)
             .expect(401)
-          await authenticatedRequest(user).delete(`${baseUrl}/${item.id}`)
+          await authenticatedRequest(user1).delete(`${baseUrl}/${item.id}`)
             .expect(200)
         })
       })

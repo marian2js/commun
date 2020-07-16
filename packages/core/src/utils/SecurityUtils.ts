@@ -9,8 +9,8 @@ export const SecurityUtils = {
 
   bcryptHashIsValid: async (value: string, hash: string) => bcryptjs.compare(value, hash),
 
-  generateRandomString: async (chars: number): Promise<string> => {
-    const buffer = await randomBytes(chars / 2)
+  generateRandomString: (chars: number): string => {
+    const buffer = randomBytes(chars / 2)
     return buffer.toString('hex')
   },
 }

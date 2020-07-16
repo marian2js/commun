@@ -223,10 +223,10 @@ async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: key
     throw new BadRequestError(`${key} is required`)
   }
   if (attribute.prefix?.type === 'random') {
-    slug = (await SecurityUtils.generateRandomString(attribute.prefix.chars)) + '-' + slug
+    slug = SecurityUtils.generateRandomString(attribute.prefix.chars) + '-' + slug
   }
   if (attribute.suffix?.type === 'random') {
-    slug += '-' + (await SecurityUtils.generateRandomString(attribute.suffix.chars))
+    slug += '-' + SecurityUtils.generateRandomString(attribute.suffix.chars)
   }
   return slug
 }
