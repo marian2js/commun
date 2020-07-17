@@ -7,6 +7,7 @@ import {
   MapModelAttribute,
   ModelAttribute,
   NumberModelAttribute,
+  ObjectModelAttribute,
   RefModelAttribute,
   SlugModelAttribute,
   StringModelAttribute,
@@ -46,6 +47,8 @@ export async function getModelAttribute<T> (
       return getMapModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
     case 'number':
       return getNumberModelAttribute(attribute, key, data[key], defaultValue)
+    case 'object':
+      return getObjectModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
     case 'ref':
       return getRefModelAttribute(attribute, key, data[key], defaultValue)
     case 'slug':
@@ -189,6 +192,30 @@ function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof
   return parsedValue
 }
 
+async function getObjectModelAttribute<T> (
+  attribute: ObjectModelAttribute,
+  key: keyof T,
+  value: any,
+  defaultValue: object,
+  userId?: string,
+  ignoreDefault?: boolean
+) {
+  if (!value) {
+    if (attribute.required && defaultValue === undefined) {
+      throw new BadRequestError(`${key} is required`)
+    }
+    return defaultValue
+  } else if (typeof value !== 'object') {
+    throw new BadRequestError(`${key} must be an object`)
+  }
+
+  const obj: { [key: string]: any } = {}
+  for (const [fieldKey, fieldAttribute] of Object.entries(attribute.fields)) {
+    obj[fieldKey] = await getModelAttribute(fieldAttribute, fieldKey, value, userId, true)
+  }
+  return obj
+}
+
 async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof T, value: any, defaultValue: string) {
   if (attribute.required && !value && defaultValue === undefined) {
     throw new BadRequestError(`${key} is required`)
@@ -297,6 +324,11 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
       return Object.entries(value).reduce((prev: { [key: string]: any }, curr) => {
         const key = parseModelAttribute(attribute.keyType, curr[0])
         prev[key] = parseModelAttribute(attribute.valueType, curr[1])
+        return prev
+      }, {})
+    case 'object':
+      return Object.keys(attribute.fields).reduce((prev: { [key: string]: any }, curr) => {
+        prev[curr] = parseModelAttribute(attribute.fields[curr], value[curr])
         return prev
       }, {})
     default:

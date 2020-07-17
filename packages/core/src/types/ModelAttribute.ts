@@ -55,6 +55,14 @@ export type NumberModelAttribute = BaseModelAttribute & {
   default?: number
 }
 
+export type ObjectModelAttribute = BaseModelAttribute & {
+  type: 'object'
+  fields: {
+    [key: string]: ModelAttribute
+  }
+  default?: object
+}
+
 export type RefModelAttribute = BaseModelAttribute & {
   type: 'ref'
   entity: string
@@ -100,6 +108,7 @@ export type ModelAttribute =
   ListModelAttribute |
   MapModelAttribute |
   NumberModelAttribute |
+  ObjectModelAttribute |
   RefModelAttribute |
   SlugModelAttribute |
   StringModelAttribute |
