@@ -128,7 +128,13 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
   })
 
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
-    const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'type') as GraphQLOutputType
+    const type = getAttributeGraphQLType(
+      entityConfig,
+      key,
+      attribute!,
+      'type',
+      name => capitalize(entityConfig.entitySingularName!) + name
+    ) as GraphQLOutputType
     const permission = { ...entityConfig.permissions, ...attribute!.permissions }['get']
     const hasAnyoneAccess = Array.isArray(permission) ? permission.includes('anyone') : permission === 'anyone'
     const required = attribute!.required && (hasAnyoneAccess || ['ref', 'user'].includes(attribute!.type))
@@ -165,7 +171,13 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
   const apiKey = entityConfig.apiKey || 'id'
 
   for (const [key, attribute] of getEntityAttributesByAction(entityConfig, action)) {
-    const type = getAttributeGraphQLType(entityConfig, key, attribute!, 'input') as GraphQLInputType
+    const type = getAttributeGraphQLType(
+      entityConfig,
+      key,
+      attribute!,
+      'input',
+      name => capitalize(action) + capitalize(entityConfig.entitySingularName!) + name + 'Input',
+    ) as GraphQLInputType
     let attributeRequired: boolean
     switch (action) {
       case 'get':
@@ -208,7 +220,13 @@ function buildFilterEntityInputType (entityConfig: EntityConfig<EntityModel>) {
         name: capitalize(entityConfig.entitySingularName!) + capitalize(key) + 'FilterInput',
         fields: {
           value: {
-            type: new GraphQLNonNull(getAttributeGraphQLType(entityConfig, key, attribute!, 'input') as GraphQLInputType)
+            type: new GraphQLNonNull(getAttributeGraphQLType(
+              entityConfig,
+              key,
+              attribute!,
+              'input',
+              name => capitalize(entityConfig.entitySingularName!) + capitalize(key) + name + 'FilterInput',
+            ) as GraphQLInputType)
           },
           comparator: {
             type: filterComparatorSymbol
@@ -261,7 +279,8 @@ export function getAttributeGraphQLType (
   entityConfig: EntityConfig<EntityModel>,
   attributeKey: string,
   attribute: ModelAttribute,
-  kind: 'type' | 'input'
+  kind: 'type' | 'input',
+  getName: (key: string) => string,
 ): GraphQLInputType | GraphQLOutputType {
   switch (attribute.type) {
     case 'boolean':
@@ -314,8 +333,36 @@ export function getAttributeGraphQLType (
         values,
       })
 
-    // TODO support these fields
+    case 'object':
+      const fields: { [key: string]: any } = {}
+      for (const [fieldKey, fieldAttribute] of Object.entries(attribute.fields)) {
+        fields[fieldKey] = {
+          type: getAttributeGraphQLType(
+            entityConfig,
+            capitalize(attributeKey) + capitalize(fieldKey),
+            fieldAttribute,
+            kind,
+            getName,
+          )
+        }
+      }
+      const graphQLType = kind === 'input' ? GraphQLInputObjectType : GraphQLObjectType
+      return new graphQLType({
+        name: getName(capitalize(attributeKey)),
+        fields: () => fields,
+      })
+
     case 'list':
+      const listType = getAttributeGraphQLType(
+        entityConfig,
+        attributeKey,
+        attribute.listType,
+        kind,
+        getName,
+      )
+      return new GraphQLList(listType)
+
+    // TODO support map attributes
     case 'map':
       return GraphQLString
 

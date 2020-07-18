@@ -379,6 +379,83 @@ describe('modelAttributes', () => {
     })
   })
 
+  describe('Object', () => {
+    it('should return the given object with all elements parsed', async () => {
+      expect(await getModelAttribute({
+        type: 'object',
+        fields: {
+          a: { type: 'string' },
+          b: { type: 'boolean' },
+          c: { type: 'number' },
+        },
+      }, 'key', { key: { a: 'test', b: 'true', c: '123' } })).toEqual({
+        a: 'test',
+        b: true,
+        c: 123,
+      })
+    })
+
+    it('should throw an error if onefield does not respect the constraints', async () => {
+      expect(await getModelAttribute({
+        type: 'object',
+        fields: {
+          a: { type: 'string' },
+          b: { type: 'boolean' },
+          c: { type: 'number', max: 10 },
+        },
+      }, 'key', { key: { a: 'test', b: 'true', c: '10' } })).toEqual({
+        a: 'test',
+        b: true,
+        c: 10,
+      })
+
+      await expect(getModelAttribute({
+        type: 'object',
+        fields: {
+          a: { type: 'string' },
+          b: { type: 'boolean' },
+          c: { type: 'number', max: 10 },
+        },
+      }, 'key', { key: { a: 'test', b: 'true', c: '11' } }))
+        .rejects.toThrow('c must be smaller or equal than 10')
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'object',
+        required: true,
+        fields: { a: { type: 'string' }, },
+      }, 'key', { key: { a: 'test' } })).toEqual({ a: 'test' })
+
+      await expect(getModelAttribute({
+        type: 'object',
+        required: true,
+        fields: { a: { type: 'string' }, },
+      }, 'key', {})).rejects.toThrow(/key is required/)
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(await getModelAttribute({
+        type: 'object',
+        fields: { a: { type: 'string' }, },
+        default: { a: 'default' },
+      }, 'key', { key: { a: 'test' } })).toEqual({ a: 'test' })
+
+      expect(await getModelAttribute({
+        type: 'object',
+        fields: { a: { type: 'string' }, },
+        default: { a: 'default' },
+      }, 'key', {})).toEqual({ a: 'default' })
+    })
+
+    it('should throw an error if the value is not an object', async () => {
+      await expect(getModelAttribute({
+        type: 'object',
+        fields: { a: { type: 'string' }, },
+      }, 'key', { key: 'not an object' })).rejects.toThrow(/key must be an object/)
+    })
+  })
+
   describe('Ref', () => {
     let itemId: string
 
@@ -644,5 +721,14 @@ describe('parseModelAttribute', () => {
       keyType: { type: 'string' },
       valueType: { type: 'boolean' }
     }, { a: 'true', b: 'false' })).toEqual({ a: true, b: false })
+
+    expect(parseModelAttribute({
+      type: 'object',
+      fields: {
+        a: { type: 'string' },
+        b: { type: 'boolean' },
+        c: { type: 'number' },
+      },
+    }, { a: 'test', b: 'true', c: '123' })).toEqual({ a: 'test', b: true, c: 123 })
   })
 })
