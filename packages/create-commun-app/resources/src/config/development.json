@@ -9,5 +9,6 @@
   },
   "logger": {
     "request": ":remote-addr :user-id :method :url :graphql-operation HTTP/:http-version :status - :response-time ms"
-  }
+  },
+  "maxRequestSize": "100kb"
 }

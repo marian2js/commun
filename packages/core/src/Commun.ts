@@ -40,6 +40,7 @@ export type CommunOptions = {
   logger?: {
     request?: string
   }
+  maxRequestSize?: string
 }
 
 export const Commun = {
@@ -49,8 +50,8 @@ export const Commun = {
     // Express configuration
     app.set('port', communOptions.port || process.env.PORT || 3000)
     app.use(compression())
-    app.use(bodyParser.json())
-    app.use(bodyParser.urlencoded({ extended: true }))
+    app.use(bodyParser.json({ limit: communOptions.maxRequestSize }))
+    app.use(bodyParser.urlencoded({ limit: communOptions.maxRequestSize, extended: true }))
     app.use(lusca.xframe('SAMEORIGIN'))
     app.use(lusca.xssProtection(true))
 
