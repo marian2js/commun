@@ -21,6 +21,7 @@ import {
   Thunk
 } from 'graphql/type/definition'
 import graphqlFields from 'graphql-fields'
+import { GraphQLJSONObject } from 'graphql-type-json'
 import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
 import { GraphQLUserController } from './controllers/GraphQLUserController'
@@ -362,9 +363,8 @@ export function getAttributeGraphQLType (
       )
       return new GraphQLList(listType)
 
-    // TODO support map attributes
     case 'map':
-      return GraphQLString
+      return GraphQLJSONObject
 
     default:
       assertNever(attribute)

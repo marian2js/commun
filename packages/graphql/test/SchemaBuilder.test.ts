@@ -2,6 +2,7 @@ import { getAttributeGraphQLType } from '../src/SchemaBuilder'
 import { GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLString } from 'graphql'
 import { EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
 import { GraphQLDate } from '../src/graphql-types/GraphQLDate'
+import { GraphQLJSONObject } from 'graphql-type-json'
 
 describe('SchemaBuilder', () => {
   describe('getAttributeGraphQLType', () => {
@@ -66,7 +67,8 @@ describe('SchemaBuilder', () => {
 
     it('should convert objects to GraphQL type', async () => {
       const config = createEntityConfig({
-        type: 'object', fields: {
+        type: 'object',
+        fields: {
           a: { type: 'string' },
           b: { type: 'number' },
         },
@@ -74,6 +76,16 @@ describe('SchemaBuilder', () => {
       expect(
         getAttributeGraphQLType(config, 'key', config.attributes.key, 'type', x => x).toString())
         .toEqual('Key')
+    })
+
+    it('should convert a map attribute to a GraphQL JSON Object', async () => {
+      const config = createEntityConfig({
+        type: 'map',
+        keyType: { type: 'string' },
+        valueType: { type: 'string' },
+      })
+      expect(getAttributeGraphQLType(config, 'key', config.attributes.key, 'type', x => x))
+        .toEqual(GraphQLJSONObject)
     })
   })
 })
