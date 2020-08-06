@@ -142,7 +142,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
 
     fields[key] = {
       type: key === 'id' || required ? new GraphQLNonNull(type) : type,
-      resolve: getAttributeGraphQLResolver(entityConfig, attribute!)
+      resolve: getAttributeGraphQLResolver(attribute!, entityConfig)
     }
   }
 
@@ -372,23 +372,42 @@ export function getAttributeGraphQLType (
   }
 }
 
-function getAttributeGraphQLResolver (entityConfig: EntityConfig<EntityModel>, attribute: ModelAttribute) {
-  if (attribute.type === 'user' && entityConfig.entityName === 'users') {
-    return
-  }
-  if (['user', 'ref'].includes(attribute.type)) {
-    const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
-    return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
-      const requestedKeys = graphqlFields(info)
-      if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
-        context.params = {
-          id: source[info.fieldName].id
-        }
-        const res = await Commun.getEntityController(entityName).get(context, { findModelById: true })
-        return res.item
+function getAttributeGraphQLResolver (attribute: ModelAttribute, entityConfig?: EntityConfig<EntityModel>) {
+  switch (attribute.type) {
+    case 'user':
+    case 'ref':
+      if (attribute.type === 'user' && entityConfig?.entityName === 'users') {
+        return
       }
-      return source[info.fieldName]
-    }
+      const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
+      return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+        const requestedKeys = graphqlFields(info)
+        if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
+          context.params = {
+            id: source[info.fieldName].id || source[info.fieldName]
+          }
+          const res = await Commun.getEntityController(entityName).get(context, { findModelById: true })
+          return res.item
+        }
+        return source[info.fieldName]
+      }
+    case 'list':
+      return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+        return source[info.fieldName]?.map((item: any) =>
+          getAttributeGraphQLResolver(attribute.listType)?.({ [info.fieldName]: item }, args, context, info)
+        )
+      }
+    case 'object':
+      return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+        const obj: { [key: string]: any } = {}
+        for (const [key, value] of Object.entries(attribute.fields)) {
+          if (source[info.fieldName][key]) {
+            obj[key] = getAttributeGraphQLResolver(value)
+              ?.({ [info.fieldName]: source[info.fieldName][key] }, args, context, info)
+          }
+        }
+        return obj
+      }
   }
 }
 
