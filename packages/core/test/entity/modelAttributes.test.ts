@@ -387,7 +387,7 @@ describe('modelAttributes', () => {
         entityName,
         attribute: { type: 'eval', eval: 'test' },
         key: 'key',
-        data: { key: 'test' }
+        data: {}
       })).toBe('test')
     })
 
@@ -396,13 +396,13 @@ describe('modelAttributes', () => {
         entityName,
         attribute: { type: 'eval', eval: 'Val: {2 + 2}' },
         key: 'key',
-        data: { key: 'test' }
+        data: {}
       })).toBe('Val: 4')
       expect(await getModelAttribute({
         entityName,
         attribute: { type: 'eval', eval: 'Val: {this.num * 2}' },
         key: 'key',
-        data: { key: 'test', num: 3 }
+        data: { key: null, num: 3 }
       })).toBe('Val: 6')
     })
 
@@ -411,13 +411,13 @@ describe('modelAttributes', () => {
         entityName,
         attribute: { type: 'eval', eval: '{this.foo}' },
         key: 'key',
-        data: { key: 'test', foo: 'bar' }
+        data: { key: null, foo: 'bar' }
       })).toBe('bar')
       expect(await getModelAttribute({
         entityName,
         attribute: { type: 'eval', eval: '{this.foo}:{this.bar}' },
         key: 'key',
-        data: { key: 'test', foo: '1', bar: '2' }
+        data: { key: null, foo: '1', bar: '2' }
       })).toBe('1:2')
     })
 

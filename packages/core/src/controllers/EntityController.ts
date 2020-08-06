@@ -256,23 +256,29 @@ export class EntityController<T extends EntityModel> {
       const validPermissions = this.hasValidPermissions(auth, persistedModel || null, action, permissions)
       const shouldSetValue = action === 'create' || (!attribute!.readonly && req.body[key] !== undefined)
       const settingUser = attribute!.type === 'user' && action === 'create'
+      const getAttributeOptions = {
+        entityName: this.entityName,
+        attribute: attribute!,
+        key: key,
+        userId: req.auth?.id,
+        ignoreDefault: action === 'update',
+      }
 
       if ((validPermissions && shouldSetValue) || settingUser) {
         model[key as keyof T] = await getModelAttribute({
-          entityName: this.entityName,
-          attribute: attribute!,
-          key: key,
+          ...getAttributeOptions,
           data: req.body,
-          userId: req.auth?.id,
-          ignoreDefault: action === 'update'
         })
       } else if (attribute!.default !== undefined && action === 'create') {
         model[key as keyof T] = await getModelAttribute({
-          entityName: this.entityName,
-          attribute: attribute!,
-          key: key,
+          ...getAttributeOptions,
           data: {},
-          userId: req.auth?.id
+        })
+      } else if (['slug', 'eval'].includes(attribute!.type)) {
+        delete req.body[key]
+        model[key as keyof T] = await getModelAttribute({
+          ...getAttributeOptions,
+          data: req.body,
         })
       }
     }
