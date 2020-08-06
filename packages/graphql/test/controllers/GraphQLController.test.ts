@@ -10,6 +10,13 @@ describe('GraphQLController', () => {
   interface TestEntity extends EntityModel {
     name: string
     date?: Date
+    subEntities?: {
+      entity: string
+    }[]
+  }
+
+  interface SubEntity extends EntityModel {
+    name: string
   }
 
   beforeAll(async () => {
@@ -33,7 +40,37 @@ describe('GraphQLController', () => {
           date: {
             type: 'date'
           },
+          subEntities: {
+            type: 'list',
+            listType: {
+              type: 'object',
+              fields: {
+                entity: {
+                  type: 'ref',
+                  entity: 'subEntity',
+                }
+              }
+            }
+          }
         },
+      }
+    })
+    Commun.registerEntity<SubEntity>({
+      config: {
+        entityName: 'subEntity',
+        collectionName: 'subEntities',
+        permissions: {
+          get: 'anyone',
+          create: 'anyone',
+          update: 'anyone',
+          delete: 'anyone',
+        },
+        attributes: {
+          name: {
+            type: 'string',
+            required: true,
+          }
+        }
       }
     })
     await startTestApp(Commun)
@@ -44,6 +81,7 @@ describe('GraphQLController', () => {
   afterAll(closeTestApp)
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
+  const getDaoSubEntity = () => Commun.getEntityDao<SubEntity>('subEntity')
 
   describe('listEntities', () => {
     it('should return a list of items', async () => {
@@ -74,6 +112,46 @@ describe('GraphQLController', () => {
               name: 'item2'
             }, {
               name: 'item3'
+            }]
+          }
+        }
+      })
+    })
+
+    it('should list properties from sub-entities', async () => {
+      const sub1 = await getDaoSubEntity().insertOne({ name: 'sub1' })
+      const sub2 = await getDaoSubEntity().insertOne({ name: 'sub2' })
+      await getDao().insertOne({ name: 'item1', subEntities: [{ entity: sub1.id! }, { entity: sub2.id! }] })
+
+      const res = await request()
+        .post('/graphql')
+        .send({
+          query:
+            `{
+               items {
+                 nodes {
+                   name
+                   subEntities {
+                     entity {
+                       name
+                     }
+                   }
+                 }
+               }
+             }`
+        })
+        .expect(200)
+
+      expect(res.body).toEqual({
+        data: {
+          items: {
+            nodes: [{
+              name: 'item1',
+              subEntities: [{
+                entity: { name: 'sub1' },
+              }, {
+                entity: { name: 'sub2' },
+              },]
             }]
           }
         }
