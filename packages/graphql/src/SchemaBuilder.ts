@@ -287,6 +287,7 @@ export function getAttributeGraphQLType (
     case 'boolean':
       return GraphQLBoolean
     case 'email':
+    case 'eval':
     case 'slug':
     case 'string':
       return GraphQLString

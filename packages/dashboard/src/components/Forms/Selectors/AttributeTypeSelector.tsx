@@ -35,6 +35,7 @@ export const AttributeTypeSelector = (props: Props) => {
         <MenuItem value="date">Date</MenuItem>
         <MenuItem value="email">Email</MenuItem>
         <MenuItem value="enum">Enum</MenuItem>
+        <MenuItem value="eval">Eval</MenuItem>
         <MenuItem value="list">List</MenuItem>
         <MenuItem value="map">Map</MenuItem>
         <MenuItem value="number">Number</MenuItem>

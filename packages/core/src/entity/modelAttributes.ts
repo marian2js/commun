@@ -3,6 +3,7 @@ import {
   DateModelAttribute,
   EmailModelAttribute,
   EnumModelAttribute,
+  EvalModelAttribute,
   ListModelAttribute,
   MapModelAttribute,
   ModelAttribute,
@@ -18,223 +19,264 @@ import { assertNever, SecurityUtils } from '../utils'
 import * as EmailValidator from 'email-validator'
 import { ObjectId } from 'mongodb'
 import { Commun } from '../Commun'
+import { parseConfigString } from './configVariables'
 
 type ModelData<T> = { [P in keyof T]?: T[P] }
 
-export async function getModelAttribute<T> (
+interface GetModelAttributeOptions<T> {
+  entityName?: string
   attribute: ModelAttribute,
   key: keyof T,
-  data: ModelData<T>,
-  userId?: string,
-  ignoreDefault?: boolean): Promise<any> {
+  data: ModelData<T>
+  userId?: string
+  ignoreDefault?: boolean
+}
 
-  const defaultValue = ignoreDefault ? undefined : attribute.default
+interface GetModelAttributeTypeOptions<T, MODEL_ATTRIBUTE extends ModelAttribute>
+  extends GetModelAttributeOptions<T> {
+  attribute: MODEL_ATTRIBUTE
+  value: any
+  defaultValue: any
+}
 
-  switch (attribute.type) {
+export function getModelAttribute<T> (options: GetModelAttributeOptions<T>): any {
+  const typeOptions: GetModelAttributeTypeOptions<T, any> = {
+    ...options,
+    value: (options.data[options.key] as any),
+    defaultValue: options.ignoreDefault ? undefined : options.attribute.default
+  }
+
+  switch (options.attribute.type) {
     case 'boolean':
-      return getBooleanModelAttribute(attribute, key, data[key], defaultValue)
+      return getBooleanModelAttribute(typeOptions)
     case 'date':
-      return getDateModelAttribute(attribute, key, data[key], defaultValue)
+      return getDateModelAttribute(typeOptions)
     case 'email':
-      return getEmailModelAttribute(attribute, key, data[key], defaultValue)
+      return getEmailModelAttribute(typeOptions)
     case 'enum':
-      return getEnumModelAttribute(attribute, key, data[key], defaultValue)
+      return getEnumModelAttribute(typeOptions)
+    case 'eval':
+      return getEvalModelAttribute(typeOptions)
     case 'id':
       return
     case 'list':
-      return getListModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
+      return getListModelAttribute(typeOptions)
     case 'map':
-      return getMapModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
+      return getMapModelAttribute(typeOptions)
     case 'number':
-      return getNumberModelAttribute(attribute, key, data[key], defaultValue)
+      return getNumberModelAttribute(typeOptions)
     case 'object':
-      return getObjectModelAttribute(attribute, key, data[key], defaultValue, userId, ignoreDefault)
+      return getObjectModelAttribute(typeOptions)
     case 'ref':
-      return getRefModelAttribute(attribute, key, data[key], defaultValue)
+      return getRefModelAttribute(typeOptions)
     case 'slug':
-      return getSlugModelAttribute(attribute, key, data, defaultValue)
+      return getSlugModelAttribute(typeOptions)
     case 'string':
-      return getStringModelAttribute(attribute, key, data[key], defaultValue)
+      return getStringModelAttribute(typeOptions)
     case 'user':
-      return getUserModelAttribute(attribute, key, data[key], defaultValue, userId)
+      return getUserModelAttribute(typeOptions)
     default:
-      assertNever(attribute)
+      assertNever(options.attribute)
   }
 }
 
-function getBooleanModelAttribute<T> (attribute: BooleanModelAttribute, key: keyof T, value: any, defaultValue: boolean) {
-  if ([undefined, null].includes(value)) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+function getBooleanModelAttribute<T> (options: GetModelAttributeTypeOptions<T, BooleanModelAttribute>) {
+  if ([undefined, null].includes(options.value)) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
+    return options.defaultValue
   }
 
-  const validValues = [true, false, 'true', 'false']
-  if (!validValues.includes(value)) {
-    throw new BadRequestError(`${key} must be boolean`)
+  if (![true, false, 'true', 'false'].includes(options.value)) {
+    throw new BadRequestError(`${options.key} must be boolean`)
   }
 
-  return parseModelAttribute(attribute, value)
+  return parseModelAttribute(options.attribute, options.value)
 }
 
-function getDateModelAttribute<T> (attribute: DateModelAttribute, key: keyof T, value: any, defaultValue: boolean) {
-  if (!value) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+function getDateModelAttribute<T> (options: GetModelAttributeTypeOptions<T, DateModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
+    return options.defaultValue
   }
 
-  const date = parseModelAttribute(attribute, value)
+  const date = parseModelAttribute(options.attribute, options.value)
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    throw new BadRequestError(`${key} must be a date`)
+    throw new BadRequestError(`${options.key} must be a date`)
   }
 
   return date
 }
 
-function getEmailModelAttribute<T> (attribute: EmailModelAttribute, key: keyof T, value: any, defaultValue: string) {
-  if (!value) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+function getEmailModelAttribute<T> (options: GetModelAttributeTypeOptions<T, EmailModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
+    return options.defaultValue
   }
 
-  const email = value.trim()
+  const email = options.value.trim()
   if (!EmailValidator.validate(email)) {
-    throw new BadRequestError(`${key} is not a valid email address`)
+    throw new BadRequestError(`${options.key} is not a valid email address`)
   }
   return email
 }
 
-function getEnumModelAttribute<T> (attribute: EnumModelAttribute, key: keyof T, value: any, defaultValue: string) {
-  if (!value) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+function getEnumModelAttribute<T> (options: GetModelAttributeTypeOptions<T, EnumModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
+    return options.defaultValue
   }
-  if (!attribute.values.includes(value)) {
-    throw new BadRequestError(`${key} must be one of ${attribute.values.join(', ')}`)
+  if (!options.attribute.values.includes(options.value)) {
+    throw new BadRequestError(`${options.key} must be one of ${options.attribute.values.join(', ')}`)
   }
-  return value
+  return options.value
 }
 
-function getListModelAttribute<T> (attribute: ListModelAttribute, key: keyof T, values: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
-  if (!values) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+async function getEvalModelAttribute<T> (options: GetModelAttributeTypeOptions<T, EvalModelAttribute>) {
+  const parsedValue = await parseConfigString(options.attribute.eval, options.entityName || '', options.data, options.userId)
+  if (!parsedValue) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
-  }
-
-  if (!Array.isArray(values)) {
-    throw new BadRequestError(`${key} must be an array`)
-  }
-
-  if (attribute.maxItems !== undefined && values.length > attribute.maxItems) {
-    throw new BadRequestError(`${key} can contain up to ${attribute.maxItems} items`)
-  }
-
-  return Promise.all(values.map(async (_, index) => {
-    try {
-      return await getModelAttribute(attribute.listType, index, values, userId, ignoreDefault)
-    } catch (e) {
-      throw new Error(`${key} index ${e.message}`)
-    }
-  }))
-}
-
-function getMapModelAttribute<T> (attribute: MapModelAttribute, key: keyof T, map: any, defaultValue: number, userId?: string, ignoreDefault?: boolean) {
-  if (!map) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
-    }
-    return defaultValue
-  }
-
-  if (typeof map !== 'object') {
-    throw new BadRequestError(`${key} must be an object`)
-  }
-
-  return Object.entries(map).reduce(async (prev: { [key: string]: any } | Promise<{ [key: string]: any }>, curr) => {
-    const prevObject = await prev
-    try {
-      const key = await getModelAttribute(attribute.keyType, 'key', { key: curr[0] }, userId, ignoreDefault)
-      prevObject[key] = await getModelAttribute(attribute.valueType, curr[0], map, userId, ignoreDefault)
-      return prev
-    } catch (e) {
-      throw new Error(`${key} ${e.message}`)
-    }
-  }, {})
-}
-
-function getNumberModelAttribute<T> (attribute: NumberModelAttribute, key: keyof T, value: any, defaultValue: number) {
-  if ([undefined, null].includes(value)) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
-    }
-    return defaultValue
-  }
-
-  const parsedValue = Number(value)
-  if ([true, false].includes(value) || Number.isNaN(parsedValue)) {
-    throw new BadRequestError(`${key} must be a number`)
-  }
-  if (attribute.min !== undefined && parsedValue < attribute.min) {
-    throw new BadRequestError(`${key} must be larger or equal than ${attribute.min}`)
-  }
-  if (attribute.max !== undefined && parsedValue > attribute.max) {
-    throw new BadRequestError(`${key} must be smaller or equal than ${attribute.max}`)
+    return options.defaultValue
   }
   return parsedValue
 }
 
-async function getObjectModelAttribute<T> (
-  attribute: ObjectModelAttribute,
-  key: keyof T,
-  value: any,
-  defaultValue: object,
-  userId?: string,
-  ignoreDefault?: boolean
-) {
-  if (!value) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+function getListModelAttribute<T> (options: GetModelAttributeTypeOptions<T, ListModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    return defaultValue
-  } else if (typeof value !== 'object') {
-    throw new BadRequestError(`${key} must be an object`)
+    return options.defaultValue
+  }
+
+  if (!Array.isArray(options.value)) {
+    throw new BadRequestError(`${options.key} must be an array`)
+  }
+
+  if (options.attribute.maxItems !== undefined && options.value.length > options.attribute.maxItems) {
+    throw new BadRequestError(`${options.key} can contain up to ${options.attribute.maxItems} items`)
+  }
+
+  return Promise.all(options.value.map(async (_, index) => {
+    try {
+      return await getModelAttribute({
+        ...options,
+        attribute: options.attribute.listType,
+        key: index as keyof T,
+        data: options.value,
+      })
+    } catch (e) {
+      throw new Error(`${options.key} index ${e.message}`)
+    }
+  }))
+}
+
+function getMapModelAttribute<T> (options: GetModelAttributeTypeOptions<T, MapModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
+    }
+    return options.defaultValue
+  }
+
+  if (typeof options.value !== 'object') {
+    throw new BadRequestError(`${options.key} must be an object`)
+  }
+
+  return Object.entries(options.value).reduce(async (prev: { [key: string]: any } | Promise<{ [key: string]: any }>, curr) => {
+    const prevObject = await prev
+    try {
+      const key = await getModelAttribute<{ key: any }>({
+        ...options,
+        attribute: options.attribute.keyType,
+        key: 'key',
+        data: { key: curr[0] },
+      })
+      prevObject[key] = await getModelAttribute({
+        ...options,
+        attribute: options.attribute.valueType,
+        key: curr[0] as keyof T,
+        data: options.value,
+      })
+      return prev
+    } catch (e) {
+      throw new Error(`${options.key} ${e.message}`)
+    }
+  }, {})
+}
+
+function getNumberModelAttribute<T> (options: GetModelAttributeTypeOptions<T, NumberModelAttribute>) {
+  if ([undefined, null].includes(options.value)) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
+    }
+    return options.defaultValue
+  }
+
+  const parsedValue = Number(options.value)
+  if ([true, false].includes(options.value) || Number.isNaN(parsedValue)) {
+    throw new BadRequestError(`${options.key} must be a number`)
+  }
+  if (options.attribute.min !== undefined && parsedValue < options.attribute.min) {
+    throw new BadRequestError(`${options.key} must be larger or equal than ${options.attribute.min}`)
+  }
+  if (options.attribute.max !== undefined && parsedValue > options.attribute.max) {
+    throw new BadRequestError(`${options.key} must be smaller or equal than ${options.attribute.max}`)
+  }
+  return parsedValue
+}
+
+async function getObjectModelAttribute<T> (options: GetModelAttributeTypeOptions<T, ObjectModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
+    }
+    return options.defaultValue
+  } else if (typeof options.value !== 'object') {
+    throw new BadRequestError(`${options.key} must be an object`)
   }
 
   const obj: { [key: string]: any } = {}
-  for (const [fieldKey, fieldAttribute] of Object.entries(attribute.fields)) {
-    obj[fieldKey] = await getModelAttribute(fieldAttribute, fieldKey, value, userId, true)
+  for (const [fieldKey, fieldAttribute] of Object.entries(options.attribute.fields)) {
+    obj[fieldKey] = await getModelAttribute({
+      ...options,
+      attribute: fieldAttribute,
+      key: fieldKey as keyof T,
+      data: options.value,
+      ignoreDefault: true,
+    })
   }
   return obj
 }
 
-async function getRefModelAttribute<T> (attribute: RefModelAttribute, key: keyof T, value: any, defaultValue: string) {
-  if (attribute.required && !value && defaultValue === undefined) {
-    throw new BadRequestError(`${key} is required`)
+async function getRefModelAttribute<T> (options: GetModelAttributeTypeOptions<T, RefModelAttribute>) {
+  if (options.attribute.required && !options.value && options.defaultValue === undefined) {
+    throw new BadRequestError(`${options.key} is required`)
   }
-  if (!value) {
-    return defaultValue ? parseModelAttribute(attribute, defaultValue) : undefined
+  if (!options.value) {
+    return options.defaultValue ? parseModelAttribute(options.attribute, options.defaultValue) : undefined
   }
-  if (!ObjectId.isValid(value)) {
-    throw new BadRequestError(`${key} is not a valid ID`)
+  if (!ObjectId.isValid(options.value)) {
+    throw new BadRequestError(`${options.key} is not a valid ID`)
   }
-  const item = await Commun.getEntityDao(attribute.entity).findOne({ id: new ObjectId(value) })
+  const item = await Commun.getEntityDao(options.attribute.entity).findOne({ id: new ObjectId(options.value) })
   if (!item) {
-    throw new NotFoundError(`${key} not found`)
+    throw new NotFoundError(`${options.key} not found`)
   }
-  return parseModelAttribute(attribute, value)
+  return parseModelAttribute(options.attribute, options.value)
 }
 
-async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: keyof T, data: ModelData<T>, defaultValue: string) {
-  const targetData = (data[attribute.setFrom as keyof T] || '') as string
+function getSlugModelAttribute<T> (options: GetModelAttributeTypeOptions<T, SlugModelAttribute>) {
+  const targetData = (options.data[options.attribute.setFrom as keyof T] || '') as string
   let slug: string = ''
   if (targetData) {
     slug = targetData.toLowerCase()
@@ -244,60 +286,60 @@ async function getSlugModelAttribute<T> (attribute: SlugModelAttribute, key: key
       .replace(/\s+/g, '-')
   }
   if (!slug) {
-    slug = defaultValue
+    slug = options.defaultValue
   }
-  if (attribute.required && !slug && defaultValue === undefined) {
-    throw new BadRequestError(`${key} is required`)
+  if (options.attribute.required && !slug && options.defaultValue === undefined) {
+    throw new BadRequestError(`${options.key} is required`)
   }
-  if (attribute.prefix?.type === 'random') {
-    slug = SecurityUtils.generateRandomString(attribute.prefix.chars) + '-' + slug
+  if (options.attribute.prefix?.type === 'random') {
+    slug = SecurityUtils.generateRandomString(options.attribute.prefix.chars) + '-' + slug
   }
-  if (attribute.suffix?.type === 'random') {
-    slug += '-' + SecurityUtils.generateRandomString(attribute.suffix.chars)
+  if (options.attribute.suffix?.type === 'random') {
+    slug += '-' + SecurityUtils.generateRandomString(options.attribute.suffix.chars)
   }
   return slug
 }
 
-async function getStringModelAttribute<T> (attribute: StringModelAttribute, key: keyof T, value: any, defaultValue: string) {
-  const parsedValue = value?.toString()?.trim()
+function getStringModelAttribute<T> (options: GetModelAttributeTypeOptions<T, StringModelAttribute>) {
+  const parsedValue = options.value?.toString()?.trim()
   if ([undefined, null, ''].includes(parsedValue)) {
-    if (attribute.required && defaultValue === undefined) {
-      throw new BadRequestError(`${key} is required`)
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
     }
-    if (defaultValue) {
-      return defaultValue
+    if (options.defaultValue) {
+      return options.defaultValue
     }
     return parsedValue === '' ? '' : undefined
   }
 
-  if (attribute.validRegex && !new RegExp(attribute.validRegex).test(parsedValue)) {
-    throw new BadRequestError(`${key} contains invalid characters`)
+  if (options.attribute.validRegex && !new RegExp(options.attribute.validRegex).test(parsedValue)) {
+    throw new BadRequestError(`${options.key} contains invalid characters`)
   }
 
-  if (attribute.maxLength !== undefined && parsedValue.length > attribute.maxLength) {
-    throw new BadRequestError(`${key} must be shorter than ${attribute.maxLength} characters`)
+  if (options.attribute.maxLength !== undefined && parsedValue.length > options.attribute.maxLength) {
+    throw new BadRequestError(`${options.key} must be shorter than ${options.attribute.maxLength} characters`)
   }
 
-  if (attribute.hash) {
-    switch (attribute.hash.algorithm) {
+  if (options.attribute.hash) {
+    switch (options.attribute.hash.algorithm) {
       case 'bcrypt':
-        return await SecurityUtils.hashWithBcrypt(value, attribute.hash.salt_rounds)
+        return SecurityUtils.hashWithBcrypt(options.value, options.attribute.hash.salt_rounds)
       default:
-        assertNever(attribute.hash.algorithm)
+        assertNever(options.attribute.hash.algorithm)
     }
   }
 
   return parsedValue
 }
 
-async function getUserModelAttribute<T> (attribute: UserModelAttribute, key: keyof T, value: any, defaultValue: string, userId?: string) {
-  if (attribute.required && !userId && defaultValue === undefined) {
-    throw new BadRequestError(`${key} is required`)
+function getUserModelAttribute<T> (options: GetModelAttributeTypeOptions<T, UserModelAttribute>) {
+  if (options.attribute.required && !options.userId && options.defaultValue === undefined) {
+    throw new BadRequestError(`${options.key} is required`)
   }
-  if (userId) {
-    return parseModelAttribute(attribute, userId)
+  if (options.userId) {
+    return parseModelAttribute(options.attribute, options.userId)
   }
-  return defaultValue ? parseModelAttribute(attribute, defaultValue) : undefined
+  return options.defaultValue ? parseModelAttribute(options.attribute, options.defaultValue) : undefined
 }
 
 export function parseModelAttribute (attribute: ModelAttribute, value: any) {
@@ -307,6 +349,7 @@ export function parseModelAttribute (attribute: ModelAttribute, value: any) {
     case 'string':
     case 'email':
     case 'slug':
+    case 'eval':
       return '' + value
     case 'number':
       return Number(value)

@@ -31,6 +31,11 @@ export type EnumModelAttribute = BaseModelAttribute & {
   default?: JsonPrimitive
 }
 
+export type EvalModelAttribute = BaseModelAttribute & {
+  type: 'eval'
+  eval: string
+}
+
 export type IdModelAttribute = BaseModelAttribute & {
   type: 'id'
   permissions?: EntityActionPermissions
@@ -104,6 +109,7 @@ export type ModelAttribute =
   DateModelAttribute |
   EmailModelAttribute |
   EnumModelAttribute |
+  EvalModelAttribute |
   IdModelAttribute |
   ListModelAttribute |
   MapModelAttribute |

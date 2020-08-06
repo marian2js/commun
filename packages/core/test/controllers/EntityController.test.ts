@@ -17,6 +17,7 @@ describe('EntityController', () => {
     num?: number
     user?: string | ObjectId
     entityRef?: string | ObjectId
+    eval?: string
   }
 
   const registerTestEntity = async (
@@ -32,7 +33,8 @@ describe('EntityController', () => {
         permissions,
         attributes: {
           name: {
-            type: 'string'
+            type: 'string',
+            required: true,
           },
           num: {
             type: 'number'
@@ -42,11 +44,15 @@ describe('EntityController', () => {
             permissions: {
               create: 'system',
               update: 'system'
-            }
+            },
           },
           entityRef: {
             type: 'ref',
             entity: entityName,
+          },
+          eval: {
+            type: 'eval',
+            eval: 'Name: {this.name}',
           },
           ...(attributes || {})
         },
@@ -717,10 +723,22 @@ describe('EntityController', () => {
       const user = new ObjectId()
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await authenticatedRequest(user.toString()).post(baseUrl)
+        .send({ name: 'item' })
         .expect(200)
       expect(res.body.item.user).toEqual({ id: user.toString() })
       const items = await getDao().find({ user })
       expect(items.length).toBe(1)
+    })
+
+    it('should set the eval attribute from the entity name', async () => {
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
+      const res = await request().post(baseUrl)
+        .send({ name: 'item' })
+        .expect(200)
+      expect(res.body.item.name).toBe('item')
+      expect(res.body.item.eval).toBe('Name: item')
+      const item = await getDao().findOne({ name: 'item' })
+      expect(item!.name).toBe('item')
     })
 
     describe('Hooks', () => {

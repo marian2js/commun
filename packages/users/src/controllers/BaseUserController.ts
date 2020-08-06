@@ -107,8 +107,13 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
     const resetPasswordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.resetPasswordCodeHash
     const plainResetPasswordCode = SecurityUtils.generateRandomString(48)
-    const resetPasswordCodeHash = await getModelAttribute(resetPasswordAttr!, 'resetPasswordCodeHash', {
-      resetPasswordCodeHash: plainResetPasswordCode
+    const resetPasswordCodeHash = await getModelAttribute({
+      entityName: this.entityName,
+      attribute: resetPasswordAttr!,
+      key: 'resetPasswordCodeHash',
+      data: {
+        resetPasswordCodeHash: plainResetPasswordCode
+      },
     })
     await this.dao.updateOne(user.id!, { resetPasswordCodeHash })
 
@@ -133,7 +138,12 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
     if (user.resetPasswordCodeHash && await SecurityUtils.bcryptHashIsValid(req.body.code, user.resetPasswordCodeHash)) {
       const passwordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.password
-      const password = await getModelAttribute<MODEL>(passwordAttr!, 'password', { password: req.body.password })
+      const password = await getModelAttribute<MODEL>({
+        entityName: this.entityName,
+        attribute: passwordAttr!,
+        key: 'password',
+        data: { password: req.body.password },
+      })
       await this.dao.updateOne(user.id!, { password, resetPasswordCodeHash: undefined })
       return { result: true }
     }
@@ -241,8 +251,13 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     if (UserModule.getOptions().refreshToken.enabled) {
       const refreshTokenAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.refreshTokenHash
       const plainRefreshToken = SecurityUtils.generateRandomString(48)
-      const refreshTokenHash = await getModelAttribute(refreshTokenAttr!, 'refreshTokenHash', {
-        refreshTokenHash: plainRefreshToken
+      const refreshTokenHash = await getModelAttribute({
+        entityName: this.entityName,
+        attribute: refreshTokenAttr!,
+        key: 'refreshTokenHash',
+        data: {
+          refreshTokenHash: plainRefreshToken
+        },
       })
       await this.dao.updateOne(user.id!, { refreshTokenHash })
       return plainRefreshToken
