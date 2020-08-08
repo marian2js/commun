@@ -138,7 +138,8 @@ export const Commun = {
     const entityConfigs = await ConfigManager.getEntityConfigs()
     for (const config of entityConfigs) {
       if (!entities[config.entityName]) {
-        await this.registerEntity<EntityModel>({ config })
+        const codeHooks = await ConfigManager.getEntityCodeHooks(config.entityName)
+        await this.registerEntity<EntityModel>({ config, codeHooks })
       }
     }
   },

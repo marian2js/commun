@@ -537,8 +537,8 @@ describe('EntityController', () => {
         await registerTestEntity({ get: 'anyone' })
         const item = await getDao().insertOne({ name: 'item' })
         await request().get(`${baseUrl}/${item.id}`).expect(200)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item, undefined)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeGet', item, expect.any(Object))
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterGet', item, expect.any(Object))
       })
     })
 
@@ -751,11 +751,11 @@ describe('EntityController', () => {
         const item = await getDao().findOne({ name: 'item' })
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeCreate', expect.objectContaining({
           name: 'item'
-        }), undefined)
+        }), expect.any(Object))
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterCreate', expect.objectContaining({
           id: item!.id!.toString(),
           name: 'item'
-        }), undefined)
+        }), expect.any(Object))
       })
     })
 
@@ -916,8 +916,8 @@ describe('EntityController', () => {
           .send({ name: 'updated' })
           .expect(200)
         const updatedItem = await getDao().findOneById(item.id!)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item, undefined)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeUpdate', item, expect.any(Object))
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterUpdate', updatedItem, expect.any(Object))
       })
     })
 
@@ -1091,8 +1091,8 @@ describe('EntityController', () => {
         await request().delete(`${baseUrl}/${item.id}`)
           .expect(200)
         const updatedItem = await getDao().findOneById(item.id!)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item, undefined)
-        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item, undefined)
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item, expect.any(Object))
+        expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item, expect.any(Object))
       })
     })
 

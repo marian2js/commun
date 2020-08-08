@@ -1,3 +1,4 @@
+import { Request } from 'express'
 import {
   EntityHook,
   EntityHookCondition,
@@ -12,14 +13,19 @@ import { parseModelAttribute } from './modelAttributes'
 import { getVariableData, parseConfigString } from './configVariables'
 
 export const entityHooks = {
-  async run<T extends EntityModel> (entityName: string, lifecycle: keyof LifecycleEntityHooks, model: T, userId?: string) {
-    const config = Commun.getEntityConfig(entityName)
-    const lifecycleHooks = config.hooks && config.hooks[lifecycle]
-    if (!lifecycleHooks) {
-      return
-    }
+  async run<T extends EntityModel> (entityName: string, lifecycle: keyof LifecycleEntityHooks, model: T, req: Request) {
+    const { config, codeHooks } = Commun.getEntity(entityName)
+
+    // Run hooks from config
+    const lifecycleHooks = config.hooks && config.hooks[lifecycle] || []
     for (const hook of lifecycleHooks) {
-      await runEntityHook(entityName, hook, model, userId)
+      await runEntityHook(entityName, hook, model, req.auth?.id)
+    }
+
+    // Run code hooks
+    const codeHook = codeHooks?.[lifecycle]
+    if (codeHook) {
+      await codeHook(model, req)
     }
   }
 }

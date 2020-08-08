@@ -3,6 +3,7 @@ import fs from 'fs'
 import { promisify } from 'util'
 import { EntityConfig, EntityModel } from './types'
 import { CommunOptions } from './Commun'
+import { EntityCodeHooks } from './types/EntityCodeHooks'
 
 let projectRootPath: string
 let srcRootPath: string
@@ -72,6 +73,14 @@ export const ConfigManager = {
       }
       await this._rmdir(entityPath)
     }
+  },
+
+  async getEntityCodeHooks (entityName: string): Promise<EntityCodeHooks> {
+    const file = path.join(distRootPath, `entities/${entityName}/hooks.js`)
+    if (await this._exists(file)) {
+      return require(file).default
+    }
+    return {}
   },
 
   getPluginPath (pluginName: string) {

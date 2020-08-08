@@ -165,9 +165,9 @@ export class EntityController<T extends EntityModel> {
     }
     const auth = await this.getAuthPermissions(req)
     this.validateActionPermissions(auth, model, 'get')
-    await entityHooks.run(this.entityName, 'beforeGet', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'beforeGet', model, req)
     const item = await this.prepareModelResponse(req, auth, model, this.getPopulateFromRequest(req))
-    await entityHooks.run(this.entityName, 'afterGet', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'afterGet', model, req)
     return {
       item
     }
@@ -177,10 +177,10 @@ export class EntityController<T extends EntityModel> {
     const auth = await this.getAuthPermissions(req)
     this.validateActionPermissions(auth, null, 'create')
     const model = await this.getModelFromBodyRequest(req, auth, 'create')
-    await entityHooks.run(this.entityName, 'beforeCreate', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'beforeCreate', model, req)
     try {
       const insertedModel = await this.dao.insertOne(model)
-      await entityHooks.run(this.entityName, 'afterCreate', insertedModel, req.auth?.id)
+      await entityHooks.run(this.entityName, 'afterCreate', insertedModel, req)
       return {
         item: await this.prepareModelResponse(req, auth, insertedModel, this.getPopulateFromRequest(req))
       }
@@ -199,11 +199,11 @@ export class EntityController<T extends EntityModel> {
     }
     const auth = await this.getAuthPermissions(req)
     this.validateActionPermissions(auth, model, 'update')
-    await entityHooks.run(this.entityName, 'beforeUpdate', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'beforeUpdate', model, req)
     const modelData = await this.getModelFromBodyRequest(req, auth, 'update', model)
     try {
       const updatedItem = await this.dao.updateOne(model.id!, modelData)
-      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem, req.auth?.id)
+      await entityHooks.run(this.entityName, 'afterUpdate', updatedItem, req)
       return {
         item: await this.prepareModelResponse(req, auth, updatedItem, this.getPopulateFromRequest(req))
       }
@@ -222,9 +222,9 @@ export class EntityController<T extends EntityModel> {
     }
     const auth = await this.getAuthPermissions(req)
     this.validateActionPermissions(auth, model, 'delete')
-    await entityHooks.run(this.entityName, 'beforeDelete', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'beforeDelete', model, req)
     const result = await this.dao.deleteOne(model.id!)
-    await entityHooks.run(this.entityName, 'afterDelete', model, req.auth?.id)
+    await entityHooks.run(this.entityName, 'afterDelete', model, req)
     return { result }
   }
 

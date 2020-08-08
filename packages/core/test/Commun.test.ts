@@ -78,17 +78,32 @@ describe('Commun', () => {
   })
 
   describe('_registerEntitiesFromConfigFiles', () => {
+    const configFiles = ['entity-1', 'entity-2', 'entity-3'].map(name => ({
+      entityName: name,
+      collectionName: name,
+      attributes: {}
+    }))
+
     it('should register entities from config files', async () => {
-      const configFiles = ['entity-1', 'entity-2', 'entity-3'].map(name => ({
-        entityName: name,
-        collectionName: name,
-        attributes: {}
-      }))
       ConfigManager.getEntityConfigs = jest.fn(() => Promise.resolve(configFiles)) as jest.Mock
+      ConfigManager.getEntityCodeHooks = jest.fn(() => Promise.resolve({})) as jest.Mock
       await Commun._registerEntitiesFromConfigFiles()
       expect(Commun.getEntityConfig('entity-1')).toEqual(configFiles[0])
       expect(Commun.getEntityConfig('entity-2')).toEqual(configFiles[1])
       expect(Commun.getEntityConfig('entity-3')).toEqual(configFiles[2])
+    })
+
+    it('should register entity code hooks', async () => {
+      ConfigManager.getEntityConfigs = jest.fn(() => Promise.resolve(configFiles)) as jest.Mock
+      ConfigManager.getEntityCodeHooks = jest.fn(() => Promise.resolve({
+        afterCreate: () => {},
+        beforeDelete: () => {},
+      })) as jest.Mock
+      await Commun._registerEntitiesFromConfigFiles()
+      expect(Commun.getEntity('entity-1').codeHooks).toEqual({
+        afterCreate: expect.any(Function),
+        beforeDelete: expect.any(Function),
+      })
     })
   })
 
