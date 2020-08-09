@@ -10,8 +10,13 @@ type BaseModelAttribute = {
   default?: any
 }
 
+export type AnyModelAttribute = BaseModelAttribute & {
+  type: 'any'
+  default?: any
+}
+
 export type BooleanModelAttribute = BaseModelAttribute & {
-  type: 'boolean',
+  type: 'boolean'
   default?: boolean
 }
 
@@ -105,6 +110,7 @@ export type UserModelAttribute = BaseModelAttribute & {
 }
 
 export type ModelAttribute =
+  AnyModelAttribute |
   BooleanModelAttribute |
   DateModelAttribute |
   EmailModelAttribute |
