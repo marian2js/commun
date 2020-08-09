@@ -364,6 +364,7 @@ export function getAttributeGraphQLType (
       )
       return new GraphQLList(listType)
 
+    case 'any':
     case 'map':
       return GraphQLJSONObject
 

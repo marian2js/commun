@@ -1,4 +1,5 @@
 import {
+  AnyModelAttribute,
   BooleanModelAttribute,
   DateModelAttribute,
   EmailModelAttribute,
@@ -47,6 +48,8 @@ export function getModelAttribute<T> (options: GetModelAttributeOptions<T>): any
   }
 
   switch (options.attribute.type) {
+    case 'any':
+      return getAnyModelAttribute(typeOptions)
     case 'boolean':
       return getBooleanModelAttribute(typeOptions)
     case 'date':
@@ -78,6 +81,16 @@ export function getModelAttribute<T> (options: GetModelAttributeOptions<T>): any
     default:
       assertNever(options.attribute)
   }
+}
+
+function getAnyModelAttribute<T> (options: GetModelAttributeTypeOptions<T, AnyModelAttribute>) {
+  if (!options.value) {
+    if (options.attribute.required && options.defaultValue === undefined) {
+      throw new BadRequestError(`${options.key} is required`)
+    }
+    return options.defaultValue
+  }
+  return options.value
 }
 
 function getBooleanModelAttribute<T> (options: GetModelAttributeTypeOptions<T, BooleanModelAttribute>) {
@@ -344,6 +357,8 @@ function getUserModelAttribute<T> (options: GetModelAttributeTypeOptions<T, User
 
 export function parseModelAttribute (attribute: ModelAttribute, value: any) {
   switch (attribute.type) {
+    case 'any':
+      return value
     case 'boolean':
       return value === true || value === 'true'
     case 'string':

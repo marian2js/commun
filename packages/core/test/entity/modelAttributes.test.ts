@@ -40,6 +40,52 @@ describe('modelAttributes', () => {
   afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
+  describe('Any', () => {
+    it('should return the given value', async () => {
+      expect(getModelAttribute({
+        attribute: { type: 'any' },
+        key: 'key',
+        data: { key: 'test' }
+      })).toBe('test')
+      expect(getModelAttribute({
+        attribute: { type: 'any' },
+        key: 'key',
+        data: { key: 123 }
+      })).toBe(123)
+      expect(getModelAttribute({
+        attribute: { type: 'any' },
+        key: 'key',
+        data: { key: [{ test: 123 }] }
+      })).toEqual([{ test: 123 }])
+    })
+
+    it('should handle the required attribute', async () => {
+      expect(getModelAttribute({
+        attribute: { type: 'any', required: true },
+        key: 'key',
+        data: { key: 'test' }
+      })).toBe('test')
+      expect(() => getModelAttribute({
+        attribute: { type: 'any', required: true },
+        key: 'key',
+        data: {}
+      })).toThrow('key is required')
+    })
+
+    it('should handle the default attribute', async () => {
+      expect(getModelAttribute({
+        attribute: { type: 'any', default: 'test' },
+        key: 'key',
+        data: {}
+      })).toBe('test')
+      expect(getModelAttribute({
+        attribute: { type: 'any', default: 'test' },
+        key: 'key',
+        data: { key: 123 }
+      })).toBe(123)
+    })
+  })
+
   describe('Boolean', () => {
     it('should return true for a truly value', async () => {
       expect(getModelAttribute({
@@ -1358,6 +1404,10 @@ describe('modelAttributes', () => {
 
 describe('parseModelAttribute', () => {
   it('should parse the value according the attribute type', async () => {
+    expect(parseModelAttribute({ type: 'any' }, 'test')).toEqual('test')
+    expect(parseModelAttribute({ type: 'any' }, 123)).toEqual(123)
+    expect(parseModelAttribute({ type: 'any' }, [{ test: 123 }])).toEqual([{ test: 123 }])
+
     expect(parseModelAttribute({ type: 'boolean' }, 'true')).toBe(true)
     expect(parseModelAttribute({ type: 'boolean' }, 'false')).toBe(false)
 
