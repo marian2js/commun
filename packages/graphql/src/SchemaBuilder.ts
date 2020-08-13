@@ -383,9 +383,12 @@ function getAttributeGraphQLResolver (attribute: ModelAttribute, entityConfig?: 
       const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
       return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
         const requestedKeys = graphqlFields(info)
+        if (!source[info.fieldName]) {
+          return null
+        }
         if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
           context.params = {
-            id: source[info.fieldName].id || source[info.fieldName]
+            id: source[info.fieldName]?.id || source[info.fieldName]
           }
           const res = await Commun.getEntityController(entityName).get(context, { findModelById: true })
           return res.item
