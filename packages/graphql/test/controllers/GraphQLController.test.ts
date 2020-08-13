@@ -10,6 +10,7 @@ describe('GraphQLController', () => {
   interface TestEntity extends EntityModel {
     name: string
     date?: Date
+    subEntity?: {}
     subEntities?: {
       entity: string
     }[]
@@ -39,6 +40,10 @@ describe('GraphQLController', () => {
           },
           date: {
             type: 'date'
+          },
+          subEntity: {
+            type: 'ref',
+            entity: 'subEntity',
           },
           subEntities: {
             type: 'list',
@@ -545,6 +550,26 @@ describe('GraphQLController', () => {
         }],
         data: null,
       })
+    })
+
+    it('should support nullable sub entities', async () => {
+      const node = await getDao().insertOne({ name: 'test' })
+      const res = await request()
+        .post('/graphql')
+        .send({
+          query:
+            `{
+               item (id: "${node.id}") {
+                 name
+                 subEntity {
+                   id
+                   name
+                 }
+               }
+             }`
+        })
+        .expect(200)
+      expect(res.body.errors).not.toBeDefined()
     })
   })
 
