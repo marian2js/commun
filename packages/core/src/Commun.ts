@@ -105,6 +105,9 @@ export const Commun = {
     await this._setupPlugins()
     await this._registerEntitiesFromConfigFiles()
 
+    await this.connectDb()
+    await this.createDbIndexes()
+
     app = expressApp || app || this.createExpressApp()
 
     await this._runOnModules(module => module.onExpressAppCreated?.(app))
@@ -113,9 +116,6 @@ export const Commun = {
     if (process.env.NODE_ENV !== 'production') {
       app.use(errorHandler())
     }
-
-    await this.connectDb()
-    await this.createDbIndexes()
 
     await this._runOnModules(module => module.beforeServerStart?.())
 
