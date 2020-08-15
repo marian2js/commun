@@ -1,8 +1,24 @@
 import { Commun } from '../Commun'
 import { ServerError } from '../errors'
-import { EntityModel, ModelAttribute, RefModelAttribute } from '../types'
-import { parseModelAttribute } from './modelAttributes'
+import { EntityModel } from '../types'
+import { getEntityRef, isEntityRef, parsePropertyValue } from './entitySchema'
 import * as mathjs from 'mathjs'
+import { JSONSchema7Definition } from 'json-schema'
+import { SecurityUtils } from '../utils'
+
+// Create mathjs parser and set functions
+const parser = mathjs.parser()
+parser.set('slug', (value: string) => {
+  if (!value) {
+    return value
+  }
+  return value.toLowerCase()
+    .replace(/-/g, ' ')
+    .replace(/[^\w\s]/g, ' ')
+    .trim()
+    .replace(/\s+/g, '-')
+})
+parser.set('randomChars', SecurityUtils.generateRandomString)
 
 export async function parseConfigString<T extends EntityModel> (str: string, entityName: string, model: T, userId?: string) {
   const expressions = str.match(/{([^}]+)}/g)
@@ -10,7 +26,7 @@ export async function parseConfigString<T extends EntityModel> (str: string, ent
     return str
   }
   if (expressions.length === 1 && /^{.*}$/.test(str.trim())) {
-    return await getConfigExpressionValue(expressions[0].trim().slice(1, -1).trim(), entityName, model, userId)
+    return getConfigExpressionValue(expressions[0].trim().slice(1, -1).trim(), entityName, model, userId)
   }
   for (const expression of expressions) {
     const value = await getConfigExpressionValue(expression.trim().slice(1, -1).trim(), entityName, model, userId)
@@ -30,39 +46,40 @@ export function getVariableData<T extends EntityModel> (variable: string, entity
       variableEntity: 'users',
       variableId: userId,
       variableKey: variableParts[1],
-      variableAttribute: Commun.getEntityConfig('users').attributes[variableParts[1] as keyof EntityModel] as ModelAttribute,
+      variableProperty: Commun.getEntityConfig('users').schema.properties?.[variableParts[1]],
     }
   }
   if (variableParts[0] !== 'this') {
     throw new ServerError(`Invalid variable ${variable} on ${entityName} config`)
   }
   const config = Commun.getEntityConfig(entityName)
-  const attributeEntries = Object.entries(config.attributes).find((([key, _]) => key === variableParts[1]))
-  if (!attributeEntries || !attributeEntries[1]) {
+  const propertyEntries = Object.entries(config.schema.properties || {})
+    .find((([key, _]) => key === variableParts[1]))
+  if (!propertyEntries || !propertyEntries[1]) {
     throw new ServerError(`Invalid variable ${variable} on ${entityName} config`)
   }
   let variableEntity
   let variableId
   let variableKey
-  let variableAttribute
+  let variableProperty
   let variableValue
 
-  if (variableParts.length === 3 && ['user', 'ref'].includes(attributeEntries[1].type)) {
+  if (variableParts.length === 3 && isEntityRef(propertyEntries[1])) {
     const id = model[variableParts[1] as keyof T]
     variableId = id ? '' + id : undefined
-    variableEntity = attributeEntries[1].type === 'user' ? 'users' : (attributeEntries[1] as RefModelAttribute).entity
+    variableEntity = getEntityRef(propertyEntries[1])!
     variableKey = variableParts[2]
-    variableAttribute = Commun.getEntityConfig(variableEntity).attributes[variableKey as keyof EntityModel] as ModelAttribute
+    variableProperty = Commun.getEntityConfig(variableEntity).schema.properties?.[variableKey]
   } else {
     variableEntity = entityName
     variableId = model.id!
     variableKey = variableParts[1]
-    variableAttribute = attributeEntries[1]
+    variableProperty = propertyEntries[1]
     variableValue = model[variableKey as keyof T]
   }
 
   return {
-    variableAttribute,
+    variableProperty,
     variableEntity,
     variableId,
     variableKey,
@@ -74,26 +91,32 @@ async function getConfigExpressionValue<T extends EntityModel> (expression: stri
   const variables = expression.match(/([a-zA-Z][\w.]+)/g)
 
   if (variables && variables[0] === expression) {
-    return await getConfigVariableValue(expression, entityName, model, userId)
+    return getConfigVariableValue(expression, entityName, model, userId)
   }
 
   if (variables) {
     for (const variable of variables) {
-      const value = await getConfigVariableValue(variable, entityName, model, userId)
-      expression = expression.replace(variable, value ? '' + value : '')
+      if (variable.includes('.')) {
+        const value = await getConfigVariableValue(variable, entityName, model, userId)
+        expression = expression.replace(variable, value ? `"${value}"` : '')
+      }
     }
   }
 
-  return mathjs.evaluate(expression)
+  return parser.evaluate(expression)
 }
 
+/**
+ * Parse entity variables
+ * examples: this.name, user.id, this.entity.name
+ */
 async function getConfigVariableValue<T extends EntityModel> (variable: string, entityName: string, model: T, userId?: string) {
   const data = getVariableData(variable, entityName, model, userId)
   if (!data) {
     return
   }
   if (data.variableValue) {
-    return parseModelAttribute(data.variableAttribute, data.variableValue)
+    return parsePropertyValue(data.variableProperty as JSONSchema7Definition, data.variableValue)
   }
   if (!data.variableId) {
     return

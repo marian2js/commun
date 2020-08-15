@@ -10,7 +10,7 @@ export const SecurityUtils = {
   bcryptHashIsValid: async (value: string, hash: string) => bcryptjs.compare(value, hash),
 
   generateRandomString: (chars: number): string => {
-    const buffer = randomBytes(chars / 2)
-    return buffer.toString('hex')
+    const buffer = randomBytes((chars + 1) / 2)
+    return buffer.toString('hex').substr(0, chars)
   },
 }

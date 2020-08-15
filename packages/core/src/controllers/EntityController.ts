@@ -1,12 +1,16 @@
 import { Request } from 'express'
 import {
+  BadRequestError,
   Commun,
   DaoFilter,
   EntityModel,
   EntityPermission,
-  getJoinAttribute,
-  getModelAttribute,
-  RefModelAttribute,
+  getEntityRef,
+  getJoinProperty,
+  getModelPropertyValue,
+  getSchemaDefinitions,
+  getSchemaValidator,
+  isEntityRef,
   UnauthorizedError
 } from '..'
 import { EntityActionPermissions } from '../types'
@@ -19,6 +23,7 @@ import {
   parseFilter,
   strToApiFilter
 } from '../utils/ApiUtils'
+import { ValidateFunction } from 'ajv'
 
 type RequestOptions = {
   findModelById?: boolean
@@ -52,6 +57,8 @@ const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 100
 
 export class EntityController<T extends EntityModel> {
+  protected createEntityValidator?: ValidateFunction
+  protected updateEntityValidator?: ValidateFunction
 
   constructor (protected readonly entityName: string) {}
 
@@ -87,9 +94,9 @@ export class EntityController<T extends EntityModel> {
     if (req.query.filter) {
       let entityFilter
       if (typeof req.query.filter === 'string') {
-        entityFilter = strToApiFilter(req.query.filter, this.config.attributes)
+        entityFilter = strToApiFilter(req.query.filter, this.config.schema)
       }
-      filter = parseFilter(entityFilter || req.query.filter as ApiEntityFilter, this.config.attributes) as DaoFilter<T>
+      filter = parseFilter(entityFilter || req.query.filter as ApiEntityFilter, this.config.schema) as DaoFilter<T>
     }
 
     if (req.query.search && typeof req.query.search === 'string') {
@@ -232,13 +239,13 @@ export class EntityController<T extends EntityModel> {
     if (options.findModelById || !this.config.apiKey || this.config.apiKey === 'id') {
       return this.dao.findOneById(req.params.id)
     }
-    const attrKey = <keyof T>this.config.apiKey
-    const attribute = this.config.attributes[attrKey]
+    const attrKey = this.config.apiKey
+    const property = this.config.schema?.properties?.[attrKey]
     let value: string | number | boolean
-    if (attribute?.type === 'number') {
-      value = Number(req.params.id)
-    } else if (attribute?.type === 'boolean') {
+    if (typeof property === 'boolean' || property?.type === 'boolean') {
       value = Boolean(req.params.id)
+    } else if (property?.type === 'number') {
+      value = Number(req.params.id)
     } else {
       value = req.params.id
     }
@@ -247,42 +254,83 @@ export class EntityController<T extends EntityModel> {
 
   protected async getModelFromBodyRequest (req: Request, auth: AuthPermissions, action: 'create' | 'update', persistedModel?: T): Promise<T> {
     const model: { [key in keyof T]: any } = {} as T
-    for (const [key, attribute] of Object.entries(this.config.attributes)) {
+    const definitions = getSchemaDefinitions()
+    this.config.schema.definitions = {
+      ...definitions,
+      ...(this.config.schema.definitions || {}),
+    }
+
+    let validationResult
+    let validator: ValidateFunction
+    if (action === 'create') {
+      validator = this.getCreateEntityValidator()
+      validationResult = validator(req.body)
+    } else {
+      validator = this.getUpdateEntityValidator()
+      validationResult = validator({
+        ...persistedModel,
+        ...req.body,
+      })
+    }
+
+    if (!validationResult) {
+      const errorMessage = (validator.errors || []).map(error => error.dataPath + ' ' + error.message).join(', ')
+      throw new BadRequestError(errorMessage ? errorMessage : 'Invalid request data')
+    }
+
+    for (const [key, property] of Object.entries(this.config.schema.properties || {})) {
       const permissions = {
         ...this.config.permissions,
-        ...attribute!.permissions
+        ...this.config.permissions?.properties?.[key],
+      }
+      if (typeof property === 'boolean') {
+        continue
       }
 
       const validPermissions = this.hasValidPermissions(auth, persistedModel || null, action, permissions)
-      const shouldSetValue = action === 'create' || (!attribute!.readonly && req.body[key] !== undefined)
-      const settingUser = attribute!.type === 'user' && action === 'create'
-      const getAttributeOptions = {
-        entityName: this.entityName,
-        attribute: attribute!,
-        key: key,
-        userId: req.auth?.id,
-        ignoreDefault: action === 'update',
+      const shouldSetValue = action === 'create' || (!property.readOnly && req.body[key] !== undefined)
+      const settingUser = property.$ref === '#user' && action === 'create'
+      const settingEvalProperty = property.format === 'eval'
+      if (settingEvalProperty) {
+        delete req.body[key]
       }
 
-      if ((validPermissions && shouldSetValue) || settingUser) {
-        model[key as keyof T] = await getModelAttribute({
-          ...getAttributeOptions,
+      if ((validPermissions && shouldSetValue) || settingUser || settingEvalProperty) {
+        model[key as keyof T] = await getModelPropertyValue({
+          entityName: this.entityName,
+          property,
+          key,
           data: req.body,
-        })
-      } else if (attribute!.default !== undefined && action === 'create') {
-        model[key as keyof T] = await getModelAttribute({
-          ...getAttributeOptions,
-          data: {},
-        })
-      } else if (['slug', 'eval'].includes(attribute!.type)) {
-        delete req.body[key]
-        model[key as keyof T] = await getModelAttribute({
-          ...getAttributeOptions,
-          data: req.body,
+          authUserId: req.auth?.id,
+          ignoreDefault: action === 'update',
         })
       }
+
     }
     return model
+  }
+
+  protected getCreateEntityValidator (): ValidateFunction {
+    try {
+      if (!this.createEntityValidator) {
+        this.createEntityValidator = getSchemaValidator({
+          useDefaults: true,
+        }).compile(this.config.schema)
+      }
+      return this.createEntityValidator
+    } catch (e) {
+      console.log('Error =>', e)
+      throw e
+    }
+  }
+
+  protected getUpdateEntityValidator (): ValidateFunction {
+    if (!this.updateEntityValidator) {
+      this.updateEntityValidator = getSchemaValidator({
+        useDefaults: false,
+      }).compile(this.config.schema)
+    }
+    return this.updateEntityValidator
   }
 
   protected async prepareModelResponse (
@@ -292,18 +340,23 @@ export class EntityController<T extends EntityModel> {
     populate: { [P in keyof T]?: any } = {}
   ): Promise<T> {
     const item: { [key in keyof T]: any } = {} as T
-    const attributes = Object.entries(this.config.attributes)
+    const properties = Object.entries(this.config.schema.properties || {})
 
-    // Prepare attributes
-    for (const [key, attribute] of attributes) {
-      if (this.hasValidPermissions(auth, model, 'get', { ...this.config.permissions, ...attribute!.permissions })) {
+    // Prepare properties
+    for (const [key, property] of properties) {
+      if (typeof property === 'boolean') {
+        continue
+      }
+      if (this.hasValidPermissions(auth, model, 'get',
+        { ...this.config.permissions, ...(this.config.permissions?.properties?.[key] || {}) })
+      ) {
         const modelKey = key as keyof T
-        if (modelKey === 'id' || !['ref', 'user'].includes(attribute!.type)) {
-          item[modelKey] = model[modelKey] === undefined || model[modelKey] === null ? attribute!.default : model[modelKey]
+        if (modelKey === 'id' || !isEntityRef(property)) {
+          item[modelKey] = model[modelKey] === undefined || model[modelKey] === null ? property!.default : model[modelKey]
         } else if (!populate[modelKey] || !model[modelKey]) {
           item[modelKey] = model[modelKey] ? { id: model[modelKey] } : undefined
         } else {
-          const populateEntityName = attribute!.type === 'ref' ? (attribute as RefModelAttribute).entity : 'users'
+          const populateEntityName = getEntityRef(property)!
           const populatedItem = await Commun.getEntityDao(populateEntityName).findOneById('' + model[modelKey])
           if (populatedItem) {
             item[modelKey] = await Commun.getEntityController(populateEntityName)
@@ -315,16 +368,18 @@ export class EntityController<T extends EntityModel> {
       }
     }
 
-    // Prepare joinAttributes
-    for (const [key, joinAttribute] of Object.entries(this.config.joinAttributes || {})) {
-      if (this.hasValidPermissions(auth, model, 'get', { ...this.config.permissions, ...joinAttribute.permissions })) {
-        const joinedAttribute = await getJoinAttribute(joinAttribute, model, req.auth?.id)
-        if (joinedAttribute) {
-          const joinAttrController = Commun.getEntityController(joinAttribute.entity)
-          if (Array.isArray(joinedAttribute)) {
-            item[key as keyof T] = await Promise.all(joinedAttribute.map(attr => joinAttrController.prepareModelResponse(req, auth, attr)))
+    // Prepare joinProperties
+    for (const [key, joinProperty] of Object.entries(this.config.joinProperties || {})) {
+      if (this.hasValidPermissions(auth, model, 'get',
+        { ...this.config.permissions, ...joinProperty.permissions }
+      )) {
+        const joinedProperty = await getJoinProperty(joinProperty, model, req.auth?.id)
+        if (joinedProperty) {
+          const joinAttrController = Commun.getEntityController(joinProperty.entity)
+          if (Array.isArray(joinedProperty)) {
+            item[key as keyof T] = await Promise.all(joinedProperty.map(attr => joinAttrController.prepareModelResponse(req, auth, attr)))
           } else {
-            item[key as keyof T] = await joinAttrController.prepareModelResponse(req, auth, joinedAttribute)
+            item[key as keyof T] = await joinAttrController.prepareModelResponse(req, auth, joinedProperty)
           }
         }
       }
@@ -356,11 +411,11 @@ export class EntityController<T extends EntityModel> {
     action: keyof EntityActionPermissions,
     permissions?: EntityActionPermissions
   ) {
-    if (!permissions) {
+    if (!permissions?.[action]) {
       return false
     }
 
-    const permission = permissions[action]!
+    const permission = permissions[action]
 
     const hasAnyoneAccess = Array.isArray(permission) ? permission.includes('anyone') : permission === 'anyone'
     if (hasAnyoneAccess) {
@@ -377,9 +432,10 @@ export class EntityController<T extends EntityModel> {
 
     const hasOwnAccess = Array.isArray(permission) ? permission.includes('own') : permission === 'own'
     if (hasOwnAccess && model) {
-      const userAttrEntries = Object.entries(this.config.attributes).find(([_, value]) => value?.type === 'user')
-      if (userAttrEntries && userAttrEntries[0]) {
-        const userId = '' + (model as { [key in keyof T]?: any })[userAttrEntries[0] as keyof T]
+      const userAttrEntries = Object.entries(this.config.schema.properties || {})
+        .find(([_, property]) => typeof property !== 'boolean' && property.$ref === '#user')
+      if (userAttrEntries?.[0]) {
+        const userId = '' + model[userAttrEntries[0] as keyof T]
         if (userId && userId === auth.userId) {
           return true
         }

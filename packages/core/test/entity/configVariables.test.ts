@@ -6,6 +6,7 @@ import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
 describe('configVariables', () => {
   const entityName = 'configVariables'
+  const entitySingularName = 'configVariable'
   const collectionName = entityName
 
   interface TestEntity extends EntityModel {
@@ -32,33 +33,34 @@ describe('configVariables', () => {
           update: 'anyone',
           delete: 'anyone',
         },
-        attributes: {
-          name: {
-            type: 'string'
+        schema: {
+          properties: {
+            name: {
+              type: 'string'
+            },
+            num: {
+              type: 'number'
+            },
+            user: {
+              $ref: '#user',
+            },
+            ref: {
+              $ref: '#entity/' + entitySingularName,
+            },
           },
-          num: {
-            type: 'number'
-          },
-          user: {
-            type: 'user',
-          },
-          ref: {
-            type: 'ref',
-            entity: entityName
-          }
         }
       }
     })
   }
 
   describe('parseConfigString', () => {
-    it('should return the value of the specified local attribute', async () => {
+    it('should return the value of the specified local property', async () => {
       registerTestEntity()
       expect(await parseConfigString<TestEntity>('{this.name}', entityName, { name: 'item' })).toBe('item')
       expect(await parseConfigString<TestEntity>(' { this.name } ', entityName, { name: 'item' })).toBe('item')
     })
 
-    it('should return the value of the specified reference attribute', async () => {
+    it('should return the value of the specified reference property', async () => {
       registerTestEntity()
       const item1 = await getDao().insertOne({ name: 'item1' })
       const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
@@ -73,7 +75,7 @@ describe('configVariables', () => {
       expect(await parseConfigString<TestEntity>(' { user.id } ', entityName, {}, userId.toString())).toEqual(userId)
     })
 
-    it('should return an attribute from the user', async () => {
+    it('should return a property from the user', async () => {
       registerTestEntity('users')
       const user = await getDao('users').insertOne({ name: 'test-user' })
       const item = await getDao().insertOne({ user: new ObjectId(user.id) })
@@ -125,6 +127,21 @@ describe('configVariables', () => {
           .rejects.toThrow()
         await expect(parseConfigString<TestEntity>('{this.num this.num}', entityName, { num: 3 }))
           .rejects.toThrow()
+      })
+
+      it('should support the slug function', async () => {
+        expect(await parseConfigString<TestEntity>('{slug("Test Slug!!!")}', entityName, {}))
+          .toBe('test-slug')
+        expect(await parseConfigString<TestEntity>('{slug(this.name)}', entityName, { name: '#Test Entity@' }))
+          .toBe('test-entity')
+      })
+
+      it('should support the randomChars function', async () => {
+        expect(await parseConfigString<TestEntity>('{randomChars(5)}', entityName, {}))
+          .toHaveLength(5)
+        const random1 = await parseConfigString<TestEntity>('{randomChars(5)}', entityName, {})
+        const random2 = await parseConfigString<TestEntity>('{randomChars(5)}', entityName, {})
+        expect(random1).not.toEqual(random2)
       })
     })
   })

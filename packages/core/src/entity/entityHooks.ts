@@ -9,7 +9,7 @@ import {
 } from '../types'
 import { Commun } from '../Commun'
 import { assertNever } from '../utils'
-import { parseModelAttribute } from './modelAttributes'
+import { parsePropertyValue } from './entitySchema'
 import { getVariableData, parseConfigString } from './configVariables'
 
 export const entityHooks = {
@@ -74,14 +74,16 @@ async function runIncrementEntityHook<T extends EntityModel> (entityName: string
   if (!targetData) {
     return
   }
-  let incrementValue: number
+  let incrementValue: number | undefined
   if (typeof hook.value === 'number') {
     incrementValue = hook.value
   } else {
-    const parsedStr = await parseConfigString(hook.value, entityName, model, userId)
-    incrementValue = parseModelAttribute(targetData.variableAttribute, parsedStr) as number
+    if (targetData.variableProperty) {
+      const parsedStr = await parseConfigString(hook.value, entityName, model, userId)
+      incrementValue = parsePropertyValue(targetData.variableProperty, parsedStr) as number
+    }
   }
-  if (!targetData.variableId) {
+  if (!targetData.variableId || !incrementValue) {
     return
   }
   await Commun.getEntityDao(targetData.variableEntity)
@@ -95,12 +97,14 @@ async function runSetEntityHook<T extends EntityModel> (entityName: string, hook
   }
   let setValue
   if (typeof hook.value === 'string') {
-    const parsedStr = await parseConfigString(hook.value, entityName, model, userId)
-    setValue = parseModelAttribute(targetData.variableAttribute, parsedStr)
+    if (targetData.variableProperty) {
+      const parsedStr = await parseConfigString(hook.value, entityName, model, userId)
+      setValue = parsePropertyValue(targetData.variableProperty, parsedStr)
+    }
   } else {
     setValue = hook.value
   }
-  if (!targetData.variableId) {
+  if (!targetData.variableId || !setValue) {
     return
   }
   await Commun.getEntityDao(targetData.variableEntity)

@@ -11,7 +11,7 @@ describe('Commun', () => {
         config: {
           entityName: 'test',
           collectionName: 'test',
-          attributes: {}
+          schema: {}
         }
       })
 
@@ -21,28 +21,37 @@ describe('Commun', () => {
           collectionName: 'test',
           entitySingularName: 'testItem',
           apiKey: 'id',
-          attributes: {
-            id: {
-              type: 'id',
-              permissions: {}
-            },
-            createdAt: {
-              type: 'date',
-              permissions: {
-                get: 'system',
-                create: 'system',
-                update: 'system',
-              }
-            },
-            updatedAt: {
-              type: 'date',
-              permissions: {
-                get: 'system',
-                create: 'system',
-                update: 'system',
+          schema: {
+            $id: '#entity/testItem',
+            properties: {
+              id: {
+                type: 'string',
+                format: 'id',
+              },
+              createdAt: {
+                type: 'object',
+                format: 'date-time',
+              },
+              updatedAt: {
+                type: 'object',
+                format: 'date-time',
               }
             }
-          }
+          },
+          permissions: {
+            properties: {
+              createdAt: {
+                get: 'system',
+                create: 'system',
+                update: 'system',
+              },
+              updatedAt: {
+                get: 'system',
+                create: 'system',
+                update: 'system',
+              }
+            },
+          },
         },
         controller: expect.any(EntityController),
         dao: expect.any(EntityDao),
@@ -58,7 +67,7 @@ describe('Commun', () => {
         config: {
           entityName: 'posts',
           collectionName: 'posts',
-          attributes: {}
+          schema: {}
         }
       })
 
@@ -69,7 +78,7 @@ describe('Commun', () => {
           entityName: 'test',
           collectionName: 'test',
           entitySingularName: 'singleTest',
-          attributes: {}
+          schema: {}
         }
       })
 
@@ -81,7 +90,7 @@ describe('Commun', () => {
     const configFiles = ['entity-1', 'entity-2', 'entity-3'].map(name => ({
       entityName: name,
       collectionName: name,
-      attributes: {}
+      schema: {}
     }))
 
     it('should register entities from config files', async () => {

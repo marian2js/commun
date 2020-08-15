@@ -9,11 +9,15 @@ describe('ApiUtils', () => {
         .toEqual({ $or: [{ a: 'b' }, { c: 'd' }] })
     })
 
-    it('should use the correct type according the attribute', async () => {
-      expect(parseFilter({ str: { value: '1' }, num: { value: '2' } }, { str: { type: 'string' }, num: { type: 'number' } }))
-        .toEqual({ str: '1', num: 2 })
-      expect(parseFilter({ str: { value: 'true' }, bool: { value: 'true' } }, { str: { type: 'string' }, bool: { type: 'boolean' } }))
-        .toEqual({ str: 'true', bool: true })
+    it('should use the correct type according the property', async () => {
+      expect(parseFilter(
+        { str: { value: '1' }, num: { value: '2' } },
+        { properties: { str: { type: 'string' }, num: { type: 'number' } } }
+      )).toEqual({ str: '1', num: 2 })
+      expect(parseFilter(
+        { str: { value: 'true' }, bool: { value: 'true' } },
+        { properties: { str: { type: 'string' }, bool: { type: 'boolean' } } }
+      )).toEqual({ str: 'true', bool: true })
     })
   })
 
@@ -25,12 +29,12 @@ describe('ApiUtils', () => {
       })
     })
 
-    it('should use the correct type according the attribute', async () => {
+    it('should use the correct type according the property', async () => {
       expect(strToApiFilter('str:1;num:2', {
-        str: { type: 'string' }, num: { type: 'number' },
+        properties: { str: { type: 'string' }, num: { type: 'number' } },
       })).toEqual({ str: { value: '1' }, num: { value: 2 } })
       expect(strToApiFilter('str:true;bool:true', {
-        str: { type: 'string' }, bool: { type: 'boolean' },
+        properties: { str: { type: 'string' }, bool: { type: 'boolean' } },
       })).toEqual({ str: { value: 'true' }, bool: { value: true } })
     })
   })

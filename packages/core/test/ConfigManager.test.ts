@@ -56,7 +56,7 @@ describe('ConfigManager', () => {
 
   describe('setEntityConfig', () => {
     it('should write the configuration in the file', async () => {
-      const config = { entityName: 'test', collectionName: 'test', attributes: {} }
+      const config = { entityName: 'test', collectionName: 'test', schema: {} }
       await ConfigManager.setEntityConfig('test-entity', config)
       expect(ConfigManager._writeFile)
         .toHaveBeenCalledWith('/test/src/entities/test-entity/config.json', JSON.stringify(config, null, 2))
@@ -79,7 +79,7 @@ describe('ConfigManager', () => {
     it('should create an entity', async () => {
       ConfigManager._exists = jest.fn(() => Promise.resolve(false))
 
-      const config = { entityName: 'tests', collectionName: 'tests', attributes: {} }
+      const config = { entityName: 'tests', collectionName: 'tests', schema: {} }
       await ConfigManager.createEntityConfig('test-entity', config)
       expect(ConfigManager._mkdir)
         .toHaveBeenCalledWith('/test/src/entities/test-entity')

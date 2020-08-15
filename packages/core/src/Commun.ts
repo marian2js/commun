@@ -25,6 +25,7 @@ import { ConfigManager } from './ConfigManager'
 let entities: { [key: string]: Entity<EntityModel> } = {}
 let plugins: { [key: string]: Plugin } = {}
 let communOptions: CommunOptions
+const entitySingularToPlural: Map<string, string> = new Map
 
 let app: Express
 
@@ -162,48 +163,16 @@ export const Commun = {
     }
   },
 
+  getPluralEntityName (entitySingularName: string) {
+    return entitySingularToPlural.get(entitySingularName)
+  },
+
   registerEntity<MODEL extends EntityModel> (entity: RegisterEntityOptions<MODEL>): Entity<MODEL> {
     if (!entity.config.entityName) {
       throw new Error('Config must include "entityName"')
     }
     if (!entity.config.collectionName) {
       throw new Error('Config must include "collectionName"')
-    }
-
-    // set default id attribute
-    if (!entity.config.attributes.id) {
-      entity.config.attributes.id = {
-        type: 'id',
-        permissions: {}
-      }
-      if (entity.config.permissions?.get) {
-        entity.config.attributes.id.permissions = {
-          ...(entity.config.attributes.id.permissions || {}),
-          get: entity.config.permissions.get,
-        }
-      }
-    }
-
-    if (!entity.config.attributes.createdAt) {
-      entity.config.attributes.createdAt = {
-        type: 'date',
-        permissions: {
-          get: entity.config.permissions?.get || 'system',
-          create: 'system',
-          update: 'system',
-        }
-      }
-    }
-
-    if (!entity.config.attributes.updatedAt) {
-      entity.config.attributes.updatedAt = {
-        type: 'date',
-        permissions: {
-          get: entity.config.permissions?.get || 'system',
-          create: 'system',
-          update: 'system',
-        }
-      }
     }
 
     // set default entitySingularName
@@ -213,6 +182,44 @@ export const Commun = {
         entity.config.entitySingularName = entity.config.entityName + 'Item'
       } else {
         entity.config.entitySingularName = entitySingularName
+      }
+    }
+
+    entitySingularToPlural.set(entity.config.entitySingularName, entity.config.entityName)
+
+    entity.config.permissions = entity.config.permissions || {}
+    entity.config.permissions.properties = entity.config.permissions.properties || {}
+    entity.config.schema = entity.config.schema || {}
+    entity.config.schema.properties = entity.config.schema.properties || {}
+    entity.config.schema.$id = '#entity/' + entity.config.entitySingularName
+
+    // set default id property
+    if (!entity.config.schema.properties.id) {
+      entity.config.schema.properties.id = {
+        type: 'string',
+        format: 'id',
+      }
+      if (entity.config.permissions.get) {
+        entity.config.permissions.properties.id = {
+          ...(entity.config.permissions.properties.id || {}),
+          get: entity.config.permissions.get,
+        }
+      }
+    }
+
+    // set createdAt and updatedAt properties
+    for (const dateField of ['createdAt', 'updatedAt']) {
+      if (!entity.config.schema.properties[dateField]) {
+        entity.config.schema.properties[dateField] = {
+          type: 'object',
+          format: 'date-time',
+        }
+        entity.config.permissions.properties[dateField] = {
+          ...(entity.config.permissions.properties[dateField] || {}),
+          get: entity.config.permissions?.get || 'system',
+          create: 'system',
+          update: 'system',
+        }
       }
     }
 

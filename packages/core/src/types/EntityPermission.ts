@@ -5,4 +5,8 @@ export type EntityActionPermissions = {
   create?: EntityPermission | EntityPermission[]
   update?: EntityPermission | EntityPermission[]
   delete?: EntityPermission | EntityPermission[]
+
+  properties?: {
+    [key: string]: EntityActionPermissions
+  }
 }
