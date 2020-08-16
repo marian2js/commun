@@ -43,13 +43,13 @@ export function getModelPropertyValue<T> (options: GetModelPropertyValueOptions<
 }
 
 async function formatEvalProperty<T> (options: GetModelPropertyValueOptions<T>, defaultValue: any) {
-  if (typeof options.property.pattern !== 'string') {
+  const expression = options.property.format?.substr(5)
+  if (!expression) {
     return ''
   }
   let parsedValue
   try {
-    parsedValue =
-      await parseConfigString(options.property.pattern, options.entityName || '', options.data, options.authUserId)
+    parsedValue = await parseConfigString(expression, options.entityName || '', options.data, options.authUserId)
   } catch (e) {
     console.error(`Evaluation failed for property ${options.key}`, e)
     throw new ServerError()
@@ -106,13 +106,16 @@ export function parsePropertyValue (property: JSONSchema7Definition, value: any)
   }
 }
 
-export function getSchemaValidator (options: AjvOptions) {
+export function getSchemaValidator (options: AjvOptions, schema: JSONSchema7) {
+  const evalFormats = Object.values(schema.properties || {})
+    .map(property => (property as JSONSchema7).format)
+    .filter(format => format?.startsWith('eval:')) as string[]
   return new Ajv({
     coerceTypes: true,
-    unknownFormats: 'ignore',
+    unknownFormats: ['id', 'hash', ...evalFormats],
     format: 'fast',
     ...options,
-  })
+  }).compile(schema)
 }
 
 export function isEntityRef (property: JSONSchema7Definition) {

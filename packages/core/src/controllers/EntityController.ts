@@ -318,7 +318,7 @@ export class EntityController<T extends EntityModel> {
       if (!this.createEntityValidator) {
         this.createEntityValidator = getSchemaValidator({
           useDefaults: true,
-        }).compile(this.config.schema)
+        }, this.config.schema)
       }
       return this.createEntityValidator
     } catch (e) {
@@ -331,7 +331,7 @@ export class EntityController<T extends EntityModel> {
     if (!this.updateEntityValidator) {
       this.updateEntityValidator = getSchemaValidator({
         useDefaults: false,
-      }).compile(this.config.schema)
+      }, this.config.schema)
     }
     return this.updateEntityValidator
   }
@@ -355,7 +355,6 @@ export class EntityController<T extends EntityModel> {
         ...(this.config.permissions?.properties?.[key] || {}),
         properties: undefined,
       }
-      console.log('PERMISSIONS =>', key, permissions)
       if (this.hasValidPermissions(auth, model, 'get', permissions)) {
         const modelKey = key as keyof T
         if (modelKey === 'id' || !isEntityRef(property)) {
@@ -372,7 +371,6 @@ export class EntityController<T extends EntityModel> {
             item[modelKey] = { id: model[modelKey] }
           }
         }
-        console.log('MODEL => ', key, item[modelKey])
         if (item[modelKey] === undefined) {
           delete item[modelKey]
         }

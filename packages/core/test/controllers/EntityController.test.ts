@@ -57,15 +57,12 @@ describe('EntityController', () => {
             entityRef: {
               $ref: '#entity/item',
             },
-            // TODO
-            // eval: {
-            //   format: 'eval',
-            //   eval: 'Name: {this.name}',
-            // },
-            // slug: {
-            //   format: 'eval',
-            //   eval: '{slug(this.name)}-{randomChars(8)}',
-            // },
+            eval: {
+              format: 'eval:Name => {this.name}',
+            },
+            slug: {
+              format: 'eval:{slug(this.name)}-{randomChars(8)}',
+            },
             ...(properties || {})
           },
         },
@@ -769,29 +766,28 @@ describe('EntityController', () => {
       expect(items.length).toBe(1)
     })
 
-    // TODO
-    // it('should set the eval property from the entity name', async () => {
-    //   await registerTestEntity({ get: 'anyone', create: 'anyone' })
-    //   const res = await request().post(baseUrl)
-    //     .send({ name: 'item' })
-    //     .expect(200)
-    //   expect(res.body.item.name).toBe('item')
-    //   expect(res.body.item.eval).toBe('Name: item')
-    //   const item = await getDao().findOne({ name: 'item' })
-    //   expect(item!.name).toBe('item')
-    // })
-    //
-    // it('should set the slug property from the entity name', async () => {
-    //   await registerTestEntity({ get: 'anyone', create: 'anyone' })
-    //   const res = await request().post(baseUrl)
-    //     .send({ name: 'Test Item' })
-    //     .expect(200)
-    //   expect(res.body.item.name).toBe('Test Item')
-    //   expect(res.body.item.slug.substr(0, 10)).toBe('test-item-')
-    //   expect(res.body.item.slug.length).toBe(18)
-    //   const item = await getDao().findOne({ name: 'Test Item' })
-    //   expect(item!.name).toBe('Test Item')
-    // })
+    it('should set the eval property from the entity name', async () => {
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
+      const res = await request().post(baseUrl)
+        .send({ name: 'item' })
+        .expect(200)
+      expect(res.body.item.name).toBe('item')
+      expect(res.body.item.eval).toBe('Name => item')
+      const item = await getDao().findOne({ name: 'item' })
+      expect(item!.name).toBe('item')
+    })
+
+    it('should set the slug property from the entity name', async () => {
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
+      const res = await request().post(baseUrl)
+        .send({ name: 'Test Item' })
+        .expect(200)
+      expect(res.body.item.name).toBe('Test Item')
+      expect(res.body.item.slug.substr(0, 10)).toBe('test-item-')
+      expect(res.body.item.slug.length).toBe(18)
+      const item = await getDao().findOne({ name: 'Test Item' })
+      expect(item!.name).toBe('Test Item')
+    })
 
     describe('Hooks', () => {
       it('should call beforeCreate and afterCreate', async () => {
