@@ -1,14 +1,14 @@
 import { UserUtils } from '../../src/utils/UserUtils'
 import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 import { Commun, ConfigManager, SecurityUtils } from '@commun/core'
-import { BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
+import { UserConfig, UserModel, UserModule } from '../../src'
 
 describe('UserUtils', () => {
   const collectionName = 'user_utils_test'
 
   beforeAll(async () => {
     ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
-      ...DefaultUserConfig,
+      ...UserConfig,
       collectionName,
     })) as jest.Mock
     ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
@@ -21,7 +21,7 @@ describe('UserUtils', () => {
   afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
-  const getDao = () => Commun.getEntityDao<BaseUserModel>('users')
+  const getDao = () => Commun.getEntityDao<UserModel>('users')
 
   describe('generateUniqueUsername', () => {
     beforeEach(() => {
@@ -33,14 +33,14 @@ describe('UserUtils', () => {
     })
 
     it('should return an username with a random suffix if the username already exists', async () => {
-      await getDao().insertOne({ username: 'test' } as BaseUserModel)
+      await getDao().insertOne({ username: 'test' } as UserModel)
       expect(await UserUtils.generateUniqueUsername('test')).toBe('test-R')
     })
 
     it('should return an username with a longer random suffix until the username does not exist', async () => {
-      await getDao().insertOne({ username: 'test' } as BaseUserModel)
-      await getDao().insertOne({ username: 'test-R' } as BaseUserModel)
-      await getDao().insertOne({ username: 'test-RR' } as BaseUserModel)
+      await getDao().insertOne({ username: 'test' } as UserModel)
+      await getDao().insertOne({ username: 'test-R' } as UserModel)
+      await getDao().insertOne({ username: 'test-RR' } as UserModel)
       expect(await UserUtils.generateUniqueUsername('test')).toBe('test-RRR')
     })
   })

@@ -296,7 +296,7 @@ export class EntityController<T extends EntityModel> {
       }
 
       if ((validPermissions && shouldSetValue) || settingUser || settingEvalProperty) {
-        model[key as keyof T] = await getModelPropertyValue({
+        const value = await getModelPropertyValue({
           entityName: this.entityName,
           property,
           key,
@@ -304,6 +304,9 @@ export class EntityController<T extends EntityModel> {
           authUserId: req.auth?.id,
           ignoreDefault: action === 'update',
         })
+        if (value !== undefined) {
+          model[key as keyof T] = value
+        }
       }
 
     }
@@ -347,9 +350,13 @@ export class EntityController<T extends EntityModel> {
       if (typeof property === 'boolean') {
         continue
       }
-      if (this.hasValidPermissions(auth, model, 'get',
-        { ...this.config.permissions, ...(this.config.permissions?.properties?.[key] || {}) })
-      ) {
+      const permissions = {
+        ...this.config.permissions,
+        ...(this.config.permissions?.properties?.[key] || {}),
+        properties: undefined,
+      }
+      console.log('PERMISSIONS =>', key, permissions)
+      if (this.hasValidPermissions(auth, model, 'get', permissions)) {
         const modelKey = key as keyof T
         if (modelKey === 'id' || !isEntityRef(property)) {
           item[modelKey] = model[modelKey] === undefined || model[modelKey] === null ? property!.default : model[modelKey]
@@ -364,6 +371,10 @@ export class EntityController<T extends EntityModel> {
           } else {
             item[modelKey] = { id: model[modelKey] }
           }
+        }
+        console.log('MODEL => ', key, item[modelKey])
+        if (item[modelKey] === undefined) {
+          delete item[modelKey]
         }
       }
     }
@@ -432,10 +443,19 @@ export class EntityController<T extends EntityModel> {
 
     const hasOwnAccess = Array.isArray(permission) ? permission.includes('own') : permission === 'own'
     if (hasOwnAccess && model) {
-      const userAttrEntries = Object.entries(this.config.schema.properties || {})
-        .find(([_, property]) => typeof property !== 'boolean' && property.$ref === '#user')
-      if (userAttrEntries?.[0]) {
-        const userId = '' + model[userAttrEntries[0] as keyof T]
+      const userPropsEntries = Object.entries(this.config.schema.properties || {})
+        .find(([key, property]) => {
+          if (typeof property === 'boolean') {
+            return false
+          }
+          if (this.config.schema.$id === '#entity/user') {
+            return key === 'id'
+          } else {
+            return property.$ref === '#user'
+          }
+        })
+      if (userPropsEntries?.[0]) {
+        const userId = '' + model[userPropsEntries[0] as keyof T]
         if (userId && userId === auth.userId) {
           return true
         }

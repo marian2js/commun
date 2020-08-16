@@ -1,7 +1,7 @@
 import { EntityModel } from '@commun/core'
 import { AuthProvider } from './ExternalAuth'
 
-export interface BaseUserModel extends EntityModel {
+export interface UserModel extends EntityModel {
   username: string
   email: string
   password?: string

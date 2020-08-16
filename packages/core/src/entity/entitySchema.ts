@@ -4,6 +4,7 @@ import Ajv, { Options as AjvOptions } from 'ajv'
 import { parseConfigString } from './configVariables'
 import { BadRequestError, ServerError } from '../errors'
 import { Commun } from '../Commun'
+import { SecurityUtils } from '../utils'
 
 type ModelData<T> = { [P in keyof T]?: T[P] }
 
@@ -24,15 +25,21 @@ export function getModelPropertyValue<T> (options: GetModelPropertyValueOptions<
     const userId = authUserId || defaultValue
     return userId ? new ObjectId(userId.toString()) : undefined
   }
-  if (property.format === 'eval') {
-    return formatEvalProperty(options, defaultValue)
-  }
   if (property.format === 'id') {
     const id = data[key] || defaultValue
     return id ? new ObjectId(id as string) : undefined
   }
+  if (property.format === 'hash') {
+    return formatHashProperty(options, defaultValue)
+  }
+  if (property.format?.startsWith('eval:')) {
+    return formatEvalProperty(options, defaultValue)
+  }
 
-  return parsePropertyValue(property, data[key])
+  const value = data[key] === undefined ? defaultValue : data[key]
+  if (value !== undefined) {
+    return parsePropertyValue(property, value)
+  }
 }
 
 async function formatEvalProperty<T> (options: GetModelPropertyValueOptions<T>, defaultValue: any) {
@@ -55,6 +62,12 @@ async function formatEvalProperty<T> (options: GetModelPropertyValueOptions<T>, 
     return defaultValue
   }
   return parsedValue
+}
+
+function formatHashProperty<T> (options: GetModelPropertyValueOptions<T>, defaultValue: any) {
+  const { data, key } = options
+  const value = data[key] || defaultValue
+  return SecurityUtils.hashWithBcrypt(value, 12)
 }
 
 export function parsePropertyValue (property: JSONSchema7Definition, value: any) {
@@ -96,7 +109,7 @@ export function parsePropertyValue (property: JSONSchema7Definition, value: any)
 export function getSchemaValidator (options: AjvOptions) {
   return new Ajv({
     coerceTypes: true,
-    unknownFormats: ['id', 'eval'],
+    unknownFormats: 'ignore',
     format: 'fast',
     ...options,
   })
