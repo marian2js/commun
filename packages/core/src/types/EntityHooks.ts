@@ -11,18 +11,26 @@ type BaseEntityHook = {
 }
 
 export type IncrementEntityHook = BaseEntityHook & {
-  action: 'increment',
+  action: 'increment'
   value: number | string
   target: string
 }
 
 export type SetEntityHook = BaseEntityHook & {
-  action: 'set',
+  action: 'set'
   value: any
   target: string
 }
 
+export type HashEntityHook = BaseEntityHook & {
+  action: 'hash'
+  target: string
+  algorithm?: 'bcrypt'
+  salt_rounds?: number
+}
+
 export type EntityHook =
+  HashEntityHook |
   IncrementEntityHook |
   SetEntityHook
 
