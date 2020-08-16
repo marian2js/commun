@@ -1,4 +1,12 @@
-import { assertNever, Commun, EntityActionPermissions, EntityConfig, EntityModel, ModelAttribute } from '@commun/core'
+import {
+  assertNever,
+  Commun,
+  EntityActionPermissions,
+  EntityConfig,
+  EntityModel,
+  getEntityRef,
+  isEntityRef
+} from '@commun/core'
 import {
   GraphQLBoolean,
   GraphQLEnumType,
@@ -6,6 +14,7 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLInputType,
+  GraphQLInt,
   GraphQLList,
   GraphQLObjectType,
   GraphQLSchema,
@@ -21,11 +30,12 @@ import {
   Thunk
 } from 'graphql/type/definition'
 import graphqlFields from 'graphql-fields'
-import { GraphQLJSONObject } from 'graphql-type-json'
 import { GraphQLController } from './controllers/GraphQLController'
 import { capitalize } from './utils/StringUtils'
 import { GraphQLUserController } from './controllers/GraphQLUserController'
 import { GraphQLDate } from './graphql-types/GraphQLDate'
+import { JSONSchema7 } from 'json-schema'
+import { GraphQLJSONObject } from 'graphql-type-json'
 
 const entityObjectTypesCache: { [key: string]: GraphQLObjectType } = {}
 const entityFilterTypesCache: { [key: string]: GraphQLInputObjectType } = {}
@@ -128,27 +138,30 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
     description: `A single ${capitalize(entityConfig.entitySingularName!)}.`
   })
 
-  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
+  for (const [key, property] of getEntityPropertiesByAction(entityConfig, 'get')) {
+    if (typeof property === 'boolean') {
+      continue
+    }
     const type = getAttributeGraphQLType(
       entityConfig,
       key,
-      attribute!,
+      property,
       'type',
       name => capitalize(entityConfig.entitySingularName!) + name
     ) as GraphQLOutputType
-    const permission = { ...entityConfig.permissions, ...attribute!.permissions }['get']
+    const permission = entityConfig.permissions?.properties?.[key]?.get || entityConfig.permissions?.get
     const hasAnyoneAccess = Array.isArray(permission) ? permission.includes('anyone') : permission === 'anyone'
-    const required = attribute!.required && (hasAnyoneAccess || ['ref', 'user'].includes(attribute!.type))
+    const required = entityConfig.schema.required?.includes(key) && (hasAnyoneAccess || isEntityRef(property))
 
     fields[key] = {
       type: key === 'id' || required ? new GraphQLNonNull(type) : type,
-      resolve: getAttributeGraphQLResolver(attribute!, entityConfig)
+      resolve: getAttributeGraphQLResolver(property!, entityConfig)
     }
   }
 
-  for (const [key, joinAttribute] of Object.entries(entityConfig.joinAttributes || {})) {
-    const entityType = buildEntityObjectType(Commun.getEntity(joinAttribute.entity).config)
-    switch (joinAttribute.type) {
+  for (const [key, joinProperty] of Object.entries(entityConfig.joinProperties || {})) {
+    const entityType = buildEntityObjectType(Commun.getEntity(joinProperty.entity).config)
+    switch (joinProperty.type) {
       case 'findOne':
         fields[key] = {
           type: entityType
@@ -160,7 +173,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
         }
         break
       default:
-        assertNever(joinAttribute)
+        assertNever(joinProperty)
     }
   }
 
@@ -171,11 +184,14 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
   const apiKey = entityConfig.apiKey || 'id'
 
-  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, action)) {
+  for (const [key, property] of getEntityPropertiesByAction(entityConfig, action)) {
+    if (typeof property === 'boolean') {
+      continue
+    }
     const type = getAttributeGraphQLType(
       entityConfig,
       key,
-      attribute!,
+      property,
       'input',
       name => capitalize(action) + capitalize(entityConfig.entitySingularName!) + name + 'Input',
     ) as GraphQLInputType
@@ -185,11 +201,14 @@ function buildEntityInputType (entityConfig: EntityConfig<EntityModel>, action: 
         attributeRequired = false
         break
       case 'create':
-        attributeRequired = attribute!.required || false
+        attributeRequired = entityConfig.schema?.required?.includes(key) || false
         break
       case 'update':
       case 'delete':
         attributeRequired = key === apiKey
+        break
+      default:
+        continue
     }
 
     fields[key] = {
@@ -215,7 +234,10 @@ function buildFilterEntityInputType (entityConfig: EntityConfig<EntityModel>) {
 
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
 
-  for (const [key, attribute] of getEntityAttributesByAction(entityConfig, 'get')) {
+  for (const [key, property] of getEntityPropertiesByAction(entityConfig, 'get')) {
+    if (typeof property === 'boolean') {
+      continue
+    }
     fields[key] = {
       type: new GraphQLInputObjectType({
         name: capitalize(entityConfig.entitySingularName!) + capitalize(key) + 'FilterInput',
@@ -224,7 +246,7 @@ function buildFilterEntityInputType (entityConfig: EntityConfig<EntityModel>) {
             type: new GraphQLNonNull(getAttributeGraphQLType(
               entityConfig,
               key,
-              attribute!,
+              property,
               'input',
               name => capitalize(entityConfig.entitySingularName!) + capitalize(key) + name + 'FilterInput',
             ) as GraphQLInputType)
@@ -259,7 +281,7 @@ function buildFilterEntityInputType (entityConfig: EntityConfig<EntityModel>) {
 function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
   const fields: Thunk<GraphQLInputFieldConfigMap> = {}
 
-  for (const [key] of getEntityAttributesByAction(entityConfig, 'get')) {
+  for (const [key] of getEntityPropertiesByAction(entityConfig, 'get')) {
     fields[key] = {
       type: orderByDirectionType
     }
@@ -278,71 +300,77 @@ function buildOrderByEntityInputType (entityConfig: EntityConfig<EntityModel>) {
 
 export function getAttributeGraphQLType (
   entityConfig: EntityConfig<EntityModel>,
-  attributeKey: string,
-  attribute: ModelAttribute,
+  propertyKey: string,
+  property: JSONSchema7,
   kind: 'type' | 'input',
   getName: (key: string) => string,
-): GraphQLInputType | GraphQLOutputType {
-  switch (attribute.type) {
+): GraphQLInputType | GraphQLOutputType | undefined {
+  if (property.format === 'id') {
+    return GraphQLID
+  }
+  if (['date', 'time', 'date-time'].includes(property.format || '')) {
+    return GraphQLDate
+  }
+  const refEntityName = getEntityRef(property)
+  if (refEntityName) {
+    return kind === 'type' ?
+      buildEntityObjectType(Commun.getEntity(refEntityName).config) : GraphQLID
+  }
+  if (property.enum) {
+    const name = capitalize(entityConfig.entitySingularName!) + capitalize(propertyKey) + 'EnumValues'
+    if (entityEnumsCache[name]) {
+      return entityEnumsCache[name]
+    }
+    const values = property.enum.reduce((prev: { [key: string]: any }, curr) => {
+      let key = '' + curr
+      if (typeof curr === 'number') {
+        if (curr > 0) {
+          key = `POSITIVE_${curr}`
+        } else if (curr < 0) {
+          key = `NEGATIVE_${Math.abs(curr)}`
+        } else {
+          key = 'ZERO'
+        }
+      } else if (typeof curr == 'string') {
+        key = curr
+          .replace(/[^_a-zA-Z0-9]/g, '')
+          .replace(/^[^_a-zA-Z]/g, '')
+      }
+      prev[key] = { value: curr }
+      return prev
+    }, {})
+    return entityEnumsCache[name] = new GraphQLEnumType({
+      name: capitalize(entityConfig.entitySingularName!) + capitalize(propertyKey) + 'Enum',
+      values,
+    })
+  }
+  if (property.format?.startsWith('eval:')) {
+    return GraphQLString
+  }
+  switch (property.type) {
     case 'boolean':
       return GraphQLBoolean
-    case 'email':
-    case 'eval':
-    case 'slug':
     case 'string':
       return GraphQLString
-    case 'date':
-      return GraphQLDate
-    case 'id':
-      return GraphQLID
+    case 'integer':
+      return GraphQLInt
     case 'number':
       return GraphQLFloat
 
-    case 'ref':
-    case 'user':
-      if (attribute.type === 'user' && entityConfig.entityName === 'users') {
-        return GraphQLID
-      }
-      const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
-      return kind === 'type' ?
-        buildEntityObjectType(Commun.getEntity(entityName).config) : GraphQLID
-
-    case 'enum':
-      const name = capitalize(entityConfig.entitySingularName!) + capitalize(attributeKey) + 'EnumValues'
-      if (entityEnumsCache[name]) {
-        return entityEnumsCache[name]
-      }
-      const values = attribute.values.reduce((prev: { [key: string]: any }, curr) => {
-        let key = '' + curr
-        if (typeof curr === 'number') {
-          if (curr > 0) {
-            key = `POSITIVE_${curr}`
-          } else if (curr < 0) {
-            key = `NEGATIVE_${Math.abs(curr)}`
-          } else {
-            key = 'ZERO'
-          }
-        } else if (typeof curr == 'string') {
-          key = curr
-            .replace(/[^_a-zA-Z0-9]/g, '')
-            .replace(/^[^_a-zA-Z]/g, '')
-        }
-        prev[key] = { value: curr }
-        return prev
-      }, {})
-      return entityEnumsCache[name] = new GraphQLEnumType({
-        name: capitalize(entityConfig.entitySingularName!) + capitalize(attributeKey) + 'Enum',
-        values,
-      })
-
     case 'object':
+      if (!property.properties || property.additionalProperties) {
+        return GraphQLJSONObject
+      }
       const fields: { [key: string]: any } = {}
-      for (const [fieldKey, fieldAttribute] of Object.entries(attribute.fields)) {
+      for (const [fieldKey, fieldProperty] of Object.entries(property.properties)) {
+        if (typeof fieldProperty === 'boolean') {
+          continue
+        }
         fields[fieldKey] = {
           type: getAttributeGraphQLType(
             entityConfig,
-            capitalize(attributeKey) + capitalize(fieldKey),
-            fieldAttribute,
+            capitalize(propertyKey) + capitalize(fieldKey),
+            fieldProperty,
             kind,
             getName,
           )
@@ -350,63 +378,76 @@ export function getAttributeGraphQLType (
       }
       const graphQLType = kind === 'input' ? GraphQLInputObjectType : GraphQLObjectType
       return new graphQLType({
-        name: getName(capitalize(attributeKey)),
+        name: getName(capitalize(propertyKey)),
         fields: () => fields,
       })
 
-    case 'list':
+    case 'array':
+      if (typeof property.items === 'boolean') {
+        return
+      }
+      if (Array.isArray(property.items)) { // TODO support arrays on JSON Schema items
+        return
+      }
       const listType = getAttributeGraphQLType(
         entityConfig,
-        attributeKey,
-        attribute.listType,
+        propertyKey,
+        property.items as JSONSchema7,
         kind,
         getName,
       )
-      return new GraphQLList(listType)
+      return listType ? new GraphQLList(listType) : undefined
 
-    case 'any':
-    case 'map':
-      return GraphQLJSONObject
+    case 'null':
+      return
 
     default:
-      assertNever(attribute)
+      throw new Error(`Unknown property type ${property.type}`)
   }
 }
 
-function getAttributeGraphQLResolver (attribute: ModelAttribute, entityConfig?: EntityConfig<EntityModel>) {
-  switch (attribute.type) {
-    case 'user':
-    case 'ref':
-      if (attribute.type === 'user' && entityConfig?.entityName === 'users') {
-        return
+function getAttributeGraphQLResolver (property: JSONSchema7, entityConfig?: EntityConfig<EntityModel>) {
+  // Resolve entity references
+  const refEntityName = getEntityRef(property)
+  if (refEntityName) {
+    return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+      const requestedKeys = graphqlFields(info)
+      if (!source[info.fieldName]) {
+        return null
       }
-      const entityName = attribute.type === 'ref' ? attribute.entity : 'users'
-      return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
-        const requestedKeys = graphqlFields(info)
-        if (!source[info.fieldName]) {
-          return null
+      if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
+        context.params = {
+          id: source[info.fieldName]?.id || source[info.fieldName]
         }
-        if (Object.keys(requestedKeys).filter(key => key !== 'id').length) {
-          context.params = {
-            id: source[info.fieldName]?.id || source[info.fieldName]
-          }
-          const res = await Commun.getEntityController(entityName).get(context, { findModelById: true })
-          return res.item
-        }
-        return source[info.fieldName]
+        const res = await Commun.getEntityController(refEntityName).get(context, { findModelById: true })
+        return res.item
       }
-    case 'list':
+      return source[info.fieldName]
+    }
+  }
+
+  switch (property.type) {
+    case 'array':
       return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+        if (typeof property.items === 'boolean' || Array.isArray(property.items)) {
+          return
+        }
         return source[info.fieldName]?.map((item: any) =>
-          getAttributeGraphQLResolver(attribute.listType)?.({ [info.fieldName]: item }, args, context, info)
+          getAttributeGraphQLResolver(property.items as JSONSchema7)?.({ [info.fieldName]: item }, args, context, info)
         )
       }
     case 'object':
       return async (source: any, args: any, context: any, info: GraphQLResolveInfo) => {
+        if (!property.properties) {
+          return source[info.fieldName]
+        }
         const obj: { [key: string]: any } = {}
-        for (const [key, value] of Object.entries(attribute.fields)) {
+        for (const [key, objectProperty] of Object.entries(property.properties)) {
+          if (typeof objectProperty === 'boolean') {
+            continue
+          }
           if (source[info.fieldName][key]) {
-            obj[key] = getAttributeGraphQLResolver(value)
+            obj[key] = getAttributeGraphQLResolver(objectProperty)
               ?.({ [info.fieldName]: source[info.fieldName][key] }, args, context, info)
           }
         }
@@ -415,13 +456,16 @@ function getAttributeGraphQLResolver (attribute: ModelAttribute, entityConfig?: 
   }
 }
 
-function getEntityAttributesByAction (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
+function getEntityPropertiesByAction (entityConfig: EntityConfig<EntityModel>, action: keyof EntityActionPermissions) {
   const apiKey = entityConfig.apiKey || 'id'
 
-  // apiKey should always be the first attribute
-  return Object.entries(entityConfig.attributes)
+  // apiKey should always be the first property
+  return Object.entries(entityConfig.schema.properties || {})
     .sort(([key]) => key === apiKey ? -1 : 1)
-    .filter(([key, attribute]) => {
+    .filter(([key, property]) => {
+      if (typeof property === 'boolean') {
+        return false
+      }
       if (action === 'create' && key === 'id') {
         return false
       }
@@ -432,15 +476,17 @@ function getEntityAttributesByAction (entityConfig: EntityConfig<EntityModel>, a
         return false
       }
 
-      // Slugs are auto-generated by the system and cannot be set
-      if (action === 'create' && attribute!.type === 'slug') {
+      // Eval formats are auto-generated by the system and cannot be set
+      if (action === 'create' && property.format?.startsWith('eval:')) {
         return false
       }
 
-      const hasSystemOnlyPermission = attribute!.permissions?.[action] === 'system' ||
-        (!attribute!.permissions?.[action] && entityConfig.permissions?.[action] === 'system')
+      const permissions = {
+        ...(entityConfig.permissions || {}),
+        ...(entityConfig.permissions?.properties?.[key] || {}),
+      }
       const isIdentificationKey = ['update', 'delete'].includes(action) && key === apiKey
 
-      return !hasSystemOnlyPermission || isIdentificationKey
+      return permissions[action] !== 'system' || isIdentificationKey
     })
 }

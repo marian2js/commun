@@ -51,12 +51,15 @@ export const UserConfig: EntityConfig<UserModel> = {
         properties: {
           google: {
             type: 'object',
+            additionalProperties: { type: 'string' },
           },
           facebook: {
             type: 'object',
+            additionalProperties: { type: 'string' },
           },
           github: {
             type: 'object',
+            additionalProperties: { type: 'string' },
           },
         },
       }

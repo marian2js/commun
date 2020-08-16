@@ -33,36 +33,38 @@ describe('GraphQLController', () => {
           update: 'anyone',
           delete: 'anyone',
         },
-        attributes: {
-          name: {
-            type: 'string',
-            required: true,
-          },
-          date: {
-            type: 'date'
-          },
-          subEntity: {
-            type: 'ref',
-            entity: 'subEntity',
-          },
-          subEntities: {
-            type: 'list',
-            listType: {
+        schema: {
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+            },
+            date: {
               type: 'object',
-              fields: {
-                entity: {
-                  type: 'ref',
-                  entity: 'subEntity',
-                }
-              }
-            }
-          }
+              format: 'date-time',
+            },
+            subEntity: {
+              $ref: '#entity/subEntity',
+            },
+            subEntities: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  entity: {
+                    $ref: '#entity/subEntity'
+                  },
+                },
+              },
+            },
+          },
         },
-      }
+      },
     })
     Commun.registerEntity<SubEntity>({
       config: {
-        entityName: 'subEntity',
+        entityName: 'subEntities',
+        entitySingularName: 'subEntity',
         collectionName: 'subEntities',
         permissions: {
           get: 'anyone',
@@ -70,11 +72,13 @@ describe('GraphQLController', () => {
           update: 'anyone',
           delete: 'anyone',
         },
-        attributes: {
-          name: {
-            type: 'string',
-            required: true,
-          }
+        schema: {
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+            },
+          },
         }
       }
     })
@@ -86,7 +90,7 @@ describe('GraphQLController', () => {
   afterAll(closeTestApp)
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
-  const getDaoSubEntity = () => Commun.getEntityDao<SubEntity>('subEntity')
+  const getDaoSubEntity = () => Commun.getEntityDao<SubEntity>('subEntities')
 
   describe('listEntities', () => {
     it('should return a list of items', async () => {

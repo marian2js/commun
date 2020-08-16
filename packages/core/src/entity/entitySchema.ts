@@ -77,6 +77,9 @@ export function parsePropertyValue (property: JSONSchema7Definition, value: any)
   if (isEntityRef(property) || property.format === 'id') {
     return new ObjectId(value)
   }
+  if (property.format === 'date-time') {
+    return Number.isNaN(Number(value)) ? new Date(value) : new Date(Number(value))
+  }
   switch (property.type) {
     case 'array':
       if (property.items && !Array.isArray(property.items)) {

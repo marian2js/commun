@@ -1,5 +1,5 @@
 import { GraphQLScalarType } from 'graphql'
-import { parseModelAttribute } from '@commun/core'
+import { parsePropertyValue } from '@commun/core'
 
 export const GraphQLDate = new GraphQLScalarType({
   name: 'Date',
@@ -18,5 +18,5 @@ export const GraphQLDate = new GraphQLScalarType({
 })
 
 function parseDate (date: Date | string | number) {
-  return parseModelAttribute({ type: 'date' }, date)
+  return parsePropertyValue({ type: 'object', format: 'date-time' }, date)
 }
