@@ -11,6 +11,7 @@ import {
   getSchemaDefinitions,
   getSchemaValidator,
   isEntityRef,
+  isSystemProperty,
   UnauthorizedError
 } from '..'
 import { EntityActionPermissions } from '../types'
@@ -253,7 +254,7 @@ export class EntityController<T extends EntityModel> {
   }
 
   protected async getModelFromBodyRequest (req: Request, auth: AuthPermissions, action: 'create' | 'update', persistedModel?: T): Promise<T> {
-    const model: { [key in keyof T]: any } = {} as T
+    const model: T = {} as T
     const definitions = getSchemaDefinitions()
     this.config.schema.definitions = {
       ...definitions,
@@ -267,14 +268,18 @@ export class EntityController<T extends EntityModel> {
       validationResult = validator(req.body)
     } else {
       validator = this.getUpdateEntityValidator()
-      validationResult = validator({
-        ...persistedModel,
-        ...req.body,
-      })
+      validationResult = validator(req.body)
     }
 
     if (!validationResult) {
-      const errorMessage = (validator.errors || []).map(error => error.dataPath + ' ' + error.message).join(', ')
+      const errorMessage = (validator.errors || [])
+        .map(error => {
+          let errorName = error.dataPath || this.entityName
+          if (errorName.startsWith('.')) {
+            errorName = errorName.substr(1)
+          }
+          return errorName + ' ' + error.message
+        }).join(', ')
       throw new BadRequestError(errorMessage ? errorMessage : 'Invalid request data')
     }
 
@@ -314,24 +319,35 @@ export class EntityController<T extends EntityModel> {
   }
 
   protected getCreateEntityValidator (): ValidateFunction {
-    try {
-      if (!this.createEntityValidator) {
-        this.createEntityValidator = getSchemaValidator({
-          useDefaults: true,
-        }, this.config.schema)
+    if (!this.createEntityValidator) {
+      // Remove system generated properties from required
+      const required = this.config.schema.required || []
+      for (const [key, property] of Object.entries(this.config.schema.properties || {})) {
+        if (isSystemProperty(property)) {
+          const index = required.indexOf(key)
+          required.splice(index, 1)
+        }
       }
-      return this.createEntityValidator
-    } catch (e) {
-      console.log('Error =>', e)
-      throw e
+      const createSchema = {
+        ...this.config.schema,
+        required,
+      }
+      this.createEntityValidator = getSchemaValidator({
+        useDefaults: true,
+      }, createSchema)
     }
+    return this.createEntityValidator
   }
 
   protected getUpdateEntityValidator (): ValidateFunction {
     if (!this.updateEntityValidator) {
+      const updateSchema = {
+        ...this.config.schema,
+        required: [],
+      }
       this.updateEntityValidator = getSchemaValidator({
         useDefaults: false,
-      }, this.config.schema)
+      }, updateSchema)
     }
     return this.updateEntityValidator
   }

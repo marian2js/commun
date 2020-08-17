@@ -26,7 +26,8 @@ describe('EntityController', () => {
     permissions: EntityActionPermissions,
     properties?: JSONSchema7['properties'] | null,
     joinProperties: { [key: string]: JoinProperty } = {},
-    indexes: EntityIndex<TestEntity>[] = []
+    indexes: EntityIndex<TestEntity>[] = [],
+    required = ['name'],
   ) => {
     Commun.registerEntity<TestEntity>({
       config: {
@@ -43,7 +44,7 @@ describe('EntityController', () => {
           },
         },
         schema: {
-          required: ['name'],
+          required,
           properties: {
             name: {
               type: 'string',
@@ -766,6 +767,17 @@ describe('EntityController', () => {
       expect(items.length).toBe(1)
     })
 
+    it('should not fail the validation if user is required but set by the system', async () => {
+      const user = new ObjectId()
+      await registerTestEntity({ get: 'anyone', create: 'anyone' }, {}, {}, [], ['name', 'user'])
+      const res = await authenticatedRequest(user.toString()).post(baseUrl)
+        .send({ name: 'item' })
+        .expect(200)
+      expect(res.body.item.user).toEqual({ id: user.toString() })
+      const items = await getDao().find({ user })
+      expect(items.length).toBe(1)
+    })
+
     it('should set the eval property from the entity name', async () => {
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await request().post(baseUrl)
@@ -954,7 +966,6 @@ describe('EntityController', () => {
       const res = await request().put(`${baseUrl}/${item.id}`)
         .send({ num: 3 })
         .expect(200)
-      console.log('BODY ===>', res.body)
       const updatedItem = await getDao().findOneById(item.id!)
       expect(updatedItem!.name).toBe('item')
       expect(updatedItem!.num).toBe(3)

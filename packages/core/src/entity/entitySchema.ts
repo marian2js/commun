@@ -70,6 +70,16 @@ function formatHashProperty<T> (options: GetModelPropertyValueOptions<T>, defaul
   return SecurityUtils.hashWithBcrypt(value, 12)
 }
 
+/**
+ * Return if a given property will be set by the system
+ */
+export function isSystemProperty (property: JSONSchema7Definition): boolean {
+  if (typeof property === 'boolean') {
+    return false
+  }
+  return property.$ref === '#user' || property.format?.startsWith('eval:') || false
+}
+
 export function parsePropertyValue (property: JSONSchema7Definition, value: any) {
   if (typeof property === 'boolean') {
     return value === true || value === 'true'
