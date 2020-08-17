@@ -6,8 +6,8 @@ import { CircularProgress, Container, makeStyles, Typography } from '@material-u
 import { Layout } from '../../components/Layout/Layout'
 import { EntitySettings } from './EntitySettings'
 import { EntityPermissions } from './EntityPermissions'
-import { EntityAttributes } from './EntityAttributes'
-import { EntityJoinAttributes } from './EntityJoinAttributes'
+import { EntitySchema } from './EntitySchema'
+import { EntityJoinProperties } from './EntityJoinProperties'
 import { EntityHooks } from './EntityHooks'
 import { EntityIndexes } from './EntityIndexes'
 import capitalize from '@material-ui/core/utils/capitalize'
@@ -46,13 +46,13 @@ export const EntityPage = () => {
     label: 'Permissions',
     component: <EntityPermissions entity={entity}/>,
   }, {
-    key: 'attributes',
-    label: 'Attributes',
-    component: <EntityAttributes entity={entity}/>,
+    key: 'schema',
+    label: 'Schema',
+    component: <EntitySchema entity={entity}/>,
   }, {
-    key: 'joinAttributes',
-    label: 'Join Attributes',
-    component: <EntityJoinAttributes entity={entity}/>,
+    key: 'joinProperties',
+    label: 'Join Properties',
+    component: <EntityJoinProperties entity={entity}/>,
   }, {
     key: 'hooks',
     label: 'Hooks',

@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  test_frontend:
+  test:
     runs-on: ubuntu-18.04
 
     strategy:

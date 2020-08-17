@@ -1,11 +1,12 @@
-import { Commun, EntityModel, getJoinAttribute } from '../../src'
-import { FindManyJoinAttribute, FindOneJoinAttribute, JoinAttribute } from '../../src/types/JoinAttributes'
+import { Commun, EntityModel, getJoinProperty } from '../../src'
+import { FindManyJoinProperty, FindOneJoinProperty, JoinProperty } from '../../src/types'
 import { ObjectId } from 'mongodb'
 import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 
-describe('joinAttributes', () => {
-  describe('getJoinAttribute', () => {
-    const entityName = 'joinAttributes'
+describe('joinProperties', () => {
+  describe('getJoinProperty', () => {
+    const entityName = 'joinProperties'
+    const entitySingularName = 'joinProperty'
     const collectionName = entityName
 
     interface TestEntity extends EntityModel {
@@ -14,7 +15,7 @@ describe('joinAttributes', () => {
       ref?: ObjectId
     }
 
-    const registerTestEntity = (joinAttributes: { [key: string]: JoinAttribute }, entity: string = entityName) => {
+    const registerTestEntity = (joinProperties: { [key: string]: JoinProperty }, entity: string = entityName) => {
       Commun.registerEntity<TestEntity>({
         config: {
           entityName: entity,
@@ -25,19 +26,20 @@ describe('joinAttributes', () => {
             update: 'anyone',
             delete: 'anyone',
           },
-          attributes: {
-            name: {
-              type: 'string'
-            },
-            user: {
-              type: 'user',
-            },
-            ref: {
-              type: 'ref',
-              entity: entityName
+          schema: {
+            properties: {
+              name: {
+                type: 'string'
+              },
+              user: {
+                $ref: '#user',
+              },
+              ref: {
+                $ref: '#entity/' + entitySingularName,
+              }
             }
           },
-          joinAttributes
+          joinProperties
         }
       })
     }
@@ -51,7 +53,7 @@ describe('joinAttributes', () => {
     describe('findOne', () => {
       it('should find and return a single item', async () => {
         registerTestEntity({})
-        const attribute: FindOneJoinAttribute = {
+        const property: FindOneJoinProperty = {
           type: 'findOne',
           entity: entityName,
           query: {
@@ -60,12 +62,12 @@ describe('joinAttributes', () => {
         }
         const item1 = await getDao().insertOne({ name: 'item1' })
         const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
-        expect(await getJoinAttribute(attribute, item2)).toEqual(item1)
+        expect(await getJoinProperty(property, item2)).toEqual(item1)
       })
 
       it('should return null if an item is not found', async () => {
         registerTestEntity({})
-        const attribute: FindOneJoinAttribute = {
+        const property: FindOneJoinProperty = {
           type: 'findOne',
           entity: entityName,
           query: {
@@ -73,13 +75,13 @@ describe('joinAttributes', () => {
           }
         }
         const item1 = await getDao().insertOne({ name: 'item1', ref: new ObjectId() })
-        expect(await getJoinAttribute(attribute, item1)).toBe(null)
+        expect(await getJoinProperty(property, item1)).toBe(null)
       })
 
       it('should support auth user on the query', async () => {
         registerTestEntity({})
         registerTestEntity({}, 'users')
-        const attribute: FindOneJoinAttribute = {
+        const property: FindOneJoinProperty = {
           type: 'findOne',
           entity: entityName,
           query: {
@@ -89,14 +91,14 @@ describe('joinAttributes', () => {
         const userId = new ObjectId()
         const item1 = await getDao().insertOne({ name: 'item1', user: userId })
         const item2 = await getDao().insertOne({ name: 'item2' })
-        expect(await getJoinAttribute(attribute, item2, userId.toString())).toEqual(item1)
+        expect(await getJoinProperty(property, item2, userId.toString())).toEqual(item1)
       })
     })
 
     describe('findMany', () => {
       it('should find and return multiple items', async () => {
         registerTestEntity({})
-        const attribute: FindManyJoinAttribute = {
+        const property: FindManyJoinProperty = {
           type: 'findMany',
           entity: entityName,
           query: {
@@ -106,12 +108,12 @@ describe('joinAttributes', () => {
         const item1 = await getDao().insertOne({ name: 'target-item' })
         const item2 = await getDao().insertOne({ name: 'item2', ref: new ObjectId(item1.id) })
         const item3 = await getDao().insertOne({ name: 'target-item' })
-        expect(await getJoinAttribute(attribute, item2)).toEqual([item1, item3])
+        expect(await getJoinProperty(property, item2)).toEqual([item1, item3])
       })
 
       it('should return an empty array if items are not found', async () => {
         registerTestEntity({})
-        const attribute: FindManyJoinAttribute = {
+        const property: FindManyJoinProperty = {
           type: 'findMany',
           entity: entityName,
           query: {
@@ -119,13 +121,13 @@ describe('joinAttributes', () => {
           }
         }
         const item1 = await getDao().insertOne({ name: 'item1', ref: new ObjectId() })
-        expect(await getJoinAttribute(attribute, item1)).toEqual([])
+        expect(await getJoinProperty(property, item1)).toEqual([])
       })
 
       it('should support auth user on the query', async () => {
         registerTestEntity({})
         registerTestEntity({}, 'users')
-        const attribute: FindManyJoinAttribute = {
+        const property: FindManyJoinProperty = {
           type: 'findMany',
           entity: entityName,
           query: {
@@ -135,7 +137,7 @@ describe('joinAttributes', () => {
         const userId = new ObjectId()
         const item1 = await getDao().insertOne({ name: 'item1', user: userId })
         const item2 = await getDao().insertOne({ name: 'item2' })
-        expect(await getJoinAttribute(attribute, item2, userId.toString())).toEqual([item1])
+        expect(await getJoinProperty(property, item2, userId.toString())).toEqual([item1])
       })
     })
   })

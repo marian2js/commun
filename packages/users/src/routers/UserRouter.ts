@@ -1,10 +1,10 @@
 import * as express from 'express'
 import { Commun, sendResponse } from '@commun/core'
-import { BaseUserController, BaseUserModel, UserModule } from '..'
+import { UserController, UserModel, UserModule } from '..'
 
-const getController = () => Commun.getEntityController<BaseUserModel>(UserModule.entityName) as BaseUserController<BaseUserModel>
+const getController = () => Commun.getEntityController<UserModel>(UserModule.entityName) as UserController<UserModel>
 
-export const BaseUserRouter = express.Router()
+export const UserRouter = express.Router()
   .post('/auth/password', (req, res, next) =>
     sendResponse(req, res, next, getController().create(req)))
   .post('/auth/password/login', (req, res, next) =>

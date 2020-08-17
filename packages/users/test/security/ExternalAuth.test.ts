@@ -3,7 +3,7 @@ import { ExternalAuth } from '../../src/security/ExternalAuth'
 import { closeTestApp, getTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 import { Commun, ConfigManager } from '@commun/core'
 import { Express } from 'express'
-import { AuthProvider, BaseUserModel, DefaultUserConfig, ExternalAuthPayload, UserModule } from '../../src'
+import { AuthProvider, ExternalAuthPayload, UserConfig, UserModel, UserModule } from '../../src'
 import { GoogleAuthStrategy } from '../../src/security/GoogleAuthStrategy'
 import jwt, {
   GetPublicKeyOrSecret,
@@ -32,7 +32,7 @@ describe('ExternalAuth', () => {
       }
     }
     ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
-      ...DefaultUserConfig,
+      ...UserConfig,
       collectionName,
     })) as jest.Mock
     ConfigManager.getKeys = jest.fn(() => Promise.resolve({
@@ -51,7 +51,7 @@ describe('ExternalAuth', () => {
   afterEach(async () => await stopTestApp(collectionName))
   afterAll(closeTestApp)
 
-  const getDao = () => Commun.getEntityDao<BaseUserModel>('users')
+  const getDao = () => Commun.getEntityDao<UserModel>('users')
 
   describe('setupPassport', () => {
     beforeEach(() => {

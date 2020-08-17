@@ -1,9 +1,9 @@
 import { Commun, SecurityUtils } from '@commun/core'
-import { BaseUserModel } from '..'
+import { UserModel } from '..'
 
 export const UserUtils = {
   async generateUniqueUsername (prefix: string) {
-    let user = await Commun.getEntityDao<BaseUserModel>('users').findOne({ username: prefix })
+    let user = await Commun.getEntityDao<UserModel>('users').findOne({ username: prefix })
     if (!user) {
       return prefix
     }
@@ -12,7 +12,7 @@ export const UserUtils = {
     while (user) {
       for (let i = 0; i < 3; i++) {
         username = `${prefix}-${SecurityUtils.generateRandomString(chars)}`
-        user = await Commun.getEntityDao<BaseUserModel>('users')
+        user = await Commun.getEntityDao<UserModel>('users')
           .findOne({ username })
         if (!user) {
           break

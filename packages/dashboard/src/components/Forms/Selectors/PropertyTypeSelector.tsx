@@ -1,6 +1,6 @@
 import React from 'react'
 import { FormControl, FormHelperText, InputLabel, makeStyles, MenuItem, Select } from '@material-ui/core'
-import { ModelAttribute } from '@commun/core'
+import { PropertyTypeName } from '../../../utils/properties'
 
 const useStyles = makeStyles(theme => ({
   typeSelectorFormControl: {
@@ -11,11 +11,11 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   label?: string
-  value: ModelAttribute['type'] | ''
-  onChange: (value: ModelAttribute['type']) => void
+  value: PropertyTypeName | ''
+  onChange: (value: PropertyTypeName) => void
 }
 
-export const AttributeTypeSelector = (props: Props) => {
+export const PropertyTypeSelector = (props: Props) => {
   const classes = useStyles()
   const { label, value, onChange } = props
 
@@ -25,26 +25,23 @@ export const AttributeTypeSelector = (props: Props) => {
         {label || 'Type'}
       </InputLabel>
       <Select
-        onChange={e => onChange(e.target.value as ModelAttribute['type'])}
+        onChange={e => onChange(e.target.value as PropertyTypeName)}
         labelId="type-selector"
         id="type-selector"
-        value={value}
+        value={value || ''}
         required
         fullWidth>
+        <MenuItem value="array">Array</MenuItem>
         <MenuItem value="boolean">Boolean</MenuItem>
-        <MenuItem value="date">Date</MenuItem>
-        <MenuItem value="email">Email</MenuItem>
-        <MenuItem value="enum">Enum</MenuItem>
         <MenuItem value="eval">Eval</MenuItem>
-        <MenuItem value="list">List</MenuItem>
-        <MenuItem value="map">Map</MenuItem>
+        <MenuItem value="object">Object</MenuItem>
+        <MenuItem value="integer">Integer</MenuItem>
         <MenuItem value="number">Number</MenuItem>
-        <MenuItem value="ref">Entity Reference</MenuItem>
-        <MenuItem value="slug">Slug</MenuItem>
+        <MenuItem value="entity-ref">Entity Reference</MenuItem>
         <MenuItem value="string">String</MenuItem>
         <MenuItem value="user">User</MenuItem>
       </Select>
-      <FormHelperText></FormHelperText>
+      <FormHelperText/>
     </FormControl>
   )
 }

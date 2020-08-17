@@ -2,7 +2,7 @@ import { AdminModule } from '../src'
 import { Commun, SecurityUtils } from '@commun/core'
 import { AdminController } from '../src/controllers/AdminController'
 import { AdminRouter } from '../src/routers/AdminRouter'
-import { DefaultUserConfig } from '@commun/users'
+import { UserConfig } from '@commun/users'
 import { startTestApp } from '@commun/test-utils'
 
 describe('AdminModule', () => {
@@ -23,7 +23,7 @@ describe('AdminModule', () => {
     beforeEach(async () => {
       await AdminModule.setup()
       SecurityUtils.generateRandomString = jest.fn(() => 'secure-code')
-      Commun.registerEntity({ config: DefaultUserConfig })
+      Commun.registerEntity({ config: UserConfig })
       const dao = Commun.getEntityDao('users')
       dao.getEstimatedCount = jest.fn(() => Promise.resolve(0))
       await startTestApp(Commun)

@@ -1,20 +1,20 @@
 import { authenticatedRequest, closeTestApp, getTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 import { GraphQLModule } from '../../src'
 import { Commun, ConfigManager } from '@commun/core'
-import { BaseUserController, BaseUserModel, DefaultUserConfig } from '@commun/users'
+import { UserConfig, UserController, UserModel } from '@commun/users'
 
 describe('GraphQLUserController', () => {
   let entityName = 'users'
-  let user: BaseUserModel
-  let controller = new BaseUserController<BaseUserModel>(entityName)
+  let user: UserModel
+  let controller = new UserController<UserModel>(entityName)
 
   beforeAll(async () => {
     GraphQLModule._writeFile = jest.fn(() => Promise.resolve())
     ConfigManager.setRootPath('/test-project/lib')
-    Commun.registerEntity<BaseUserModel>({
+    Commun.registerEntity<UserModel>({
       controller,
       config: {
-        ...DefaultUserConfig,
+        ...UserConfig,
         permissions: {
           get: 'anyone',
           create: 'anyone',
@@ -36,7 +36,7 @@ describe('GraphQLUserController', () => {
   afterEach(async () => await stopTestApp('users'))
   afterAll(closeTestApp)
 
-  const getDao = () => Commun.getEntityDao<BaseUserModel>(entityName)
+  const getDao = () => Commun.getEntityDao<UserModel>(entityName)
 
   describe('getViewer', () => {
     it('should return the current viewer', async () => {
@@ -50,7 +50,7 @@ describe('GraphQLUserController', () => {
                }
              }`
         })
-      .expect(200)
+        .expect(200)
       expect(res.body.data.viewer.username).toBe('test')
     })
   })

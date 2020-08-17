@@ -1,4 +1,4 @@
-import { BaseUserModel } from './BaseUserModel'
+import { UserModel } from './UserModel'
 
 export type AuthProvider =
   'google' |
@@ -6,7 +6,7 @@ export type AuthProvider =
   'github'
 
 export type ExternalAuthPayload = {
-  user: BaseUserModel
+  user: UserModel
   provider: {
     key: AuthProvider
     id: string

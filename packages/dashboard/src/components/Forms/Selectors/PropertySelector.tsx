@@ -3,7 +3,7 @@ import { FormControl, InputLabel, makeStyles, MenuItem, Select } from '@material
 import { EntityConfig, EntityModel } from '@commun/core'
 
 const useStyles = makeStyles(theme => ({
-  attributeSelectorFormControl: {
+  propertySelectorFormControl: {
     margin: theme.spacing(4, 1, 2),
     width: '100%',
   },
@@ -17,26 +17,26 @@ interface Props {
   className?: string
 }
 
-export const AttributeSelector = (props: Props) => {
+export const PropertySelector = (props: Props) => {
   const classes = useStyles()
   const { entity, label, value, onChange, className } = props
-  const [attributes, setAttributes] = useState(entity.attributes)
+  const [properties, setProperties] = useState(entity.schema.properties || {})
 
-  useEffect(() => setAttributes(entity.attributes), [entity])
+  useEffect(() => setProperties(entity.schema.properties || {}), [entity])
 
   return (
-    <FormControl className={className === undefined ? classes.attributeSelectorFormControl : className}>
+    <FormControl className={className === undefined ? classes.propertySelectorFormControl : className}>
       <InputLabel id="entity-selector">
-        {label || 'Attribute'}
+        {label || 'Property'}
       </InputLabel>
       <Select
         onChange={e => onChange ? onChange(e.target.value as string) : null}
         value={value || ''}
-        labelId="attribute-selector"
-        id="attribute-selector"
+        labelId="property-selector"
+        id="property-selector"
         fullWidth>
         {
-          Object.keys(attributes).map((key) => <MenuItem key={key} value={key}>{key}</MenuItem>)
+          Object.keys(properties).map((key) => <MenuItem key={key} value={key}>{key}</MenuItem>)
         }
       </Select>
     </FormControl>

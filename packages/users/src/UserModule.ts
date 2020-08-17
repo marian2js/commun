@@ -1,8 +1,8 @@
 import { Commun, ConfigManager, RegisterEntityOptions } from '@commun/core'
-import { BaseUserModel } from './types/BaseUserModel'
-import { BaseUserController } from './controllers/BaseUserController'
-import { BaseUserRouter } from './routers/BaseUserRouter'
-import { DefaultUserConfig } from './config/DefaultUserConfig'
+import { UserModel } from './types/UserModel'
+import { UserController } from './controllers/UserController'
+import { UserRouter } from './routers/UserRouter'
+import { UserConfig } from './config/UserConfig'
 import jwt from 'jsonwebtoken'
 import { AccessTokenSecurity } from './security/AccessTokenSecurity'
 import { AccessTokenKeys } from './types/UserTokens'
@@ -30,7 +30,7 @@ let entityName: string
 let keys: AccessTokenKeys
 
 export const UserModule = {
-  async setup<MODEL extends BaseUserModel> (options: UserModuleSettings, entityOptions?: RegisterEntityOptions<MODEL>) {
+  async setup<MODEL extends UserModel> (options: UserModuleSettings, entityOptions?: RegisterEntityOptions<MODEL>) {
     const config = entityOptions?.config || await getUserEntityConfig<MODEL>()
     entityName = config.entityName
 
@@ -48,8 +48,8 @@ export const UserModule = {
 
     Commun.registerEntity<MODEL>({
       config,
-      controller: new BaseUserController<MODEL>(config.entityName),
-      router: BaseUserRouter,
+      controller: new UserController<MODEL>(config.entityName),
+      router: UserRouter,
       onExpressAppCreated: app => {
         ExternalAuth.setupPassport(app)
         app.use(AccessTokenSecurity.setRequestAuthMiddleware)
@@ -80,14 +80,26 @@ export const UserModule = {
   },
 }
 
-async function getUserEntityConfig<MODEL extends BaseUserModel> () {
+async function getUserEntityConfig<MODEL extends UserModel> () {
   const config = await ConfigManager.readEntityConfig<MODEL>('users')
   return {
-    ...DefaultUserConfig,
+    ...UserConfig,
     ...config,
-    attributes: {
-      ...DefaultUserConfig.attributes,
-      ...config.attributes
+    schema: {
+      ...UserConfig.schema,
+      ...(config.schema || {}),
+      properties: {
+        ...UserConfig.schema?.properties,
+        ...(config.schema?.properties || {}),
+      },
+    },
+    permissions: {
+      ...UserConfig.permissions,
+      ...(config.permissions || {}),
+      properties: {
+        ...UserConfig.permissions?.properties,
+        ...(config.permissions?.properties || {}),
+      }
     }
   }
 }

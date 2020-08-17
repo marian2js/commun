@@ -1,5 +1,6 @@
-import { EntityConfig, EntityModel, JoinAttribute, ModelAttribute } from '@commun/core'
+import { EntityConfig, EntityModel, JoinProperty } from '@commun/core'
 import { request, requestUntilSuccess } from '../utils/apiUtils'
+import { JSONSchema7 } from 'json-schema'
 
 export const EntityService = {
   async getEntities (): Promise<{ items: EntityConfig<EntityModel>[] }> {
@@ -22,20 +23,23 @@ export const EntityService = {
     return request('DELETE', `/admin/entities/${entityName}`)
   },
 
-  async updateEntityAttribute (entityName: string, attributeKey: string, attribute: ModelAttribute): Promise<{ item: EntityConfig<EntityModel> }> {
-    return request('PUT', `/admin/entities/${entityName}/attributes/${attributeKey}`, attribute)
+  async updateEntityProperty (entityName: string, propertyKey: string, property: JSONSchema7, required?: boolean): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('PUT', `/admin/entities/${entityName}/properties/${propertyKey}`, {
+      ...property,
+      required,
+    })
   },
 
-  async deleteEntityAttribute (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
-    return request('DELETE', `/admin/entities/${entityName}/attributes/${attributeKey}`)
+  async deleteEntityProperty (entityName: string, propertyKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('DELETE', `/admin/entities/${entityName}/properties/${propertyKey}`)
   },
 
-  async updateEntityJoinAttribute (entityName: string, attributeKey: string, attribute: JoinAttribute): Promise<{ item: EntityConfig<EntityModel> }> {
-    return request('PUT', `/admin/entities/${entityName}/joinAttributes/${attributeKey}`, attribute)
+  async updateEntityJoinProperty (entityName: string, propertyKey: string, joinProperty: JoinProperty): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('PUT', `/admin/entities/${entityName}/joinProperties/${propertyKey}`, joinProperty)
   },
 
-  async deleteEntityJoinAttribute (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
-    return request('DELETE', `/admin/entities/${entityName}/joinAttributes/${attributeKey}`)
+  async deleteEntityJoinProperty (entityName: string, attributeKey: string): Promise<{ item: EntityConfig<EntityModel> }> {
+    return request('DELETE', `/admin/entities/${entityName}/joinProperties/${attributeKey}`)
   },
 
   async waitUntilEntityExist (entityName: string) {

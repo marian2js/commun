@@ -30,6 +30,12 @@ export const startTestApp = async (commun: any) => {
   connectionDb = (await Commun.connectDb()).getDb()
 }
 
+export const prepareDb = async () => {
+  jest.clearAllMocks()
+  connectionDb = (await Commun.connectDb()).getDb()
+  await connectionDb.dropDatabase()
+}
+
 export const stopTestApp = async (collectionName?: string) => {
   if (collectionName) {
     try {

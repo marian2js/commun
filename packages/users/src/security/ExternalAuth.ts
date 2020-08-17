@@ -1,6 +1,5 @@
-import { BaseUserModel, UserModule } from '..'
+import { AuthProvider, ExternalAuthPayload, UserModel, UserModule } from '..'
 import { assertNever, BadRequestError, Commun } from '@commun/core'
-import { AuthProvider, ExternalAuthPayload } from '../types/ExternalAuth'
 import jwt from 'jsonwebtoken'
 import passport, { Profile } from 'passport'
 import { GoogleAuthStrategy } from './GoogleAuthStrategy'
@@ -60,7 +59,7 @@ export const ExternalAuth = {
       ...(profile.emails[0] as { value: string, verified?: boolean })
     }
 
-    const user = await Commun.getEntityDao<BaseUserModel>('users')
+    const user = await Commun.getEntityDao<UserModel>('users')
       .findOne({ email: emailInfo.value })
 
     if (user) {
@@ -97,7 +96,7 @@ export const ExternalAuth = {
         usernamePrefix = email.split('@')[0].toLowerCase()
       }
       const username = await UserUtils.generateUniqueUsername(usernamePrefix)
-      const createdUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
+      const createdUser = await Commun.getEntityDao<UserModel>('users').insertOne({
         ...user,
         username,
       })
@@ -117,7 +116,7 @@ export const ExternalAuth = {
 
   async updateAccountFromProvider (provider: AuthProvider,
     profile: Profile,
-    user: BaseUserModel,
+    user: UserModel,
     emailVerified: boolean | undefined,
     cb: ProviderCallback
   ) {
@@ -130,7 +129,7 @@ export const ExternalAuth = {
         id: profile.id
       }
     }
-    const updatedUser = await Commun.getEntityDao<BaseUserModel>('users').updateOne(user.id!, { providers })
+    const updatedUser = await Commun.getEntityDao<UserModel>('users').updateOne(user.id!, { providers })
     cb(undefined, {
       user: updatedUser,
       userCreated: true,

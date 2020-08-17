@@ -2,10 +2,10 @@ import { GraphQLBoolean, GraphQLFloat, GraphQLObjectType, GraphQLString } from '
 import { GraphQLNonNull } from 'graphql/type/definition'
 import { Request } from 'express'
 import { Commun, UnauthorizedError } from '@commun/core'
-import { BaseUserController, BaseUserModel } from '@commun/users'
+import { UserController, UserModel } from '@commun/users'
 
 function getUsersController () {
-  return Commun.getEntityController('users') as BaseUserController<BaseUserModel>
+  return Commun.getEntityController('users') as UserController<UserModel>
 }
 
 const tokensType = new GraphQLObjectType({

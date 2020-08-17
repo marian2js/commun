@@ -14,12 +14,13 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   value?: string
   entities?: EntityConfig<EntityModel>[]
+  useSingularNames?: boolean
   onChange?: (entityName: string, entity?: EntityConfig<EntityModel>) => void
 }
 
 export const EntitySelector = (props: Props) => {
   const classes = useStyles()
-  const { value, onChange } = props
+  const { value, useSingularNames, onChange } = props
   const [entities, setEntities] = useState<EntityConfig<EntityModel>[]>(props.entities || [])
 
   useEffect(() => {
@@ -41,6 +42,8 @@ export const EntitySelector = (props: Props) => {
     }
   }
 
+  const getName = (entity: EntityConfig<EntityModel>) => useSingularNames ? entity.entitySingularName! : entity.entityName
+
   return (
     <FormControl className={classes.entitySelectorFormControl}>
       <InputLabel id="entity-selector">
@@ -54,7 +57,7 @@ export const EntitySelector = (props: Props) => {
         fullWidth>
         {
           entities.map(entity => (
-            <MenuItem key={entity.entityName} value={entity.entityName}>{capitalize(entity.entityName)}</MenuItem>
+            <MenuItem key={getName(entity)} value={getName(entity)}>{capitalize(getName(entity))}</MenuItem>
           ))
         }
       </Select>

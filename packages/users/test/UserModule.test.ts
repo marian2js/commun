@@ -1,4 +1,4 @@
-import { BaseUserController, BaseUserRouter, DefaultUserConfig, UserModule } from '../src'
+import { UserConfig, UserController, UserModule, UserRouter } from '../src'
 import { Commun, ConfigManager } from '@commun/core'
 
 describe('UserModule', () => {
@@ -12,7 +12,7 @@ describe('UserModule', () => {
 
     beforeEach(() => {
       ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
-      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({ attributes: {} })) as jest.Mock
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({ schema: {} })) as jest.Mock
       spyOn(Commun, 'registerEntity')
       spyOn(Commun, 'registerLogsToken')
       process.env.COMMUN_ACCESS_TOKEN_PK_PASSPHRASE = 'secret'
@@ -37,9 +37,9 @@ describe('UserModule', () => {
     it('should register the entity using the users entity config file', async () => {
       await UserModule.setup(setupOptions)
       expect(Commun.registerEntity).toHaveBeenCalledWith({
-        config: DefaultUserConfig,
-        controller: expect.any(BaseUserController),
-        router: BaseUserRouter,
+        config: UserConfig,
+        controller: expect.any(UserController),
+        router: UserRouter,
         onExpressAppCreated: expect.any(Function)
       })
     })

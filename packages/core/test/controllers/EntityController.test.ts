@@ -1,8 +1,9 @@
 import { Commun, EntityController, EntityIndex, EntityModel, EntityPermission } from '../../src'
-import { EntityActionPermissions, JoinAttribute, ModelAttribute } from '../../src/types'
+import { EntityActionPermissions, JoinProperty } from '../../src/types'
 import { ObjectId } from 'mongodb'
 import { entityHooks } from '../../src/entity/entityHooks'
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
+import { JSONSchema7 } from 'json-schema'
 
 type AdminUser = EntityModel & { admin: boolean }
 
@@ -18,45 +19,55 @@ describe('EntityController', () => {
     user?: string | ObjectId
     entityRef?: string | ObjectId
     eval?: string
+    slug?: string
   }
 
   const registerTestEntity = async (
     permissions: EntityActionPermissions,
-    attributes?: { [key in keyof TestEntity]: ModelAttribute } | null,
-    joinAttributes: { [key: string]: JoinAttribute } = {},
-    indexes: EntityIndex<TestEntity>[] = []
+    properties?: JSONSchema7['properties'] | null,
+    joinProperties: { [key: string]: JoinProperty } = {},
+    indexes: EntityIndex<TestEntity>[] = [],
+    required = ['name'],
   ) => {
     Commun.registerEntity<TestEntity>({
       config: {
         entityName,
         collectionName,
-        permissions,
-        attributes: {
-          name: {
-            type: 'string',
-            required: true,
-          },
-          num: {
-            type: 'number'
-          },
-          user: {
-            type: 'user',
-            permissions: {
+        permissions: {
+          ...permissions,
+          properties: {
+            user: {
               create: 'system',
-              update: 'system'
+              update: 'system',
             },
+            ...(permissions.properties || {}),
           },
-          entityRef: {
-            type: 'ref',
-            entity: entityName,
-          },
-          eval: {
-            type: 'eval',
-            eval: 'Name: {this.name}',
-          },
-          ...(attributes || {})
         },
-        joinAttributes,
+        schema: {
+          required,
+          properties: {
+            name: {
+              type: 'string',
+            },
+            num: {
+              type: 'number'
+            },
+            user: {
+              $ref: '#user',
+            },
+            entityRef: {
+              $ref: '#entity/item',
+            },
+            eval: {
+              format: 'eval:Name => {this.name}',
+            },
+            slug: {
+              format: 'eval:{slug(this.name)}-{randomChars(8)}',
+            },
+            ...(properties || {})
+          },
+        },
+        joinProperties,
         indexes,
       }
     })
@@ -69,27 +80,28 @@ describe('EntityController', () => {
     nameAttrPermission: EntityPermission
   ) => {
     return registerTestEntity({
+      properties: {
+        name: {
+          [action]: nameAttrPermission
+        },
+        user: {
+          create: 'system',
+          update: 'system',
+        }
+      },
       [action]: defaultPermission
     }, {
       num: { type: 'number' },
       name: {
         type: 'string',
-        permissions: {
-          [action]: nameAttrPermission
-        }
       },
       user: {
-        type: 'user',
-        permissions: {
-          create: 'system',
-          update: 'system'
-        }
+        $ref: '#user',
       },
     })
   }
 
   const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
-  const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
   const registerNewUser = async (userId = new ObjectId()) => {
     return await Commun.getEntityDao<EntityModel & { username: string, email: string }>('users')
@@ -101,9 +113,11 @@ describe('EntityController', () => {
       config: {
         entityName: 'users',
         collectionName: 'users',
-        attributes: {
-          admin: {
-            type: 'boolean'
+        schema: {
+          properties: {
+            admin: {
+              type: 'boolean'
+            }
           }
         }
       }
@@ -181,7 +195,7 @@ describe('EntityController', () => {
         expect(res.body.items[0].name).toBe('item1')
       })
 
-      it('should filter items by a numeric attribute', async () => {
+      it('should filter items by a numeric property', async () => {
         const res = await request().get(`${baseUrl}?filter=num:20`).expect(200)
         expect(res.body.items.length).toBe(2)
         expect(res.body.items[0].name).toBe('item1')
@@ -195,7 +209,7 @@ describe('EntityController', () => {
         expect(res.body.items[1].name).toBe('item2')
       })
 
-      it('should filter items by multiple attributes', async () => {
+      it('should filter items by multiple properties', async () => {
         const res = await request().get(`${baseUrl}?filter=num:20;user:${user1}`).expect(200)
         expect(res.body.items.length).toBe(1)
         expect(res.body.items[0].name).toBe('item1')
@@ -375,7 +389,7 @@ describe('EntityController', () => {
         item3 = await getDao().insertOne({ name: 'item3', entityRef: item2.id })
       })
 
-      it('should populate a ref attribute', async () => {
+      it('should populate a ref property', async () => {
         const res = await request().get(`${baseUrl}?populate=entityRef`).expect(200)
         expect(res.body.items[0].entityRef).toBeUndefined()
         expect(res.body.items[1].entityRef).toEqual({ id: item1.id, name: 'item1', createdAt: expect.any(String) })
@@ -542,19 +556,22 @@ describe('EntityController', () => {
       })
     })
 
-    describe('Join Attributes', () => {
-      it('should return join attributes', async () => {
-        await registerTestEntity({ get: 'anyone' }, {
+    describe('Join Properties', () => {
+      it('should return join properties', async () => {
+        await registerTestEntity({
+          get: 'anyone',
+          properties: {
+            num: { get: 'system' },
+          }
+        }, {
           name: {
             type: 'string'
           },
           num: {
             type: 'number',
-            permissions: { get: 'system' }
           },
           entityRef: {
-            type: 'ref',
-            entity: entityName,
+            $ref: '#entity/item',
           }
         }, {
           single: {
@@ -705,21 +722,41 @@ describe('EntityController', () => {
       expect(item!.name).toBe('item')
     })
 
-    it('should return an error if the name is unique and already exists', async () => {
-      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+    it('should set default item values', async () => {
+      await registerTestEntity({ get: 'anyone', create: 'anyone' }, {
         name: {
           type: 'string',
-          unique: true,
+          default: 'default-name'
+        }
+      })
+      const res = await request().post(baseUrl)
+        .send({})
+        .expect(200)
+      expect(res.body.item.name).toBe('default-name')
+      const item = await getDao().findOne({ name: 'default-name' })
+      expect(item!.name).toBe('default-name')
+    })
+
+    it('should return an error if the name is unique and already exists', async () => {
+      const properties: JSONSchema7['properties'] = {
+        name: {
+          type: 'string',
         }
       }
-      await registerTestEntity({ create: 'anyone' }, attributes)
+      const indexes: EntityIndex<TestEntity>[] = [{
+        keys: {
+          name: 1
+        },
+        unique: true,
+      }]
+      await registerTestEntity({ create: 'anyone' }, properties, {}, indexes)
       await getDao().insertOne({ name: 'item' })
       await request().post(baseUrl)
         .send({ name: 'item' })
         .expect(400)
     })
 
-    it('should set the user attribute with the authenticated user', async () => {
+    it('should set the user property with the authenticated user', async () => {
       const user = new ObjectId()
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await authenticatedRequest(user.toString()).post(baseUrl)
@@ -730,15 +767,38 @@ describe('EntityController', () => {
       expect(items.length).toBe(1)
     })
 
-    it('should set the eval attribute from the entity name', async () => {
+    it('should not fail the validation if user is required but set by the system', async () => {
+      const user = new ObjectId()
+      await registerTestEntity({ get: 'anyone', create: 'anyone' }, {}, {}, [], ['name', 'user'])
+      const res = await authenticatedRequest(user.toString()).post(baseUrl)
+        .send({ name: 'item' })
+        .expect(200)
+      expect(res.body.item.user).toEqual({ id: user.toString() })
+      const items = await getDao().find({ user })
+      expect(items.length).toBe(1)
+    })
+
+    it('should set the eval property from the entity name', async () => {
       await registerTestEntity({ get: 'anyone', create: 'anyone' })
       const res = await request().post(baseUrl)
         .send({ name: 'item' })
         .expect(200)
       expect(res.body.item.name).toBe('item')
-      expect(res.body.item.eval).toBe('Name: item')
+      expect(res.body.item.eval).toBe('Name => item')
       const item = await getDao().findOne({ name: 'item' })
       expect(item!.name).toBe('item')
+    })
+
+    it('should set the slug property from the entity name', async () => {
+      await registerTestEntity({ get: 'anyone', create: 'anyone' })
+      const res = await request().post(baseUrl)
+        .send({ name: 'Test Item' })
+        .expect(200)
+      expect(res.body.item.name).toBe('Test Item')
+      expect(res.body.item.slug.substr(0, 10)).toBe('test-item-')
+      expect(res.body.item.slug.length).toBe(18)
+      const item = await getDao().findOne({ name: 'Test Item' })
+      expect(item!.name).toBe('Test Item')
     })
 
     describe('Hooks', () => {
@@ -857,13 +917,18 @@ describe('EntityController', () => {
     })
 
     it('should return an error if the name is unique and already exists', async () => {
-      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+      const properties: JSONSchema7['properties'] = {
         name: {
           type: 'string',
-          unique: true,
         }
       }
-      await registerTestEntity({ update: 'anyone' }, attributes)
+      const indexes: EntityIndex<TestEntity>[] = [{
+        keys: {
+          name: 1
+        },
+        unique: true,
+      }]
+      await registerTestEntity({ update: 'anyone' }, properties, {}, indexes)
       await getDao().insertOne({ name: 'item1' })
       const item = await getDao().insertOne({ name: 'item2' })
       await request().put(`${baseUrl}/${item.id}`)
@@ -871,14 +936,14 @@ describe('EntityController', () => {
         .expect(400)
     })
 
-    it('should not update a readonly attribute', async () => {
-      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+    it('should not update a readonly property', async () => {
+      const properties: JSONSchema7['properties'] = {
         name: {
           type: 'string',
-          readonly: true,
+          readOnly: true,
         }
       }
-      await registerTestEntity({ update: 'anyone' }, attributes)
+      await registerTestEntity({ update: 'anyone' }, properties)
       const item = await getDao().insertOne({ name: 'item' })
       await request().put(`${baseUrl}/${item.id}`)
         .send({ name: 'This value should not be set' })
@@ -888,18 +953,17 @@ describe('EntityController', () => {
     })
 
     it('should succeed if a required value is not send on update', async () => {
-      const attributes: { [key in keyof TestEntity]: ModelAttribute } = {
+      const properties: JSONSchema7['properties'] = {
         num: {
           type: 'number'
         },
         name: {
           type: 'string',
-          required: true,
         }
       }
-      await registerTestEntity({ update: 'anyone' }, attributes)
+      await registerTestEntity({ update: 'anyone' }, properties)
       const item = await getDao().insertOne({ name: 'item' })
-      await request().put(`${baseUrl}/${item.id}`)
+      const res = await request().put(`${baseUrl}/${item.id}`)
         .send({ num: 3 })
         .expect(200)
       const updatedItem = await getDao().findOneById(item.id!)
@@ -1090,7 +1154,7 @@ describe('EntityController', () => {
         const item = await getDao().insertOne({ name: 'item' })
         await request().delete(`${baseUrl}/${item.id}`)
           .expect(200)
-        const updatedItem = await getDao().findOneById(item.id!)
+        await getDao().findOneById(item.id!)
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'beforeDelete', item, expect.any(Object))
         expect(entityHooks.run).toHaveBeenCalledWith(entityName, 'afterDelete', item, expect.any(Object))
       })

@@ -1,23 +1,23 @@
 import { NextFunction, Request, Response } from 'express'
 import {
   BadRequestError,
-  Commun,
   EntityController,
-  getModelAttribute,
+  getModelPropertyValue,
   NotFoundError,
   SecurityUtils,
   ServerError,
   UnauthorizedError
 } from '@commun/core'
-import { AuthProvider, BaseUserModel, UserModule } from '..'
+import { AuthProvider, UserModel, UserModule } from '..'
 import { AccessToken, UserTokens } from '../types/UserTokens'
 import { AccessTokenSecurity } from '../security/AccessTokenSecurity'
 import { EmailClient } from '@commun/emails'
 import passport from 'passport'
 import { ExternalAuth } from '../security/ExternalAuth'
 import ms from 'ms'
+import { JSONSchema7 } from 'json-schema'
 
-export class BaseUserController<MODEL extends BaseUserModel> extends EntityController<MODEL> {
+export class UserController<MODEL extends UserModel> extends EntityController<MODEL> {
   async create (req: Request): Promise<{ item: MODEL }> {
     if (!req.body.password) {
       throw new BadRequestError('Password cannot be blank')
@@ -105,11 +105,10 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
       throw new NotFoundError()
     }
 
-    const resetPasswordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.resetPasswordCodeHash
     const plainResetPasswordCode = SecurityUtils.generateRandomString(48)
-    const resetPasswordCodeHash = await getModelAttribute({
+    const resetPasswordCodeHash = await getModelPropertyValue({
       entityName: this.entityName,
-      attribute: resetPasswordAttr!,
+      property: this.config.schema.properties!.resetPasswordCodeHash as JSONSchema7,
       key: 'resetPasswordCodeHash',
       data: {
         resetPasswordCodeHash: plainResetPasswordCode
@@ -137,10 +136,9 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
 
     if (user.resetPasswordCodeHash && await SecurityUtils.bcryptHashIsValid(req.body.code, user.resetPasswordCodeHash)) {
-      const passwordAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.password
-      const password = await getModelAttribute<MODEL>({
+      const password = await getModelPropertyValue<MODEL>({
         entityName: this.entityName,
-        attribute: passwordAttr!,
+        property: this.config.schema.properties!.password as JSONSchema7,
         key: 'password',
         data: { password: req.body.password },
       })
@@ -184,6 +182,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     const payload = await ExternalAuth.verify(token)
     let user
     let auth
+    let userData
 
     if (payload.userCreated) {
       user = await this.dao.findOne({ email: payload.user.email })
@@ -200,7 +199,6 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
         isAdmin: user.admin || false,
       }
     } else {
-      let userData
       if (!payload.user.username) {
         if (!req.body.username) {
           throw new BadRequestError('Username is required')
@@ -223,7 +221,7 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
     }
 
     return {
-      user: await this.prepareModelResponse(req, auth, user),
+      user: userData || await this.prepareModelResponse(req, auth, user),
       tokens: {
         ...(await this.generateAccessToken(user)),
         refreshToken: await this.generateRefreshToken(user),
@@ -249,11 +247,10 @@ export class BaseUserController<MODEL extends BaseUserModel> extends EntityContr
 
   protected async generateRefreshToken (user: MODEL): Promise<string | undefined> {
     if (UserModule.getOptions().refreshToken.enabled) {
-      const refreshTokenAttr = Commun.getEntityConfig<MODEL>(UserModule.entityName).attributes.refreshTokenHash
       const plainRefreshToken = SecurityUtils.generateRandomString(48)
-      const refreshTokenHash = await getModelAttribute({
+      const refreshTokenHash = await getModelPropertyValue({
         entityName: this.entityName,
-        attribute: refreshTokenAttr!,
+        property: this.config.schema.properties!.refreshTokenHash as JSONSchema7,
         key: 'refreshTokenHash',
         data: {
           refreshTokenHash: plainRefreshToken

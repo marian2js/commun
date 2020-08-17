@@ -36,7 +36,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface TableItem {
-  [key: string]: string | number | boolean
+  [key: string]: string | number | boolean | JSX.Element
 }
 
 interface Props {
@@ -65,37 +65,25 @@ export const SelectTable = (props: Props) => {
   const handleSelectChange = (index: number) => {
     if (items[index].noSelectable || selected === index) {
       setSelected(-1)
-      if (onSelectChange) {
-        onSelectChange(null)
-      }
+      onSelectChange?.(null)
     } else {
       setSelected(index)
-      if (onSelectChange) {
-        onSelectChange(items[index])
-      }
+      onSelectChange?.(items[index])
     }
   }
 
   const handleAddClick = () => {
-    if (onAddClick) {
-      onAddClick()
-    }
+    onAddClick?.()
   }
 
   const handleUpdateClick = () => {
-    if (onUpdateClick) {
-      onUpdateClick()
-    }
+    onUpdateClick?.()
   }
 
   const handleDeleteClick = () => {
-    if (onDeleteClick) {
-      onDeleteClick()
-    }
+    onDeleteClick?.()
     setSelected(-1)
-    if (onSelectChange) {
-      onSelectChange(null)
-    }
+    onSelectChange?.(null)
   }
 
   const getActionButtons = (position: 'top' | 'bottom' | 'center') => {

@@ -1,20 +1,17 @@
-import { Commun, ConfigManager, EntityActionPermissions, ModelAttribute, SecurityUtils } from '@commun/core'
-import { AuthProvider, BaseUserController, BaseUserModel, DefaultUserConfig, UserModule } from '../../src'
+import { Commun, ConfigManager, SecurityUtils } from '@commun/core'
+import { AuthProvider, UserConfig, UserController, UserModel, UserModule } from '../../src'
 import { EmailClient } from '@commun/emails'
-import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
+import { authenticatedRequest, closeTestApp, prepareDb, request, startTestApp } from '@commun/test-utils'
 import { AccessTokenSecurity } from '../../src/security/AccessTokenSecurity'
 import passport from 'passport'
 import { NextFunction, Request, Response } from 'express'
 import { ExternalAuth } from '../../src/security/ExternalAuth'
 
-describe('BaseUserController', () => {
+describe('UserController', () => {
   const baseUrl = '/api/v1/auth'
   const entityName = 'users'
-  const collectionName = 'user_controller_test'
 
-  const registerUserEntity = async (
-    permissions: EntityActionPermissions,
-    attributes: { [key in keyof BaseUserModel]: ModelAttribute } = DefaultUserConfig.attributes) => {
+  const registerUserEntity = async () => {
     await UserModule.setup({
       accessToken: {
         expiresIn: '3 days',
@@ -25,10 +22,12 @@ describe('BaseUserController', () => {
       }
     }, {
       config: {
-        ...DefaultUserConfig,
-        collectionName,
-        permissions,
-        attributes,
+        ...UserConfig,
+        permissions: {
+          get: 'anyone',
+          create: 'anyone',
+          ...UserConfig.permissions,
+        }
       }
     })
     UserModule.accessTokenKeys = {
@@ -43,19 +42,18 @@ describe('BaseUserController', () => {
     Commun.configureRoutes()
   }
 
-  const getDao = () => Commun.getEntityDao<BaseUserModel>(entityName)
-  const getController = () => Commun.getEntityDao<BaseUserModel>(entityName)
+  const getDao = () => Commun.getEntityDao<UserModel>(entityName)
 
   beforeAll(async () => {
     ConfigManager.getKeys = jest.fn(() => Promise.resolve({ publicKey: 'public', privateKey: 'private' }))
     await startTestApp(Commun)
   })
-  afterEach(async () => await stopTestApp(collectionName))
+  beforeEach(async () => await prepareDb())
   afterAll(closeTestApp)
 
   describe('register with password - [POST] /auth/password', () => {
     it('should create an user', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         email: 'user@example.org',
@@ -74,7 +72,7 @@ describe('BaseUserController', () => {
     })
 
     it('should return bad request without username', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         password: 'password',
@@ -85,7 +83,7 @@ describe('BaseUserController', () => {
     })
 
     it('should return bad request without email', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         email: 'user@example.org',
         password: 'password',
@@ -96,7 +94,7 @@ describe('BaseUserController', () => {
     })
 
     it('should return bad request without password', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         email: 'user@example.org',
@@ -110,7 +108,7 @@ describe('BaseUserController', () => {
       jest.spyOn(EmailClient, 'sendEmail')
       SecurityUtils.generateRandomString = jest.fn(() => 'plain-code')
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         email: 'user@example.org',
@@ -128,7 +126,7 @@ describe('BaseUserController', () => {
     })
 
     it('should validate usernames', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const validUserData = {
         username: 'User.123_456',
         email: 'user.123_456@example.org',
@@ -136,7 +134,7 @@ describe('BaseUserController', () => {
       }
       await request().post(`${baseUrl}/password`).send(validUserData).expect(200)
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const invalidUserData1 = {
         username: 'User 123',
         email: 'user.123@example.org',
@@ -144,7 +142,7 @@ describe('BaseUserController', () => {
       }
       await request().post(`${baseUrl}/password`).send(invalidUserData1).expect(400)
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const invalidUserData2 = {
         username: 'User@123',
         email: 'user123@example.org',
@@ -155,12 +153,12 @@ describe('BaseUserController', () => {
   })
 
   describe('login with password - [POST] /auth/password/login', () => {
-    let userData: BaseUserModel
+    let userData: UserModel
 
     beforeEach(async () => {
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       userData = {
         username: 'user',
         email: 'user@example.org',
@@ -199,10 +197,10 @@ describe('BaseUserController', () => {
   })
 
   describe('logout - [POST] /auth/password/logout', () => {
-    let user: BaseUserModel
+    let user: UserModel
 
     beforeEach(async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       user = await getDao().insertOne({
         username: 'user',
         email: 'user@example.org',
@@ -220,12 +218,12 @@ describe('BaseUserController', () => {
   })
 
   describe('get access token - [POST] /auth/token', () => {
-    let userData: BaseUserModel
+    let userData: UserModel
 
     beforeEach(async () => {
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       userData = {
         username: 'user',
         email: 'user@example.org',
@@ -254,12 +252,12 @@ describe('BaseUserController', () => {
   })
 
   describe('verify - [POST] /auth/verify', () => {
-    let fakeUser: BaseUserModel
+    let fakeUser: UserModel
 
     beforeEach(async () => {
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         email: 'user@example.org',
@@ -304,13 +302,13 @@ describe('BaseUserController', () => {
   })
 
   describe('reset password - [POST] /auth/password/reset', () => {
-    let fakeUser: BaseUserModel
+    let fakeUser: UserModel
 
     beforeEach(async () => {
       SecurityUtils.hashWithBcrypt = jest.fn((str, saltRounds) => Promise.resolve(`hashed(${str}:${saltRounds})`))
       SecurityUtils.bcryptHashIsValid = jest.fn((code, hash) => Promise.resolve(hash === `hashed(${code})`))
 
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'user',
         email: 'user@example.org',
@@ -366,7 +364,7 @@ describe('BaseUserController', () => {
 
   describe('get - [GET] /users/:id', () => {
     it('should return an user by username', async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'test-username',
         email: 'test-username@example.org',
@@ -396,7 +394,7 @@ describe('BaseUserController', () => {
 
   describe('generateAccessTokenForAuthWithProvider - [POST] /auth/:provider/token', () => {
     beforeEach(async () => {
-      await registerUserEntity({ get: 'anyone', create: 'anyone' })
+      await registerUserEntity()
       const userData = {
         username: 'test',
         email: 'user@example.org',
@@ -414,7 +412,7 @@ describe('BaseUserController', () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
         user: {
           email: 'user@example.org'
-        } as BaseUserModel,
+        } as UserModel,
         provider: {
           key: 'google',
           id: 'id'
@@ -441,7 +439,7 @@ describe('BaseUserController', () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
         user: {
           email: 'bad-user@example.org'
-        } as BaseUserModel,
+        } as UserModel,
         provider: {
           key: 'google',
           id: 'id'
@@ -458,7 +456,7 @@ describe('BaseUserController', () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
         user: {
           email: 'user@example.org'
-        } as BaseUserModel,
+        } as UserModel,
         provider: {
           key: 'google',
           id: 'bad-id'
@@ -475,7 +473,7 @@ describe('BaseUserController', () => {
       ExternalAuth.verify = jest.fn(() => Promise.resolve({
         user: {
           email: 'new-user@example.org'
-        } as BaseUserModel,
+        } as UserModel,
         provider: {
           key: 'google',
           id: 'id'

@@ -7,6 +7,7 @@ import { EntityCodeHook } from '../../src/types/EntityCodeHooks'
 describe('entityHooks', () => {
   describe('run', () => {
     const entityName = 'entityHooks'
+    const entitySingularName = 'entityHook'
     const collectionName = 'entityHooks'
 
     interface TestEntity extends EntityModel {
@@ -27,20 +28,21 @@ describe('entityHooks', () => {
             update: 'anyone',
             delete: 'anyone',
           },
-          attributes: {
-            name: {
-              type: 'string'
+          schema: {
+            properties: {
+              name: {
+                type: 'string'
+              },
+              value: {
+                type: 'number',
+              },
+              num: {
+                type: 'number',
+              },
+              ref: {
+                $ref: '#entity/' + entitySingularName,
+              },
             },
-            value: {
-              type: 'number',
-            },
-            num: {
-              type: 'number',
-            },
-            ref: {
-              type: 'ref',
-              entity: entityName
-            }
           },
           hooks: {
             [lifecycle]: hook
@@ -53,7 +55,6 @@ describe('entityHooks', () => {
     }
 
     const getDao = () => Commun.getEntityDao<TestEntity>(entityName)
-    const getController = () => Commun.getEntityDao<TestEntity>(entityName)
 
     beforeAll(async () => await startTestApp(Commun))
     afterEach(async () => await stopTestApp(collectionName))
@@ -96,7 +97,7 @@ describe('entityHooks', () => {
     })
 
     describe('Increment', () => {
-      it('should increment the value of a local attribute', async () => {
+      it('should increment the value of a local property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'increment',
           value: 3,
@@ -108,7 +109,7 @@ describe('entityHooks', () => {
         expect(updatedItem!.value).toBe(5)
       })
 
-      it('should increment the value of a reference attribute', async () => {
+      it('should increment the value of a reference property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'increment',
           value: 3,
@@ -123,7 +124,7 @@ describe('entityHooks', () => {
         expect(updatedItem2!.value).toBe(2)
       })
 
-      it('should increment a value using a local attribute', async () => {
+      it('should increment a value using a local property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'increment',
           value: '{this.num}',
@@ -135,7 +136,7 @@ describe('entityHooks', () => {
         expect(updatedItem!.value).toBe(5)
       })
 
-      it('should increment a value using a reference attribute', async () => {
+      it('should increment a value using a reference property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'increment',
           value: '{this.ref.num}',
@@ -147,10 +148,21 @@ describe('entityHooks', () => {
         const updatedItem = await getDao().findOneById(item2.id!)
         expect(updatedItem!.value).toBe(5)
       })
+
+      it('should increment the value of a non-persisted property', async () => {
+        registerTestEntity('beforeCreate', [{
+          action: 'increment',
+          value: 2,
+          target: 'this.num'
+        }])
+        const item = await getDao().insertOne({ num: 3 })
+        await entityHooks.run(entityName, 'beforeCreate', item, {} as Request)
+        expect(item.num).toBe(5)
+      })
     })
 
     describe('Set', () => {
-      it('should set the value of a local attribute', async () => {
+      it('should set the value of a local property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'set',
           value: 3,
@@ -162,7 +174,7 @@ describe('entityHooks', () => {
         expect(updatedItem!.value).toBe(3)
       })
 
-      it('should set the value of a reference attribute', async () => {
+      it('should set the value of a reference property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'set',
           value: 3,
@@ -177,7 +189,7 @@ describe('entityHooks', () => {
         expect(updatedItem2!.value).toBe(2)
       })
 
-      it('should set a value using a local attribute', async () => {
+      it('should set a value using a local property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'set',
           value: '{this.num}',
@@ -189,7 +201,7 @@ describe('entityHooks', () => {
         expect(updatedItem!.value).toBe(3)
       })
 
-      it('should increment a value using a reference attribute', async () => {
+      it('should increment a value using a reference property', async () => {
         registerTestEntity('afterUpdate', [{
           action: 'set',
           value: '{this.ref.num}',
@@ -200,6 +212,17 @@ describe('entityHooks', () => {
         await entityHooks.run(entityName, 'afterUpdate', item2, {} as Request)
         const updatedItem = await getDao().findOneById(item2.id!)
         expect(updatedItem!.value).toBe(3)
+      })
+
+      it('should increment the value of a non-persisted property', async () => {
+        registerTestEntity('beforeCreate', [{
+          action: 'set',
+          value: 5,
+          target: 'this.value'
+        }])
+        const item = await getDao().insertOne({})
+        await entityHooks.run(entityName, 'beforeCreate', item, {} as Request)
+        expect(item.value).toBe(5)
       })
     })
 

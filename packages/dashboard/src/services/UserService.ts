@@ -1,8 +1,8 @@
 import { request, STORE_TOKENS_KEY, STORE_USER_KEY } from '../utils/apiUtils'
-import { BaseUserModel } from '@commun/users'
+import { UserModel } from '@commun/users'
 
 export const UserService = {
-  getUserData (): BaseUserModel | null {
+  getUserData (): UserModel | null {
     const userData = localStorage.getItem(STORE_USER_KEY)
     if (userData) {
       return JSON.parse(userData)
