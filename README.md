@@ -1,8 +1,9 @@
-# Commun
+# 🎩 Commun
 
-With Commun you can build powerful backends for communities and user based apps **without coding**.
-Commun helps you build scalable APIs in hours instead of months by giving you powerful tools to model your app in a
-graphic UI.
+Commun is a fully-featured framework for building REST APIs and GraphQL servers from a set of [JSON Schemas](https://json-schema.org/)
+and configurations, which can be written by hand or using our [UI dashboard](#dashboard).
+
+Who said your team needs to write code for building CRUD APIs, authentication and authorization?
 
 **[Documentation](https://commun.dev/docs/introduction)**.
 
