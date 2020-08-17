@@ -14,14 +14,14 @@ export const AdminEntityRouter = express.Router()
   .delete('/:entityName', (req, res, next) =>
     sendResponse(req, res, next, new AdminController().deleteEntity(req, res)))
 
-  // Attributes
-  .put('/:entityName/attributes/:attributeKey', (req, res, next) =>
-    sendResponse(req, res, next, new AdminController().updateEntityAttribute(req, res)))
-  .delete('/:entityName/attributes/:attributeKey', (req, res, next) =>
-    sendResponse(req, res, next, new AdminController().deleteEntityAttribute(req, res)))
+  // Schema
+  .put('/:entityName/properties/:propertyKey', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().updateEntityProperty(req, res)))
+  .delete('/:entityName/properties/:propertyKey', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().deleteEntityProperty(req, res)))
 
-  // Join attributes
-  .put('/:entityName/joinAttributes/:attributeKey', (req, res, next) =>
-    sendResponse(req, res, next, new AdminController().updateEntityJoinAttribute(req, res)))
-  .delete('/:entityName/joinAttributes/:attributeKey', (req, res, next) =>
-    sendResponse(req, res, next, new AdminController().deleteEntityJoinAttribute(req, res)))
+  // Join properties
+  .put('/:entityName/joinProperties/:propertyKey', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().updateEntityJoinProperties(req, res)))
+  .delete('/:entityName/joinProperties/:propertyKey', (req, res, next) =>
+    sendResponse(req, res, next, new AdminController().deleteEntityJoinProperty(req, res)))

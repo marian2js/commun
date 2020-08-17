@@ -11,8 +11,8 @@ import {
   Select,
   TextField
 } from '@material-ui/core'
-import { handleAttrChange, handleNumberAttrChange } from '../../../utils/attributes'
-import { ModelAttribute } from '@commun/core'
+import { handleAttrChange, handleNumberAttrChange } from '../../../utils/properties'
+import { JSONSchema7 } from 'json-schema'
 
 const useStyles = makeStyles(theme => ({
   defaultSelectorFormControl: {
@@ -22,26 +22,27 @@ const useStyles = makeStyles(theme => ({
 }))
 
 interface Props {
-  attribute?: ModelAttribute
-  subAttribute: boolean
+  property?: JSONSchema7
+  subProperty: boolean
   onChange: (key: any, value: any) => void
   noDefault?: boolean
 }
 
-export const ModelAttributeSharedOptions = (props: Props) => {
+export const SchemaPropertySharedOptions = (props: Props) => {
   const classes = useStyles()
-  const { attribute, subAttribute, onChange, noDefault } = props
-  const [required, setRequired] = useState(attribute?.required)
-  const [unique, setUnique] = useState(attribute?.unique)
-  const [attributeDefault, setAttributeDefault] = useState(attribute?.default ?? '')
+  const { property, subProperty, onChange, noDefault } = props
+  const [attributeDefault, setAttributeDefault] = useState<any>(property?.default ?? '')
+  const [readOnly, setReadOnly] = useState(property?.readOnly || false)
+  const [writeOnly, setWriteOnly] = useState(property?.writeOnly || false)
 
   const handleAttributeDefaultChange = (value: string) => {
-    switch (attribute?.type) {
+    switch (property?.type) {
       case 'number':
+      case 'integer':
         handleNumberAttrChange(onChange, 'default', value, setAttributeDefault)
         break
       case 'boolean':
-        const defaultValue = ['', undefined].includes(value) ? undefined : value === 'true'
+        const defaultValue = value === 'true' ? true : value === 'false' ? false : undefined
         handleAttrChange(onChange, 'default', defaultValue, setAttributeDefault)
         break
       default:
@@ -55,7 +56,7 @@ export const ModelAttributeSharedOptions = (props: Props) => {
         onChange={e => handleAttributeDefaultChange(e.target.value)}
         value={attributeDefault ?? ''}
         name="default"
-        type={attribute?.type === 'number' ? 'number' : 'text'}
+        type={property?.type === 'number' || property?.type === 'integer' ? 'number' : 'text'}
         variant="outlined"
         margin="normal"
         fullWidth
@@ -71,11 +72,11 @@ export const ModelAttributeSharedOptions = (props: Props) => {
         </InputLabel>
         <Select
           onChange={e => handleAttributeDefaultChange(e.target.value as string)}
-          value={(attributeDefault || '').toString()}
+          value={'' + attributeDefault}
           labelId="attribute-default-selector"
           id="attribute-default-selector"
           fullWidth>
-          <MenuItem value=""/>
+          <MenuItem value="">No Default</MenuItem>
           <MenuItem value="true">True</MenuItem>
           <MenuItem value="false">False</MenuItem>
         </Select>
@@ -86,23 +87,22 @@ export const ModelAttributeSharedOptions = (props: Props) => {
   return (
     <>
       {
-        !noDefault && (attribute?.type === 'boolean' ? renderBooleanDefaultTextField() : renderAttributeDefaultTextField())
+        !noDefault && (property?.type === 'boolean' ? renderBooleanDefaultTextField() : renderAttributeDefaultTextField())
       }
 
       {
-        subAttribute ? '' :
+        subProperty ? '' :
           <>
             <Grid item xs={12}>
               <FormControl component="fieldset">
                 <FormGroup>
                   <FormControlLabel
                     control={
-                      <Checkbox checked={required}
-                                onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(
-                                  onChange, 'required', !required, setRequired)
-                                }/>
+                      <Checkbox checked={readOnly}
+                                onChange={() => handleAttrChange<JSONSchema7, boolean>(
+                                  onChange, 'readOnly', !readOnly, setReadOnly)}/>
                     }
-                    label="Required"/>
+                    label="Read only"/>
                 </FormGroup>
               </FormControl>
             </Grid>
@@ -112,11 +112,11 @@ export const ModelAttributeSharedOptions = (props: Props) => {
                 <FormGroup>
                   <FormControlLabel
                     control={
-                      <Checkbox checked={unique}
-                                onChange={() => handleAttrChange<ModelAttribute, boolean | undefined>(
-                                  onChange, 'unique', !unique, setUnique)}/>
+                      <Checkbox checked={writeOnly}
+                                onChange={() => handleAttrChange<JSONSchema7, boolean>(
+                                  onChange, 'writeOnly', !writeOnly, setWriteOnly)}/>
                     }
-                    label="Unique"/>
+                    label="Write only"/>
                 </FormGroup>
               </FormControl>
             </Grid>

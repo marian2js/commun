@@ -3,13 +3,12 @@ import {
   EntityHook,
   EntityHookCondition,
   EntityModel,
-  HashEntityHook,
   IncrementEntityHook,
   LifecycleEntityHooks,
   SetEntityHook
 } from '../types'
 import { Commun } from '../Commun'
-import { assertNever, SecurityUtils } from '../utils'
+import { assertNever } from '../utils'
 import { parsePropertyValue } from './entitySchema'
 import { getVariableData, parseConfigString } from './configVariables'
 
@@ -43,8 +42,6 @@ async function runEntityHook<T extends EntityModel> (
   }
 
   switch (hook.action) {
-    case 'hash':
-      return runHashEntityHook(entityName, lifecycle, hook, model, userId)
     case 'increment':
       return runIncrementEntityHook(entityName, lifecycle, hook, model, userId)
     case 'set':
@@ -75,25 +72,6 @@ async function validHookCondition<T extends EntityModel> (entityName: string, co
       return leftValue !== rightValue
     default:
       assertNever(condition.comparator)
-  }
-}
-
-async function runHashEntityHook<T extends EntityModel> (
-  entityName: string,
-  lifecycle: keyof LifecycleEntityHooks,
-  hook: HashEntityHook,
-  model: T,
-  userId?: string
-) {
-  const targetData = getVariableData(hook.target, entityName, model, userId)
-  if (typeof targetData?.variableValue === 'string' && targetData.variableId) {
-    const hashed = await SecurityUtils.hashWithBcrypt(targetData.variableValue, hook.salt_rounds || 12)
-    if (entityName === targetData.variableEntity && lifecycle.startsWith('before')) {
-      model[targetData.variableKey as keyof T] = hashed as any
-    } else {
-      await Commun.getEntityDao(targetData.variableEntity)
-        .updateOne(targetData.variableId, { [targetData.variableKey]: hashed })
-    }
   }
 }
 

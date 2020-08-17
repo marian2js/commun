@@ -1,27 +1,28 @@
 import { authenticatedRequest, closeTestApp, request, startTestApp, stopTestApp } from '@commun/test-utils'
-import { Commun, ConfigManager, EntityConfig } from '@commun/core'
+import { Commun, ConfigManager, EntityConfig, EntityModel } from '@commun/core'
 import { AdminModule } from '../../src'
-import { BaseUserModel, DefaultUserConfig } from '@commun/users'
+import { UserConfig, UserModel } from '@commun/users'
+import { JSONSchema7 } from 'json-schema'
 
 describe('AdminController', () => {
   const collectionName = 'users'
   const baseUrl = '/api/v1/admin'
-  let adminUser: BaseUserModel
-  let nonAdminUser: BaseUserModel
+  let adminUser: UserModel
+  let nonAdminUser: UserModel
 
   beforeEach(async () => {
     await AdminModule.setup()
-    Commun.registerEntity({ config: DefaultUserConfig })
+    Commun.registerEntity({ config: UserConfig })
     Commun.registerPlugin('test-plugin', { config: { key: 123 } })
     await startTestApp(Commun)
-    adminUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
+    adminUser = await Commun.getEntityDao<UserModel>('users').insertOne({
       admin: true,
       username: 'admin',
       email: 'admin@example.org',
       password: 'admin',
       verified: true,
     })
-    nonAdminUser = await Commun.getEntityDao<BaseUserModel>('users').insertOne({
+    nonAdminUser = await Commun.getEntityDao<UserModel>('users').insertOne({
       admin: false,
       username: 'non-admin',
       email: 'non-admin@example.org',
@@ -37,7 +38,7 @@ describe('AdminController', () => {
       const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/entities`)
         .expect(200)
-      expect(res.body.items[0]).toEqual(DefaultUserConfig)
+      expect(res.body.items[0]).toEqual(UserConfig)
     })
 
     it('should throw unauthorized error if the user is not admin', async () => {
@@ -61,13 +62,19 @@ describe('AdminController', () => {
       expect(res.body.item).toEqual({
         entityName: 'test-entity',
         collectionName: 'test-entity',
-        attributes: {}
+        schema: {
+          required: [],
+          properties: {},
+        }
       })
 
       expect(ConfigManager.createEntityConfig).toHaveBeenCalledWith('test-entity', {
         entityName: 'test-entity',
         collectionName: 'test-entity',
-        attributes: {}
+        schema: {
+          required: [],
+          properties: {},
+        }
       })
     })
 
@@ -78,51 +85,41 @@ describe('AdminController', () => {
         .post(`${baseUrl}/entities`)
         .send({ entityName: 'test-entity', addUser: true })
         .expect(200)
-      expect(res.body.item).toEqual({
-        entityName: 'test-entity',
-        collectionName: 'test-entity',
-        attributes: {
-          user: {
-            type: 'user',
-            required: true,
-            index: true,
-            readonly: true,
-            permissions: {
-              create: 'system',
-              update: 'system',
-            }
-          }
-        },
-        permissions: {
-          get: 'anyone',
-          create: 'user',
-          update: 'own',
-          delete: 'own',
-        }
-      })
 
-      expect(ConfigManager.createEntityConfig).toHaveBeenCalledWith('test-entity', {
+      const expectedConfig: EntityConfig<EntityModel & { user: string }> = {
         entityName: 'test-entity',
         collectionName: 'test-entity',
-        attributes: {
-          user: {
-            type: 'user',
-            required: true,
-            index: true,
-            readonly: true,
-            permissions: {
-              create: 'system',
-              update: 'system',
+        schema: {
+          required: ['user'],
+          properties: {
+            user: {
+              $ref: '#user',
+              readOnly: true,
             }
-          }
+          },
         },
         permissions: {
           get: 'anyone',
           create: 'user',
           update: 'own',
           delete: 'own',
-        }
-      })
+          properties: {
+            user: {
+              create: 'system',
+              update: 'system',
+            }
+          }
+        },
+        indexes: [{
+          keys: {
+            user: 1,
+          }
+        }],
+      }
+
+      expect(res.body.item).toEqual(expectedConfig)
+
+      expect(ConfigManager.createEntityConfig).toHaveBeenCalledWith('test-entity', expectedConfig)
     })
   })
 
@@ -131,7 +128,7 @@ describe('AdminController', () => {
       const res = await authenticatedRequest(adminUser.id)
         .get(`${baseUrl}/entities/users`)
         .expect(200)
-      expect(res.body.item).toEqual(DefaultUserConfig)
+      expect(res.body.item).toEqual(UserConfig)
     })
 
     it('should throw a not found error if the entity does not exist', async () => {
@@ -152,14 +149,14 @@ describe('AdminController', () => {
 
   describe('update - [PUT] /admin/entities/:entityName', () => {
     it('should update a single entity', async () => {
-      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
-        Promise.resolve({ ...DefaultUserConfig, ...config }))
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<UserModel>]?: any }) =>
+        Promise.resolve({ ...UserConfig, ...config }))
 
       const res = await authenticatedRequest(adminUser.id)
         .put(`${baseUrl}/entities/users`)
         .send({ test: 123 })
         .expect(200)
-      expect(res.body.item).toEqual({ ...DefaultUserConfig, ...{ test: 123 } })
+      expect(res.body.item).toEqual({ ...UserConfig, ...{ test: 123 } })
     })
   })
 
@@ -175,61 +172,69 @@ describe('AdminController', () => {
     })
   })
 
-  describe('updateEntityAttribute - [PUT] /admin/entities/:entityName/attributes/:attributeKey', () => {
+  describe('updateEntityAttribute - [PUT] /admin/entities/:entityName/properties/:attributeKey', () => {
     it('should update a single attribute', async () => {
-      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
-      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
-        Promise.resolve({ ...DefaultUserConfig, ...config }))
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(UserConfig)) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<UserModel>]?: any }) =>
+        Promise.resolve({ ...UserConfig, ...config }))
+
+      const usernameProperty = UserConfig.schema.properties!.username as JSONSchema7
 
       const res = await authenticatedRequest(adminUser.id)
-        .put(`${baseUrl}/entities/users/attributes/username`)
-        .send({ ...DefaultUserConfig.attributes.username, default: 'default-username' })
+        .put(`${baseUrl}/entities/users/properties/username`)
+        .send({ ...usernameProperty, default: 'default-username' })
         .expect(200)
       expect(res.body.item).toEqual({
-        ...DefaultUserConfig,
-        attributes: {
-          ...DefaultUserConfig.attributes,
-          username: {
-            ...DefaultUserConfig.attributes.username,
-            default: 'default-username'
+        ...UserConfig,
+        schema: {
+          ...UserConfig.schema,
+          properties: {
+            ...UserConfig.schema.properties,
+            username: {
+              ...usernameProperty,
+              default: 'default-username'
+            }
           }
         }
       })
     })
   })
 
-  describe('deleteEntityAttribute - [DELETE] /admin/entities/:entityName/attributes/:attributeKey', () => {
+  describe('deleteEntityAttribute - [DELETE] /admin/entities/:entityName/properties/:attributeKey', () => {
     it('should delete a single attribute', async () => {
-      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(DefaultUserConfig)) as jest.Mock
-      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
-        Promise.resolve({ ...DefaultUserConfig, ...config }))
+      ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve(UserConfig)) as jest.Mock
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<UserModel>]?: any }) =>
+        Promise.resolve({ ...UserConfig, ...config }))
 
       const res = await authenticatedRequest(adminUser.id)
-        .delete(`${baseUrl}/entities/users/attributes/username`)
+        .delete(`${baseUrl}/entities/users/properties/username`)
         .expect(200)
 
-      const expectedAttributes = { ...DefaultUserConfig.attributes }
-      delete expectedAttributes.username
+      const expectedProperties = { ...UserConfig.schema.properties }
+      delete expectedProperties.username
 
       expect(res.body.item).toEqual({
-        ...DefaultUserConfig,
-        attributes: expectedAttributes
+        ...UserConfig,
+        schema: {
+          ...UserConfig.schema,
+          properties: expectedProperties
+        }
       })
     })
   })
 
-  describe('updateEntityJoinAttribute - [PUT] /admin/entities/:entityName/joinAttributes/:attributeKey', () => {
+  describe('updateEntityJoinAttribute - [PUT] /admin/entities/:entityName/joinProperties/:attributeKey', () => {
     it('should update a single attribute', async () => {
       ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({})) as jest.Mock
-      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<UserModel>]?: any }) =>
         Promise.resolve({ ...config })) as jest.Mock
 
       const res = await authenticatedRequest(adminUser.id)
-        .put(`${baseUrl}/entities/users/joinAttributes/test`)
+        .put(`${baseUrl}/entities/users/joinProperties/test`)
         .send({ type: 'findOne', entity: 'user', query: {} })
         .expect(200)
       expect(res.body.item).toEqual({
-        joinAttributes: {
+        joinProperties: {
           test: {
             type: 'findOne',
             entity: 'user',
@@ -240,10 +245,10 @@ describe('AdminController', () => {
     })
   })
 
-  describe('deleteEntityJoinAttribute - [DELETE] /admin/entities/:entityName/joinAttributes/:attributeKey', () => {
+  describe('deleteEntityJoinAttribute - [DELETE] /admin/entities/:entityName/joinProperties/:attributeKey', () => {
     it('should delete a single attribute', async () => {
       ConfigManager.readEntityConfig = jest.fn(() => Promise.resolve({
-        joinAttributes: {
+        joinProperties: {
           test: {
             type: 'findOne',
             entity: 'user',
@@ -256,15 +261,15 @@ describe('AdminController', () => {
           },
         },
       })) as jest.Mock
-      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<BaseUserModel>]?: any }) =>
+      ConfigManager.mergeEntityConfig = jest.fn((name: string, config: { [key in keyof EntityConfig<UserModel>]?: any }) =>
         Promise.resolve({ ...config })) as jest.Mock
 
       const res = await authenticatedRequest(adminUser.id)
-        .delete(`${baseUrl}/entities/users/joinAttributes/test`)
+        .delete(`${baseUrl}/entities/users/joinProperties/test`)
         .expect(200)
 
       expect(res.body.item).toEqual({
-        joinAttributes: {
+        joinProperties: {
           test2: {
             type: 'findOne',
             entity: 'user',

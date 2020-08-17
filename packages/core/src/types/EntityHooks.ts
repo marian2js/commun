@@ -22,15 +22,7 @@ export type SetEntityHook = BaseEntityHook & {
   target: string
 }
 
-export type HashEntityHook = BaseEntityHook & {
-  action: 'hash'
-  target: string
-  algorithm?: 'bcrypt'
-  salt_rounds?: number
-}
-
 export type EntityHook =
-  HashEntityHook |
   IncrementEntityHook |
   SetEntityHook
 

@@ -3,7 +3,7 @@ import { Button, Grid, makeStyles, TextField } from '@material-ui/core'
 import { EntityConfig, EntityModel } from '@commun/core'
 import { EntityService } from '../../services/EntityService'
 import { Alert, Color } from '@material-ui/lab'
-import { AttributeSelector } from '../../components/Forms/Selectors/AttributeSelector'
+import { PropertySelector } from '../../components/Forms/Selectors/PropertySelector'
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -80,11 +80,11 @@ export const EntitySettings = (props: Props) => {
         </Grid>
 
         <Grid item xs={12}>
-          <AttributeSelector value={apiKey || 'id'}
-                             label="Attribute used by API endpoints"
-                             entity={entity}
-                             onChange={setApiKey}
-                             className={classes.apiAttributeSelectorFormControl}/>
+          <PropertySelector value={apiKey || 'id'}
+                            label="Attribute used by API endpoints"
+                            entity={entity}
+                            onChange={setApiKey}
+                            className={classes.apiAttributeSelectorFormControl}/>
         </Grid>
 
         {

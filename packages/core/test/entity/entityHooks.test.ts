@@ -1,5 +1,5 @@
 import { Request } from 'express'
-import { Commun, EntityHook, EntityModel, LifecycleEntityHooks, SecurityUtils } from '../../src'
+import { Commun, EntityHook, EntityModel, LifecycleEntityHooks } from '../../src'
 import { entityHooks } from '../../src/entity/entityHooks'
 import { closeTestApp, startTestApp, stopTestApp } from '@commun/test-utils'
 import { EntityCodeHook } from '../../src/types/EntityCodeHooks'
@@ -93,44 +93,6 @@ describe('entityHooks', () => {
         await entityHooks.run(entityName, 'afterUpdate', item, {} as Request)
         const updatedItem = await getDao().findOneById(item.id!)
         expect(updatedItem!.value).toBe(2)
-      })
-    })
-
-    describe('Hash', () => {
-      SecurityUtils.hashWithBcrypt = jest
-        .fn(async (str: string, saltRounds: number) => `hashed_${str}_${saltRounds}`)
-
-      it('should hash the value of a local property', async () => {
-        registerTestEntity('afterCreate', [{
-          action: 'hash',
-          target: 'this.name',
-        }])
-        const item = await getDao().insertOne({ name: 'test' })
-        await entityHooks.run(entityName, 'afterCreate', item, {} as Request)
-        const updatedItem = await getDao().findOneById(item.id!)
-        expect(updatedItem!.name).toBe('hashed_test_12')
-      })
-
-      it('should hash the value of a local property using salt rounds', async () => {
-        registerTestEntity('afterCreate', [{
-          action: 'hash',
-          target: 'this.name',
-          salt_rounds: 999,
-        }])
-        const item = await getDao().insertOne({ name: 'test' })
-        await entityHooks.run(entityName, 'afterCreate', item, {} as Request)
-        const updatedItem = await getDao().findOneById(item.id!)
-        expect(updatedItem!.name).toBe('hashed_test_999')
-      })
-
-      it('should increment the value of a non-persisted property', async () => {
-        registerTestEntity('beforeCreate', [{
-          action: 'hash',
-          target: 'this.name'
-        }])
-        const item = await getDao().insertOne({ name: 'test' })
-        await entityHooks.run(entityName, 'beforeCreate', item, {} as Request)
-        expect(item.name).toBe('hashed_test_12')
       })
     })
 

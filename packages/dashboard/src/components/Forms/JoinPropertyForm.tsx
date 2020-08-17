@@ -10,11 +10,11 @@ import {
   TextField
 } from '@material-ui/core'
 import React, { useEffect, useState } from 'react'
-import { EntityConfig, EntityModel, JoinAttribute, JoinAttributeQuery } from '@commun/core'
+import { EntityConfig, EntityModel, JoinProperty, JoinPropertyQuery } from '@commun/core'
 import { EntityService } from '../../services/EntityService'
-import { handleAttrChange } from '../../utils/attributes'
+import { handleAttrChange } from '../../utils/properties'
 import { EntitySelector } from './Selectors/EntitySelector'
-import { AttributeSelector } from './Selectors/AttributeSelector'
+import { PropertySelector } from './Selectors/PropertySelector'
 import DeleteIcon from '@material-ui/icons/Delete'
 
 const useStyles = makeStyles(theme => ({
@@ -22,7 +22,7 @@ const useStyles = makeStyles(theme => ({
     margin: theme.spacing(1),
     width: '100%',
   },
-  attributeSelectorFormControl: {
+  propertySelectorFormControl: {
     margin: theme.spacing(2, 0),
     width: '100%',
   },
@@ -37,51 +37,51 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   entity: EntityConfig<EntityModel>
-  joinAttribute?: JoinAttribute
-  onChange: (key: keyof JoinAttribute, value: any) => void
+  joinProperty?: JoinProperty
+  onChange: (key: keyof JoinProperty, value: any) => void
   onKeyChange: (key: string) => void
 }
 
-export const JoinAttributeForm = (props: Props) => {
+export const JoinPropertyForm = (props: Props) => {
   const classes = useStyles()
-  const { joinAttribute, onChange, onKeyChange } = props
-  const [type, setType] = useState(joinAttribute?.type || '')
-  const [joinAttributeKey, setJoinAttributeKey] = useState('')
-  const [joinAttributeData, setJoinAttributeData] = useState<Partial<JoinAttribute>>(joinAttribute || {})
+  const { joinProperty, onChange, onKeyChange } = props
+  const [type, setType] = useState(joinProperty?.type || '')
+  const [joinPropertyKey, setJoinPropertyKey] = useState('')
+  const [joinPropertyData, setJoinPropertyData] = useState<Partial<JoinProperty>>(joinProperty || {})
   const [entities, setEntities] = useState<EntityConfig<EntityModel>[]>()
-  const [entityAttribute, setEntityAttribute] = useState(joinAttribute?.entity || '')
-  const [query, setQuery] = useState<JoinAttributeQuery>({ ...(joinAttribute?.query || {}), '': '' })
+  const [entityProperty, setEntityProperty] = useState(joinProperty?.entity || '')
+  const [query, setQuery] = useState<JoinPropertyQuery>({ ...(joinProperty?.query || {}), '': '' })
   const [selectedEntity, setSelectedEntity] = useState<EntityConfig<EntityModel> | undefined>()
 
-  const attributeIsNew = !joinAttribute
+  const propertyIsNew = !joinProperty
 
   useEffect(() => {
     (async () => {
       const res = await EntityService.getEntities()
       setEntities(res.items)
-      setSelectedEntity(res.items.find(entity => entity.entityName === entityAttribute))
+      setSelectedEntity(res.items.find(entity => entity.entityName === entityProperty))
     })()
-  }, [entityAttribute])
+  }, [entityProperty])
 
   if (!entities) {
     return <CircularProgress/>
   }
 
-  const handleNewAttributeKeyChange = (key: string) => {
-    setJoinAttributeKey(key)
+  const handleNewPropertyKeyChange = (key: string) => {
+    setJoinPropertyKey(key)
     onKeyChange(key)
   }
 
-  const handleTypeChange = (type: Extract<JoinAttribute, 'type'>) => {
-    setJoinAttributeData({
+  const handleTypeChange = (type: Extract<JoinProperty, 'type'>) => {
+    setJoinPropertyData({
       type,
-      ...(joinAttributeData || {})
+      ...(joinPropertyData || {})
     })
     handleAttrChange(onChange, 'type', type, setType)
   }
 
   const handleEntityChange = (entityName: string) => {
-    handleAttrChange(onChange, 'entity', entityName, setEntityAttribute)
+    handleAttrChange(onChange, 'entity', entityName, setEntityProperty)
     setSelectedEntity(entities.find(entity => entity.entityName === entityName))
   }
 
@@ -115,17 +115,17 @@ export const JoinAttributeForm = (props: Props) => {
   return (
     <Grid container>
       {
-        attributeIsNew ?
+        propertyIsNew ?
           <Grid item xs={12}>
             <TextField
-              onChange={e => handleNewAttributeKeyChange(e.target.value as string)}
-              value={joinAttributeKey}
-              name="attributeKey"
+              onChange={e => handleNewPropertyKeyChange(e.target.value as string)}
+              value={joinPropertyKey}
+              name="propertyKey"
               variant="outlined"
               margin="normal"
               fullWidth
               required
-              label="Join Attribute Key"/>
+              label="Join Property Key"/>
           </Grid> : ''
       }
 
@@ -135,7 +135,7 @@ export const JoinAttributeForm = (props: Props) => {
             Type
           </InputLabel>
           <Select
-            onChange={e => handleTypeChange(e.target.value as Extract<JoinAttribute, 'type'>)}
+            onChange={e => handleTypeChange(e.target.value as Extract<JoinProperty, 'type'>)}
             labelId="type-selector"
             id="type-selector"
             value={type}
@@ -149,24 +149,24 @@ export const JoinAttributeForm = (props: Props) => {
       </Grid>
 
       <Grid item xs={12}>
-        <EntitySelector entities={entities} value={entityAttribute} onChange={handleEntityChange}/>
+        <EntitySelector entities={entities} value={entityProperty} onChange={handleEntityChange}/>
       </Grid>
 
       {
         selectedEntity ?
           <Grid item xs={12} className={classes.query}>
-            <InputLabel id="attribute-selector">
+            <InputLabel id="property-selector">
               Query
             </InputLabel>
             {
               Object.entries(query).map(([key, value]) => (
                 <Grid container key={key}>
                   <Grid item xs={6}>
-                    <AttributeSelector value={key}
-                                       label="Key"
-                                       entity={selectedEntity}
-                                       onChange={newKey => handleQueryKeyChange(key, newKey)}
-                                       className={classes.attributeSelectorFormControl}/>
+                    <PropertySelector value={key}
+                                      label="Key"
+                                      entity={selectedEntity}
+                                      onChange={newKey => handleQueryKeyChange(key, newKey)}
+                                      className={classes.propertySelectorFormControl}/>
                   </Grid>
                   <Grid item xs={5}>
                     <TextField

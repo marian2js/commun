@@ -13,9 +13,9 @@ import {
   Select,
   TextField
 } from '@material-ui/core'
-import { AttributeSelector } from './Selectors/AttributeSelector'
+import { PropertySelector } from './Selectors/PropertySelector'
 import DeleteIcon from '@material-ui/icons/Delete'
-import { handleAttrChange } from '../../utils/attributes'
+import { handleAttrChange } from '../../utils/properties'
 import { Alert } from '@material-ui/lab'
 
 const useStyles = makeStyles(theme => ({
@@ -121,11 +121,11 @@ export const IndexForm = (props: Props) => {
         Object.entries(keys).map(([key, indexType]) => (
           <Grid container key={key}>
             <Grid item xs={6}>
-              <AttributeSelector value={key}
-                                 label="Key"
-                                 entity={entity}
-                                 onChange={newKey => handleIndexKeyChange(key, newKey)}
-                                 className={classes.keySelectorFormControl}/>
+              <PropertySelector value={key}
+                                label="Key"
+                                entity={entity}
+                                onChange={newKey => handleIndexKeyChange(key, newKey)}
+                                className={classes.keySelectorFormControl}/>
             </Grid>
             <Grid item xs={5}>
               <FormControl className={classes.indexKeyTypeSelectorFormControl}>

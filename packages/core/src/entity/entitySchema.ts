@@ -130,7 +130,7 @@ export function isEntityRef (property: JSONSchema7Definition) {
 
 export function getEntityRef (property: JSONSchema7Definition) {
   if (!isEntityRef(property) || typeof property === 'boolean') {
-    return null
+    return
   }
   return property.$ref?.startsWith('#entity/') ?
     Commun.getPluralEntityName(property.$ref?.substr('#entity/'.length)) : 'users'

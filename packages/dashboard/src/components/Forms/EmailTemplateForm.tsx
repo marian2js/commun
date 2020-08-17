@@ -4,13 +4,14 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
-  FormGroup, FormHelperText,
+  FormGroup,
+  FormHelperText,
   Grid,
   makeStyles,
   TextareaAutosize,
   TextField
 } from '@material-ui/core'
-import { handleAttrChange } from '../../utils/attributes'
+import { handleAttrChange } from '../../utils/properties'
 
 const useStyles = makeStyles(theme => ({
   emailText: {

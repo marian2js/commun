@@ -5,20 +5,21 @@ import {
   Commun,
   ConfigManager,
   EntityConfig,
+  EntityIndex,
   EntityModel,
-  ModelAttribute,
   PluginController,
   ServerError,
   UnauthorizedError
 } from '@commun/core'
-import { AuthProvider, BaseUserModel } from '@commun/users'
+import { AuthProvider, UserModel } from '@commun/users'
 import { AdminModule } from '../AdminModule'
+import { JSONSchema7 } from 'json-schema'
 
 export class AdminController extends PluginController {
   async validateAdminPermissions (req: Request, res: Response, next: NextFunction) {
     if (req.auth?.id) {
       const authUser = await Commun.getEntityDao('users').findOneById(req.auth.id)
-      if (authUser && (authUser as BaseUserModel).admin) {
+      if (authUser && (authUser as UserModel).admin) {
         return next()
       }
     }
@@ -46,26 +47,35 @@ export class AdminController extends PluginController {
     const entityConfig: EntityConfig<EntityModel> = {
       entityName: req.body.entityName,
       collectionName: req.body.collectionName || req.body.entityName,
-      attributes: {},
+      schema: {
+        required: [],
+        properties: {},
+      },
     }
 
     if (req.body.addUser) {
-      ;(entityConfig.attributes as { user: ModelAttribute }).user = {
-        type: 'user',
-        required: true,
-        index: true,
-        readonly: true,
-        permissions: {
-          create: 'system',
-          update: 'system',
-        }
+      entityConfig.schema.required!.push('user')
+      entityConfig.schema.properties!.user = {
+        $ref: '#user',
+        readOnly: true,
       }
       entityConfig.permissions = {
         get: 'anyone',
         create: 'user',
         update: 'own',
         delete: 'own',
+        properties: {
+          user: {
+            create: 'system',
+            update: 'system',
+          },
+        }
       }
+      ;(entityConfig.indexes as EntityIndex<EntityModel & { user: string }>[]) = [{
+        keys: {
+          user: 1
+        }
+      }]
     }
 
     await ConfigManager.createEntityConfig(req.body.entityName, entityConfig)
@@ -84,40 +94,76 @@ export class AdminController extends PluginController {
     return { ok: true }
   }
 
-  async updateEntityAttribute (req: Request, res: Response) {
+  async updateEntityProperty (req: Request, res: Response) {
     const originalEntityConfig = await ConfigManager.readEntityConfig(req.params.entityName)
-    const attributes = {
-      ...originalEntityConfig.attributes,
-      [req.params.attributeKey]: req.body
+    const propertyKey = req.params.propertyKey
+    const required = req.body.required
+    delete req.body.required
+
+    // Update requires
+    if (required === true && !originalEntityConfig.schema.required?.includes(propertyKey)) {
+      originalEntityConfig.schema.required = originalEntityConfig.schema.required || []
+      originalEntityConfig.schema.required.push(propertyKey)
+    } else if (required === false && originalEntityConfig.schema.required?.includes(propertyKey)) {
+      const index = originalEntityConfig.schema.required.indexOf(propertyKey)
+      originalEntityConfig.schema.required.splice(index, 1)
     }
-    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { attributes })
+
+    const schema: JSONSchema7 = {
+      ...originalEntityConfig.schema,
+      properties: {
+        ...(originalEntityConfig.schema.properties || {}),
+        [propertyKey]: req.body,
+      },
+    }
+    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { schema })
     return { item: entityConfig }
   }
 
-  async deleteEntityAttribute (req: Request, res: Response) {
+  async deleteEntityProperty (req: Request, res: Response) {
     const originalEntityConfig = await ConfigManager.readEntityConfig<EntityModel>(req.params.entityName)
-    const attributes = originalEntityConfig.attributes
-    delete attributes[req.params.attributeKey as keyof EntityModel]
-    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { attributes })
+    const propertyKey = req.params.propertyKey
+    const properties = originalEntityConfig.schema.properties || {}
+    delete properties[propertyKey as keyof EntityModel]
+
+    // delete property from required array
+    if (originalEntityConfig.schema.required?.includes(propertyKey)) {
+      const index = originalEntityConfig.schema.required.indexOf(propertyKey)
+      originalEntityConfig.schema.required.splice(index, 1)
+    }
+
+    // delete property from permissions
+    if (originalEntityConfig.permissions?.properties?.[propertyKey]) {
+      delete originalEntityConfig.permissions.properties[propertyKey]
+    }
+
+    const schema = {
+      ...originalEntityConfig.schema,
+      properties,
+    }
+    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, {
+      schema,
+      permissions: originalEntityConfig.permissions,
+    })
     return { item: entityConfig }
   }
 
-  async updateEntityJoinAttribute (req: Request, res: Response) {
+  async updateEntityJoinProperties (req: Request, res: Response) {
     const originalEntityConfig = await ConfigManager.readEntityConfig(req.params.entityName)
-    const joinAttributes = {
-      ...originalEntityConfig.joinAttributes,
-      [req.params.attributeKey]: req.body
+    const joinProperties = {
+      ...originalEntityConfig.joinProperties,
+      [req.params.propertyKey]: req.body
     }
-    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinAttributes })
+    const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinProperties })
     return { item: entityConfig }
   }
 
-  async deleteEntityJoinAttribute (req: Request, res: Response) {
+  async deleteEntityJoinProperty (req: Request, res: Response) {
     const originalEntityConfig = await ConfigManager.readEntityConfig<EntityModel>(req.params.entityName)
-    const joinAttributes = originalEntityConfig.joinAttributes
-    if (joinAttributes) {
-      delete joinAttributes[req.params.attributeKey]
-      const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinAttributes })
+    const joinProperties = originalEntityConfig.joinProperties
+    if (joinProperties) {
+      delete joinProperties[req.params.propertyKey]
+      const entityConfig = await ConfigManager.mergeEntityConfig(req.params.entityName, { joinProperties })
       return { item: entityConfig }
     }
     return { item: originalEntityConfig }
@@ -203,7 +249,7 @@ export class AdminController extends PluginController {
 
   async createAdmin (req: Request, res: Response) {
     AdminModule.validateFirstRunCode(req.body.code)
-    const usersEntity = Commun.getEntity<BaseUserModel>('users')
+    const usersEntity = Commun.getEntity<UserModel>('users')
     const result = await usersEntity.controller.create(req)
     if (!result.item.id) {
       throw new ServerError('Error occurred when creating the account, please try again')

@@ -14,7 +14,7 @@ import {
   Select,
   TextField
 } from '@material-ui/core'
-import { handleAttrChange } from '../../utils/attributes'
+import { getPropertyEntityRef, handleAttrChange } from '../../utils/properties'
 import { EntityService } from '../../services/EntityService'
 
 const useStyles = makeStyles(theme => ({
@@ -128,26 +128,21 @@ export const HookForm = (props: Props) => {
   }
 
   const targets: string[] = []
-  for (const [attributeKey, attribute] of Object.entries(entity.attributes)) {
-    if (!attribute) {
+  for (const [propertyKey, property] of Object.entries(entity.schema.properties || {})) {
+    if (typeof property === 'boolean') {
       continue
     }
-    let expandEntity: string | null = null
-    if (attribute.type === 'ref') {
-      expandEntity = attribute.entity
-    } else if (attribute.type === 'user') {
-      expandEntity = 'users'
-    }
+    const expandEntity = getPropertyEntityRef(property)
 
     if (expandEntity) {
       const entity = entities.find(entity => entity.entityName === expandEntity)
       if (entity) {
-        for (const entityAttribute of Object.keys(entity.attributes)) {
-          targets.push(`this.${attributeKey}.${entityAttribute}`)
+        for (const entityAttribute of Object.keys(entity.schema.properties || {})) {
+          targets.push(`this.${propertyKey}.${entityAttribute}`)
         }
       }
     } else {
-      targets.push(`this.${attributeKey}`)
+      targets.push(`this.${propertyKey}`)
     }
   }
 
@@ -213,7 +208,7 @@ export const HookForm = (props: Props) => {
               targets.map(target => <MenuItem key={target} value={target}>{target}</MenuItem>)
             }
           </Select>
-          <FormHelperText></FormHelperText>
+          <FormHelperText/>
         </FormControl>
       </Grid>
 
