@@ -21,22 +21,23 @@ describe('EmailClient', () => {
       jest.resetModules()
     })
 
-    const mockTemplate = (template: EmailTemplate) => {
+    const setupTemplate = async (template: EmailTemplate) => {
       jest.mock('/test/src/plugins/emails/templates/template.json', () => template, { virtual: true })
-    }
-
-    it('should send an email', async () => {
-      mockTemplate({
-        enabled: true,
-        subject: 'Subject',
-        text: 'Text'
-      })
 
       await EmailModule.setup({
         sendFrom: 'from@example.org',
         transporter,
         templates: {},
       })
+    }
+
+    it('should send an email', async () => {
+      await setupTemplate({
+        enabled: true,
+        subject: 'Subject',
+        text: 'Text'
+      })
+
       await EmailClient.sendEmail('template', 'to@example.org', {})
       expect(transporter.sendMail).toHaveBeenCalledWith({
         from: 'from@example.org',
@@ -47,17 +48,12 @@ describe('EmailClient', () => {
     })
 
     it('should parse given variables into the subject and text', async () => {
-      mockTemplate({
+      await setupTemplate({
         enabled: true,
         subject: 'Subject {hi}!',
         text: 'Text {hi}!'
       })
 
-      await EmailModule.setup({
-        sendFrom: 'from@example.org',
-        transporter,
-        templates: {},
-      })
       await EmailClient.sendEmail('template', 'to@example.org', { hi: 'test-name' })
       expect(transporter.sendMail).toHaveBeenCalledWith({
         from: 'from@example.org',
@@ -68,7 +64,7 @@ describe('EmailClient', () => {
     })
 
     it('should parse Commun options into the subject and text', async () => {
-      mockTemplate({
+      await setupTemplate({
         enabled: true,
         subject: 'Welcome to {appName}!',
         text: 'Check out {endpoint}'
@@ -79,10 +75,26 @@ describe('EmailClient', () => {
         endpoint: 'http://example.org',
         mongoDB: { dbName: '', uri: '' }
       })
-      await EmailModule.setup({
-        sendFrom: 'from@example.org',
-        transporter,
-        templates: {},
+      await EmailClient.sendEmail('template', 'to@example.org')
+      expect(transporter.sendMail).toHaveBeenCalledWith({
+        from: 'from@example.org',
+        to: 'to@example.org',
+        subject: 'Welcome to TEST-APP!',
+        text: 'Check out http://example.org',
+      })
+    })
+
+    it('should remove white spaces from options', async () => {
+      await setupTemplate({
+        enabled: true,
+        subject: 'Welcome to {    appName    }!',
+        text: 'Check out {    endpoint    }'
+      })
+
+      Commun.setOptions({
+        appName: 'TEST-APP',
+        endpoint: 'http://example.org',
+        mongoDB: { dbName: '', uri: '' }
       })
       await EmailClient.sendEmail('template', 'to@example.org')
       expect(transporter.sendMail).toHaveBeenCalledWith({
@@ -94,17 +106,12 @@ describe('EmailClient', () => {
     })
 
     it('should not send an email if the template is not enabled', async () => {
-      mockTemplate({
+      await setupTemplate({
         enabled: false,
         subject: 'Subject',
         text: 'Text'
       })
 
-      await EmailModule.setup({
-        sendFrom: 'from@example.org',
-        transporter,
-        templates: {},
-      })
       await EmailClient.sendEmail('template', 'to@example.org', {})
       expect(transporter.sendMail).not.toHaveBeenCalled()
     })
