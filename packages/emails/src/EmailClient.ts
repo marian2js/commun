@@ -40,7 +40,7 @@ export const EmailClient = {
 
 function parseTemplateVariables (template: string, variables: TemplateVariables) {
   for (const [key, value] of Object.entries(variables)) {
-    const regexp = RegExp(`{\s*${key}\s*}`, 'g')
+    const regexp = RegExp(`{\\s*${key}\\s*}`, 'g')
     template = template.replace(regexp, (value || '').toString())
   }
   return template
