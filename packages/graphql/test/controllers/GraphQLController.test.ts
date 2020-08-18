@@ -14,6 +14,7 @@ describe('GraphQLController', () => {
     subEntities?: {
       entity: string
     }[]
+    object?: object
   }
 
   interface SubEntity extends EntityModel {
@@ -56,6 +57,10 @@ describe('GraphQLController', () => {
                   },
                 },
               },
+            },
+            object: {
+              type: 'object',
+              additionalProperties: true,
             },
           },
         },
@@ -573,6 +578,24 @@ describe('GraphQLController', () => {
              }`
         })
         .expect(200)
+      expect(res.body.errors).not.toBeDefined()
+    })
+
+    it('should support objects with additionalProperties', async () => {
+      const node = await getDao().insertOne({ name: 'test', object: { foo: 'bar', test: true, } })
+      const res = await request()
+        .post('/graphql')
+        .send({
+          query:
+            `{
+               item (id: "${node.id}") {
+                 name
+                 object
+               }
+             }`
+        })
+        .expect(200)
+      expect(res.body.data.item).toEqual({ name: 'test', object: { foo: 'bar', test: true, } })
       expect(res.body.errors).not.toBeDefined()
     })
   })

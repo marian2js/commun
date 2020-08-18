@@ -128,7 +128,7 @@ function buildEntityObjectType (entityConfig: EntityConfig<EntityModel>): GraphQ
     return entityObjectTypesCache[entityConfig.entityName]
   }
 
-  const fields: Thunk<GraphQLFieldConfigMap<any, any, any>> = {}
+  const fields: Thunk<GraphQLFieldConfigMap<any, any>> = {}
 
   // create the GraphQL object and cache it before setting the fields, to support circular references
   entityObjectTypesCache[entityConfig.entityName] = new GraphQLObjectType({
