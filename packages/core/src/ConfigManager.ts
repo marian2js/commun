@@ -136,6 +136,21 @@ export const ConfigManager = {
     return pluginConfig
   },
 
+  async writeGeneratedFile (filename: string, content: string, onlyOnChanges: boolean = false) {
+    const generatedPath = path.join(this.projectRootPath, '/generated')
+    const filePath = path.join(generatedPath, filename)
+    if (!(await this._exists(generatedPath))) {
+      await this._mkdir(generatedPath)
+    }
+    if (onlyOnChanges) {
+      const originalContent = (await this._readFile(filePath)).toString()
+      if (originalContent === content) {
+        return
+      }
+    }
+    await this._writeFile(path.join(generatedPath, filename), content)
+  },
+
   async getCommunOptions (): Promise<{ [key: string]: CommunOptions }> {
     const configPath = path.join(srcRootPath, 'config')
     const envFiles = await this._readdir(configPath)
@@ -194,11 +209,11 @@ export const ConfigManager = {
     return projectRootPath
   },
 
-  _readFile: promisify(fs.readFile),
-  _writeFile: promisify(fs.writeFile),
-  _unlink: promisify(fs.unlink),
+  _readFile: fs.promises.readFile,
+  _writeFile: fs.promises.writeFile,
+  _unlink: fs.promises.unlink,
   _exists: promisify(fs.exists),
-  _readdir: promisify(fs.readdir),
-  _mkdir: promisify(fs.mkdir),
-  _rmdir: promisify(fs.rmdir),
+  _readdir: fs.promises.readdir,
+  _mkdir: fs.promises.mkdir,
+  _rmdir: fs.promises.rmdir,
 }

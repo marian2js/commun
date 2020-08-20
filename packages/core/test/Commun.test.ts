@@ -23,6 +23,7 @@ describe('Commun', () => {
           apiKey: 'id',
           schema: {
             $id: '#entity/testItem',
+            title: 'testItem',
             properties: {
               id: {
                 type: 'string',

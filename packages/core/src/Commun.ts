@@ -21,6 +21,7 @@ import { EntityController, PluginController } from './controllers'
 import { EntityDao } from './dao/EntityDao'
 import { NotFoundError } from './errors'
 import { ConfigManager } from './ConfigManager'
+import { generateJsonSchemaTypings } from './utils'
 
 let entities: { [key: string]: Entity<EntityModel> } = {}
 let plugins: { [key: string]: Plugin } = {}
@@ -105,6 +106,7 @@ export const Commun = {
     this.setOptions(options || await ConfigManager.readEnvConfig())
     await this._setupPlugins()
     await this._registerEntitiesFromConfigFiles()
+    await generateJsonSchemaTypings(entities)
 
     await this.connectDb()
     await this.createDbIndexes()
@@ -140,7 +142,7 @@ export const Commun = {
     for (const config of entityConfigs) {
       if (!entities[config.entityName]) {
         const codeHooks = await ConfigManager.getEntityCodeHooks(config.entityName)
-        await this.registerEntity<EntityModel>({ config, codeHooks })
+        this.registerEntity({ config, codeHooks })
       }
     }
   },
@@ -192,6 +194,7 @@ export const Commun = {
     entity.config.schema = entity.config.schema || {}
     entity.config.schema.properties = entity.config.schema.properties || {}
     entity.config.schema.$id = '#entity/' + entity.config.entitySingularName
+    entity.config.schema.title = entity.config.schema.title || entity.config.entitySingularName
 
     // set default id property
     if (!entity.config.schema.properties.id) {

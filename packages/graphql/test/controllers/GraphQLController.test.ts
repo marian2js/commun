@@ -22,7 +22,10 @@ describe('GraphQLController', () => {
   }
 
   beforeAll(async () => {
-    GraphQLModule._writeFile = jest.fn(() => Promise.resolve())
+    ConfigManager._writeFile = jest.fn(() => Promise.resolve())
+    ConfigManager._mkdir = jest.fn(() => Promise.resolve()) as jest.Mock
+    ConfigManager._readFile = jest.fn(() => Promise.resolve('test')) as jest.Mock
+    ConfigManager._exists = jest.fn(() => Promise.resolve(true)) as jest.Mock
     ConfigManager.setRootPath('/test-project/lib')
     Commun.registerEntity<TestEntity>({
       config: {
