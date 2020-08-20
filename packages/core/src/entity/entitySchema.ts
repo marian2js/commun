@@ -138,12 +138,20 @@ export function isEntityRef (property: JSONSchema7Definition) {
   return property.$ref?.startsWith('#entity/') || property.$ref === '#user'
 }
 
-export function getEntityRef (property: JSONSchema7Definition) {
+export function getSingularEntityRef (property: JSONSchema7Definition) {
   if (!isEntityRef(property) || typeof property === 'boolean') {
     return
   }
   return property.$ref?.startsWith('#entity/') ?
-    Commun.getPluralEntityName(property.$ref?.substr('#entity/'.length)) : 'users'
+    property.$ref?.substr('#entity/'.length) : 'user'
+}
+
+export function getEntityRef (property: JSONSchema7Definition) {
+  const singularName = getSingularEntityRef(property)
+  if (!singularName) {
+    return
+  }
+  return singularName === 'user' ? 'users' : Commun.getPluralEntityName(singularName)
 }
 
 export function getSchemaDefinitions (): JSONSchema7['definitions'] {

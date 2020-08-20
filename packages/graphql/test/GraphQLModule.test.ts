@@ -29,7 +29,10 @@ describe('GraphQLModule', () => {
       startTestApp(Commun)
       app = getTestApp()
       spyOn(app, 'use')
-      GraphQLModule._writeFile = jest.fn(() => Promise.resolve())
+      ConfigManager._writeFile = jest.fn(() => Promise.resolve())
+      ConfigManager._mkdir = jest.fn(() => Promise.resolve()) as jest.Mock
+      ConfigManager._readFile = jest.fn(() => Promise.resolve('test')) as jest.Mock
+      ConfigManager._exists = jest.fn(() => Promise.resolve(true)) as jest.Mock
       ConfigManager.setRootPath('/test-project/lib')
     })
 
@@ -43,8 +46,8 @@ describe('GraphQLModule', () => {
 
       const app = getTestApp()
       await GraphQLModule.setupGraphql(app)
-      expect(GraphQLModule._writeFile)
-        .toHaveBeenCalledWith('/test-project/schema.graphql', expect.any(String))
+      expect(ConfigManager._writeFile)
+        .toHaveBeenCalledWith('/test-project/generated/schema.graphql', expect.any(String))
     })
   })
 })
