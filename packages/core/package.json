@@ -22,7 +22,7 @@
   "dependencies": {
     "ajv": "^6.12.3",
     "bcryptjs": "^2.4.3",
-    "chalk": "^3.0.0",
+    "chalk": "^4.0.0",
     "compression": "^1.7.4",
     "deepcopy": "^2.1.0",
     "email-validator": "^2.0.4",
