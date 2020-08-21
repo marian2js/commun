@@ -27,7 +27,7 @@
     "commander": "^4.1.0"
   },
   "devDependencies": {
-    "@types/mongodb": "3.5.14",
+    "@types/mongodb": "3.5.26",
     "@types/node": "13.7.0",
     "typescript": "3.8.3"
   },

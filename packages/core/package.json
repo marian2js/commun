@@ -48,7 +48,7 @@
     "@types/json-schema": "7.0.5",
     "@types/lusca": "1.6.1",
     "@types/mathjs": "6.0.5",
-    "@types/mongodb": "3.5.14",
+    "@types/mongodb": "3.5.26",
     "@types/morgan": "1.9.0",
     "@types/pluralize": "0.0.29",
     "@types/prettier": "2.0.2",
