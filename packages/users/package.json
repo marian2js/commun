@@ -48,7 +48,7 @@
     "@types/passport-github2": "1.2.4",
     "@types/passport-google-oauth20": "2.0.3",
     "@types/passport-local": "1.0.33",
-    "@types/supertest": "2.0.8",
+    "@types/supertest": "2.0.10",
     "supertest": "4.0.2",
     "typescript": "3.8.3"
   },
