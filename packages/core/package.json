@@ -30,7 +30,7 @@
     "express": "^4.17.1",
     "json-schema-to-typescript": "^9.1.1",
     "lusca": "^1.6.1",
-    "mathjs": "^6.5.0",
+    "mathjs": "^7.0.0",
     "mongodb": "^3.4.1",
     "morgan": "^1.9.1",
     "pluralize": "^8.0.0"
