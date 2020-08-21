@@ -7,7 +7,7 @@
     "test": "lerna run test"
   },
   "devDependencies": {
-    "@shelf/jest-mongodb": "1.1.5",
+    "@shelf/jest-mongodb": "1.2.2",
     "@types/jest": "24.9.1",
     "@types/node": "13.11.0",
     "jest": "24.9.0",
