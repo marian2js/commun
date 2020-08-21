@@ -24,7 +24,7 @@
   "dependencies": {
     "@commun/core": "^1.0.0",
     "chalk": "^4.0.0",
-    "commander": "^4.1.0"
+    "commander": "^6.0.0"
   },
   "devDependencies": {
     "@types/mongodb": "3.5.14",
