@@ -54,7 +54,7 @@
     "@types/prettier": "2.0.2",
     "@types/supertest": "2.0.8",
     "supertest": "4.0.2",
-    "typescript": "3.8.3"
+    "typescript": "3.9.7"
   },
   "publishConfig": {
     "access": "public"
