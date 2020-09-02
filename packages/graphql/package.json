@@ -38,7 +38,7 @@
     "@types/json-schema": "7.0.6",
     "@types/mongodb": "3.5.26",
     "@types/supertest": "2.0.8",
-    "mongodb": "3.6.0",
+    "mongodb": "3.6.1",
     "supertest": "4.0.2",
     "typescript": "3.8.3"
   },
