@@ -27,7 +27,7 @@
     "@types/mongodb": "3.5.26",
     "@types/nodemailer": "6.4.0",
     "@types/supertest": "2.0.8",
-    "supertest": "4.0.2",
+    "supertest": "5.0.0",
     "typescript": "3.8.3"
   },
   "publishConfig": {

@@ -30,7 +30,7 @@
     "@types/json-schema": "7.0.6",
     "@types/mongodb": "3.5.26",
     "@types/supertest": "2.0.8",
-    "supertest": "4.0.2",
+    "supertest": "5.0.0",
     "typescript": "3.8.3"
   },
   "publishConfig": {
