@@ -8,11 +8,11 @@
   },
   "devDependencies": {
     "@shelf/jest-mongodb": "1.2.3",
-    "@types/jest": "26.0.13",
+    "@types/jest": "27.5.1",
     "@types/node": "13.13.15",
-    "jest": "24.9.0",
+    "jest": "28.1.0",
     "lerna": "3.22.1",
-    "ts-jest": "26.3.0",
+    "ts-jest": "28.0.2",
     "typescript": "3.8.3"
   }
 }
